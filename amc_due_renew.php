@@ -1,0 +1,97 @@
+<?php
+require 'connection.php'; // Include your database connection file
+
+if (!isset($_GET['id']) || empty($_GET['id'])) {
+    die("Invalid request.");
+}
+
+$invoice_item_id = $_GET['id']; // Directly using the GET parameter
+
+// Step 1: Fetch invoice_id from invoice_items
+$query = "SELECT invoice_id FROM invoice_items WHERE id = $invoice_item_id";
+$result = mysqli_query($connection, $query);
+
+if (mysqli_num_rows($result) === 0) {
+    die("No matching invoice found.");
+}
+
+$invoice_item = mysqli_fetch_assoc($result);
+$invoice_id = $invoice_item['invoice_id'];
+
+// Step 2: Fetch invoice details from invoices table
+$query = "SELECT * FROM invoices WHERE id = $invoice_id";
+$result = mysqli_query($connection, $query);
+
+if (mysqli_num_rows($result) === 0) {
+    die("Invoice not found.");
+}
+
+$invoice = mysqli_fetch_assoc($result);
+$reference_invoice_no = $invoice['invoice_no']; // Get the reference invoice number
+
+// Step 3: Insert new invoice (excluding invoice_no, keeping status as 'Draft')
+$query = "INSERT INTO invoices
+    (invoice_date, gross_amount, discount, net_amount, total_igst, total_cgst, total_sgst,
+    client_name, client_address, client_phone, client_city, client_state, client_country, client_pincode, client_gstno,
+    shipper_company_name, shipper_address, shipper_city, shipper_state, shipper_country, shipper_pincode,
+    shipper_phone, shipper_gstno, created_at, updated_at, quotation_no, quotation_id, client_id,
+    shipper_location_code, shipper_id, base_amount, status)
+    VALUES (
+    '{$invoice['invoice_date']}', '{$invoice['gross_amount']}', '{$invoice['discount']}', '{$invoice['net_amount']}',
+    '{$invoice['total_igst']}', '{$invoice['total_cgst']}', '{$invoice['total_sgst']}',
+    '{$invoice['client_name']}', '{$invoice['client_address']}', '{$invoice['client_phone']}',
+    '{$invoice['client_city']}', '{$invoice['client_state']}', '{$invoice['client_country']}',
+    '{$invoice['client_pincode']}', '{$invoice['client_gstno']}',
+    '{$invoice['shipper_company_name']}', '{$invoice['shipper_address']}', '{$invoice['shipper_city']}',
+    '{$invoice['shipper_state']}', '{$invoice['shipper_country']}', '{$invoice['shipper_pincode']}',
+    '{$invoice['shipper_phone']}', '{$invoice['shipper_gstno']}',
+    NOW(), NOW(), '{$invoice['quotation_no']}', '{$invoice['quotation_id']}', '{$invoice['client_id']}',
+    '{$invoice['shipper_location_code']}', '{$invoice['shipper_id']}', '{$invoice['base_amount']}', 'Draft')";
+
+mysqli_query($connection, $query);
+$new_invoice_id = mysqli_insert_id($connection); // Get the newly created invoice ID
+
+// Step 4: Fetch all invoice items except AMC fields
+$query = "SELECT id, product_name, product_id, unit, value, quantity, rate, gst, igst, cgst, sgst, amount, lot_tracking, expiration_tracking, expiration_date, lot_trackingid, amc_code, amc_amount
+          FROM invoice_items WHERE invoice_id = $invoice_id";
+
+$result = mysqli_query($connection, $query);
+
+while ($row = mysqli_fetch_assoc($result)) {
+    // Fetch amc_code and amc_amount from the existing invoice item
+    $amc_code = $row['amc_code']; // This should be a number like 31, 60, 90, etc.
+    $amc_amount = $row['amc_amount'];
+
+    // Calculate amc_due_date as amc_paid_date (NOW) + amc_code days
+    $query_due_date = "SELECT DATE_ADD(NOW(), INTERVAL $amc_code DAY) AS amc_due_date";
+    $result_due_date = mysqli_query($connection, $query_due_date);
+    $due_date_row = mysqli_fetch_assoc($result_due_date);
+    $amc_due_date = $due_date_row['amc_due_date'];
+
+    // Step 5: Insert the new invoice items including AMC fields
+    $insertQuery = "INSERT INTO invoice_items (invoice_id, product_name, product_id, unit, value, quantity, rate, gst, igst, cgst, sgst, amount, lot_tracking, expiration_tracking, expiration_date, lot_trackingid, reference_invoice_no, amc_code, amc_paid_date, amc_due_date, amc_amount)
+                    VALUES (
+                    '$new_invoice_id', '{$row['product_name']}', '{$row['product_id']}', '{$row['unit']}', '{$row['value']}',
+                    '{$row['quantity']}', '{$row['rate']}', '{$row['gst']}', '{$row['igst']}', '{$row['cgst']}',
+                    '{$row['sgst']}', '{$row['amount']}', '{$row['lot_tracking']}', '{$row['expiration_tracking']}',
+                    '{$row['expiration_date']}', '{$row['lot_trackingid']}', '$reference_invoice_no',
+                    '$amc_code', NOW(), '$amc_due_date', '$amc_amount')";
+
+    mysqli_query($connection, $insertQuery);
+}
+
+
+// Step 6: Update pending_amount and reference_invoice_no in invoices table
+$query_update_pending = "UPDATE invoices
+                         SET pending_amount = pending_amount +
+                             (SELECT SUM(amc_amount) FROM invoice_items WHERE invoice_id = $new_invoice_id),
+                             reference_invoice_no = (SELECT reference_invoice_no FROM invoice_items WHERE invoice_id = $new_invoice_id LIMIT 1)
+                         WHERE id = $new_invoice_id";
+
+mysqli_query($connection, $query_update_pending);
+
+// Redirect back to AMC dues display page or confirmation page
+echo "<script>alert('AMC Renewed Successfully !'); window.location.href='amc_due_display.php';</script>";
+exit;
+
+?>
