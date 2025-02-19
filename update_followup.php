@@ -130,6 +130,7 @@ if (isset($_GET['id'])) {
             padding: 20px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             background-color: white;
+            position: relative; /* For positioning the cross button */
         }
 
         .header {
@@ -140,6 +141,21 @@ if (isset($_GET['id'])) {
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .cross-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #2c3e50;
+        }
+
+        .cross-button:hover {
+            color: #e74c3c; /* Change color on hover */
         }
 
         .row {
@@ -179,7 +195,6 @@ if (isset($_GET['id'])) {
             text-align: center;
             margin-top: 20px;
             color: #2c3e50;
-
         }
 
         .btn {
@@ -189,7 +204,10 @@ if (isset($_GET['id'])) {
             border: none;
             border-radius: 4px;
             cursor: pointer;
-
+            font-size: 14px;
+            margin: 0 5px; /* Add margin between buttons */
+            text-decoration: none; /* Remove underline from Cancel link */
+            display: inline-block; /* Ensure buttons are aligned */
         }
 
         .btn:hover {
@@ -210,20 +228,31 @@ if (isset($_GET['id'])) {
         .row-inline textarea {
             flex: 1;
         }
+        .close-btn {
+            position: absolute;
+            top: 3px;
+            right: 6px;
+            font-size: 18px;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-      <div class="header">
-  <div>
-      <span>Lead Source: <?php echo htmlspecialchars($followup_data['lead_source']); ?></span> |
-      <span>Lead For: <?php echo htmlspecialchars($followup_data['lead_for']); ?></span>
-  </div>
-  <div class="lead-priority" style="color: green;">
-      Lead Priority: <?php echo htmlspecialchars($followup_data['lead_priority']); ?>
-  </div>
-</div>
+        <!-- Cross Button -->
+      <a style="text-decoration:None;"href="followup_display.php" class="close-btn">&times;</a>
 
+        <div class="header">
+            <div>
+                <span>Lead Source: <?php echo htmlspecialchars($followup_data['lead_source']); ?></span> |
+                <span>Lead For: <?php echo htmlspecialchars($followup_data['lead_for']); ?></span>
+            </div>
+            <div class="lead-priority" style="color: green;">
+                Lead Priority: <?php echo htmlspecialchars($followup_data['lead_priority']); ?>
+            </div>
+        </div>
 
         <div class="row">
             <div>
@@ -339,8 +368,7 @@ if (isset($_GET['id'])) {
 
             <div class="button-container">
                 <button class="btn" type="submit">Update</button>
-                <a href="followup_display.php" class="btn" role="button" style="text-decoration: none;">Cancel</a>
-
+                <a href="followup_display.php" class="btn" role="button">Cancel</a>
             </div>
         </form>
     </div>

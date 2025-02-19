@@ -2,6 +2,17 @@
 include('connection.php'); // Include your database connection
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Check if an entry already exists
+    $check_query = "SELECT COUNT(*) as count FROM company_card";
+    $result = mysqli_query($connection, $check_query);
+    $row = mysqli_fetch_assoc($result);
+    $count = $row['count'];
+
+    if ($count > 0) {
+        echo "<script>alert('An entry is already registered in the company card.'); window.location.href='companycard_display.php';</script>";
+        exit(); // Stop further execution
+    }
+
     // Process the form submission
     $company_name = mysqli_real_escape_string($connection, $_POST['company_name']);
     $address = mysqli_real_escape_string($connection, $_POST['address']);
@@ -39,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                   VALUES ('$company_name', '$address', '$pincode', '$city', '$state', '$country', '$contact_no', '$whatsapp_no', '$email_id', '$pancard', '$gstno', '$registration_no', '$company_type', '$target_file')";
 
         if (mysqli_query($connection, $query)) {
-            echo "<script>alert('Company added successfully'); window.location.href='companycard.php';</script>";
+            echo "<script>alert('Company added successfully'); window.location.href='companycard_display.php';</script>";
         } else {
             echo "<script>alert('Error adding company: " . mysqli_error($connection) . "');</script>";
         }
@@ -48,7 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -69,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border: 1px solid #ddd;
             border-radius: 5px;
             background-color: #f9f9f9;
-
+            position: relative; /* Added for positioning the cross button */
         }
         .title {
             text-align: center;
@@ -104,7 +114,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             justify-content: flex-end;
             margin-top: 20px;
             margin-right: 320px;
-
         }
         .btn-register {
             padding: 10px 15px;
@@ -125,13 +134,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             overflow: hidden;
             height: auto;
         }
+        .cross-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #2c3e50;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <a href="companycard.php" class="cross-btn">✖</a> <!-- Cross button -->
     <div class="title">
-        <span >Add New Company</span>
+        <span>Add New Company</span>
     </div>
     <form action="" method="POST" enctype="multipart/form-data">
     <div class="form-grid">
@@ -218,7 +237,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <button type="button" class="btn-cancel" onclick="window.history.back();">Cancel</button>
     </div>
 </form>
-
 
 </div>
 

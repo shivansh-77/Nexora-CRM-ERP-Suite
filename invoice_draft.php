@@ -192,7 +192,7 @@ include('topbar.php');
                                <td>{$row['discount']}</td>
                                <td>{$row['net_amount']}</td>
                                <td>
-                                   <button class='btn-info' onclick=\"window.location.href='invoice.php?id={$row['id']}'\">📝</button>
+                                   <button class='btn-info'  onclick=\"window.location.href='invoice.php?id={$row['id']}'\">📝</button>
 
                                    <button class='btn-secondary' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button>
                                </td>

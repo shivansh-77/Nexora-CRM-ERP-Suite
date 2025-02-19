@@ -57,8 +57,19 @@ if (isset($_GET['id'])) {
         $closed_amount = $_POST['closed_amount'] ?? '';
         $reporting_details = $_POST['reporting_details'] ?? '';
 
+        // Fetch the current fy_code from the financial_years table
+        $sql_fy = "SELECT fy_code FROM financial_years WHERE is_current = 1";
+        $result_fy = $connection->query($sql_fy);
+
+        if ($result_fy && $result_fy->num_rows > 0) {
+            $row_fy = $result_fy->fetch_assoc();
+            $fy_code = $row_fy['fy_code']; // Get the fy_code of the current financial year
+        } else {
+            die("No current financial year found.");
+        }
+
         // Prepare the SQL query to update the followup data
-        $sql_update = "UPDATE followup SET lead_status = ?, status = ?, followup_date_nxt = ?, followup_time_nxt = ?, lead_followup = ?, estimate_amount = ?, closed_amount = ?, reporting_details = ? WHERE id = ?";
+        $sql_update = "UPDATE followup SET lead_status = ?, status = ?, followup_date_nxt = ?, followup_time_nxt = ?, lead_followup = ?, estimate_amount = ?, closed_amount = ?, reporting_details = ?, fy_code = ? WHERE id = ?";
         $stmt_update = $connection->prepare($sql_update);
 
         if (!$stmt_update) {
@@ -66,23 +77,23 @@ if (isset($_GET['id'])) {
         }
 
         // Bind parameters
-        $stmt_update->bind_param("ssssssssi", $lead_status, $status, $followup_date_nxt, $followup_time_nxt, $lead_followup, $estimate_amount, $closed_amount, $reporting_details, $id);
+        $stmt_update->bind_param("sssssssssi", $lead_status, $status, $followup_date_nxt, $followup_time_nxt, $lead_followup, $estimate_amount, $closed_amount, $reporting_details, $fy_code, $id);
 
         if ($stmt_update->execute()) {
             // Insert the updated data into followup_history
-            $sql_history_insert = "INSERT INTO followup_history (followup_id, contact_id, followup_date_nxt, followup_time_nxt, status, lead_status, lead_sub_status, estimate_amount, closed_amount, lead_followup, reporting_details, lead_source, lead_for, lead_priority)
-                                   VALUES (?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?)";
+            $sql_history_insert = "INSERT INTO followup_history (followup_id, contact_id, followup_date_nxt, followup_time_nxt, status, lead_status, lead_sub_status, estimate_amount, closed_amount, lead_followup, reporting_details, lead_source, lead_for, lead_priority, fy_code)
+                                   VALUES (?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt_history_insert = $connection->prepare($sql_history_insert);
 
             if (!$stmt_history_insert) {
                 die("Preparation failed: " . $connection->error);
             }
 
-            // Bind parameters for history including the new fields
-            $stmt_history_insert->bind_param("iisssssssssss", $id, $contact_id, $followup_date_nxt, $followup_time_nxt, $status, $lead_status, $estimate_amount, $closed_amount, $lead_followup, $reporting_details, $followup_data['lead_source'], $followup_data['lead_for'], $followup_data['lead_priority']);
+            // Bind parameters for history including fy_code
+            $stmt_history_insert->bind_param("iissssssssssss", $id, $contact_id, $followup_date_nxt, $followup_time_nxt, $status, $lead_status, $estimate_amount, $closed_amount, $lead_followup, $reporting_details, $followup_data['lead_source'], $followup_data['lead_for'], $followup_data['lead_priority'], $fy_code);
 
             if ($stmt_history_insert->execute()) {
-                echo "<script>alert('Record Updated and History Added Successfully'); window.location.href='today_followup.php';</script>";
+                echo "<script>alert('Record Updated and History Added Successfully'); window.location.href='followup_display.php';</script>";
             } else {
                 echo "Error adding to followup_history: " . $stmt_history_insert->error;
             }
@@ -119,6 +130,7 @@ if (isset($_GET['id'])) {
             padding: 20px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             background-color: white;
+            position: relative; /* For positioning the cross button */
         }
 
         .header {
@@ -129,6 +141,21 @@ if (isset($_GET['id'])) {
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .cross-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #2c3e50;
+        }
+
+        .cross-button:hover {
+            color: #e74c3c; /* Change color on hover */
         }
 
         .row {
@@ -168,7 +195,6 @@ if (isset($_GET['id'])) {
             text-align: center;
             margin-top: 20px;
             color: #2c3e50;
-
         }
 
         .btn {
@@ -178,7 +204,10 @@ if (isset($_GET['id'])) {
             border: none;
             border-radius: 4px;
             cursor: pointer;
-
+            font-size: 14px;
+            margin: 0 5px; /* Add margin between buttons */
+            text-decoration: none; /* Remove underline from Cancel link */
+            display: inline-block; /* Ensure buttons are aligned */
         }
 
         .btn:hover {
@@ -199,20 +228,31 @@ if (isset($_GET['id'])) {
         .row-inline textarea {
             flex: 1;
         }
+        .close-btn {
+            position: absolute;
+            top: 3px;
+            right: 6px;
+            font-size: 18px;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-      <div class="header">
-  <div>
-      <span>Lead Source: <?php echo htmlspecialchars($followup_data['lead_source']); ?></span> |
-      <span>Lead For: <?php echo htmlspecialchars($followup_data['lead_for']); ?></span>
-  </div>
-  <div class="lead-priority" style="color: green;">
-      Lead Priority: <?php echo htmlspecialchars($followup_data['lead_priority']); ?>
-  </div>
-</div>
+        <!-- Cross Button -->
+      <a style="text-decoration:None;"href="today_followup.php" class="close-btn">&times;</a>
 
+        <div class="header">
+            <div>
+                <span>Lead Source: <?php echo htmlspecialchars($followup_data['lead_source']); ?></span> |
+                <span>Lead For: <?php echo htmlspecialchars($followup_data['lead_for']); ?></span>
+            </div>
+            <div class="lead-priority" style="color: green;">
+                Lead Priority: <?php echo htmlspecialchars($followup_data['lead_priority']); ?>
+            </div>
+        </div>
 
         <div class="row">
             <div>
@@ -328,8 +368,7 @@ if (isset($_GET['id'])) {
 
             <div class="button-container">
                 <button class="btn" type="submit">Update</button>
-                <a href="followup_display.php" class="btn" role="button" style="text-decoration: none;">Cancel</a>
-
+                <a href="today_followup.php" class="btn" role="button">Cancel</a>
             </div>
         </form>
     </div>

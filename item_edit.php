@@ -98,7 +98,7 @@ $connection->close();
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 70vw;
-            max-height: 600px;
+            max-height: 610px;
             margin-top: 50px;
         }
 
@@ -226,12 +226,12 @@ $connection->close();
                 </div>
                 <!-- Repeat for other form fields, populating with $item['field_name'] -->
                 <div class="form-group">
-                    <label for="item_type">Item Type<span>*</span>:</label>
-                    <select id="item_type" name="item_type" required>
-                        <option value="Service">Service</option>
-                        <option value="Inventory">Inventory</option>
-                    </select>
-                </div>
+      <label for="item_type">Item Type<span>*</span>:</label>
+      <select id="item_type" name="item_type" required>
+          <option value="Service" <?php echo ($item['item_type'] == 'Service') ? 'selected' : ''; ?>>Service</option>
+          <option value="Inventory" <?php echo ($item['item_type'] == 'Inventory') ? 'selected' : ''; ?>>Inventory</option>
+      </select>
+  </div>
                 <!-- <div class="form-group">
                     <label for="vendor_item_name">Vendor Item Name:</label>
                     <input type="text" id="vendor_item_name" name="vendor_item_name">

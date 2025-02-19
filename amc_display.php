@@ -32,7 +32,7 @@ include('topbar.php');
         }
 
         .user-table th, .user-table td {
-            padding: 15px; /* Increased padding for wider columns */
+            padding: 12px; /* Increased padding for wider columns */
             border: 1px solid #ddd;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -154,6 +154,10 @@ include('topbar.php');
     .user-table td:last-child {
         text-align: center; /* Align last column to the left (or adjust as needed) */
     }
+    table th:last-child, table td:last-child {
+    width: 100px; /* Adjust the width as needed */
+    text-align: center;
+}
     </style>
 </head>
 <body>

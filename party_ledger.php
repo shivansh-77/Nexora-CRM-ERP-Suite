@@ -73,6 +73,7 @@ html, body {
 
         .user-table td {
             text-align: left;
+            padding: 6px;
         }
 
         .user-table tr:nth-child(even) {

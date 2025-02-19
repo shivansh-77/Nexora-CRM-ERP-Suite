@@ -9,7 +9,7 @@ include('topbar.php');
   <head>
     <meta charset="utf-8">
     <title>AMC Dues</title>
-    
+
     <style>
     html, body {
         overflow: hidden;
@@ -146,6 +146,45 @@ include('topbar.php');
             border: none;
             outline: none;
         }
+        /* Filter Styles */
+        .filter-select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .date-filter {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .glow-red {
+            color: red;
+            font-weight: bold;
+            text-shadow: 0px 0px 0px red;
+        }
+
+        .date-filter {
+            width: 120px; /* Adjust width */
+            padding: 7px; /* Smaller padding */
+            font-size: 14px; /* Reduce font size */
+        }
+
+        .filter-input, .filter-select {
+            width: 100%;
+            padding: 6px;
+            box-sizing: border-box;
+        }
+
+        #downloadExcel {
+            background-color: green;
+        }
+    
     </style>
   </head>
   <body>

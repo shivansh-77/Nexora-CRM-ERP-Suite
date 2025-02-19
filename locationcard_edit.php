@@ -58,18 +58,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="stylesheet" href=""> <!-- Link your external CSS file -->
     <title>Update Location</title>
     <style>
-
         body {
             background: #2c3e50;
             font-family: Arial, sans-serif;
         }
         .container {
+            position: relative;
             max-width: 800px;
             margin: 50px auto;
             padding: 20px;
             border: 1px solid #ddd;
             border-radius: 5px;
             background-color: #f9f9f9;
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: #2c3e50;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .close-button:hover {
+            color: #555;
         }
         .title {
             text-align: center;
@@ -117,12 +130,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .btn-cancel {
             margin-left: 10px;
         }
-
     </style>
-
 </head>
 <body>
 <div class="container">
+    <div class="close-button" onclick="window.location.href='locationcard_display.php';">
+        &times;
+    </div>
     <div class="title">
         <span>Update Location</span>
     </div>

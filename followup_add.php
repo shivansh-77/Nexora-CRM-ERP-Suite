@@ -193,8 +193,15 @@ body {
 .new-followup-card button:hover {
     background-color: #1a252f;
 }
+.close-btn{
+  font-size: 18px;
+  margin-left: 1000px;
+  bottom: 30px;
+
+}
 </style>
 <div class="new-followup-card">
+  <a style="text-decoration:None;"href="contact_display.php" class="close-btn">&times;</a>
     <h2>Add New Followup</h2>
     <form method="POST" action="">
         <input type="hidden" name="contact_id" value="<?= $id; ?>" required>

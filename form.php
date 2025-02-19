@@ -3,6 +3,9 @@ include('connection.php');
 
 // Fetch departments from the database
 $departments = mysqli_query($connection, "SELECT * FROM department");
+
+// Fetch designations from the database
+$designations = mysqli_query($connection, "SELECT * FROM designation");
 ?>
 
 <!DOCTYPE html>
@@ -16,10 +19,25 @@ $departments = mysqli_query($connection, "SELECT * FROM department");
     .required {
       color: red;
     }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+      text-decoration: none;
+      color: #000;
+    }
+    /* .close-btn:hover {
+      color: #f00;
+    } */
+    .container {
+      position: relative;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <a href="display.php" class="close-btn">×</a>
     <form class="form" action="" method="post">
       <div class="title">
         <span>Employee Registration</span>
@@ -43,33 +61,24 @@ $departments = mysqli_query($connection, "SELECT * FROM department");
           <select name="department" class="input" required>
             <option value="">Select</option>
             <?php while ($row = mysqli_fetch_assoc($departments)) { ?>
-              <option value="<?php echo $row['id']; ?>"><?php echo $row['department']; ?></option>
+              <option value="<?php echo htmlspecialchars($row['department']); ?>">
+                <?php echo htmlspecialchars($row['department']); ?>
+              </option>
             <?php } ?>
           </select>
         </div>
-        <?php
-                    // Fetch designations from the database
-            $sql = "SELECT designation FROM designation"; // Change this if your query needs to be different
-            $result = $connection->query($sql);
-            ?>
 
-            <div class="input_field">
-                <label>Designation <span class="required">*</span></label>
-                <select name="designation" class="input" required>
-                    <option value="">Select</option>
-                    <?php
-                    // Check if there are any results
-                    if ($result->num_rows > 0) {
-                        // Loop through the results and create an option for each designation
-                        while ($row = $result->fetch_assoc()) {
-                            echo '<option value="' . htmlspecialchars($row['designation']) . '">' . htmlspecialchars($row['designation']) . '</option>';
-                        }
-                    } else {
-                        echo '<option value="">No designations available</option>';
-                    }
-                    ?>
-                </select>
-            </div>
+        <div class="input_field">
+          <label>Designation <span class="required">*</span></label>
+          <select name="designation" class="input" required>
+            <option value="">Select</option>
+            <?php while ($row = mysqli_fetch_assoc($designations)) { ?>
+              <option value="<?php echo htmlspecialchars($row['designation']); ?>">
+                <?php echo htmlspecialchars($row['designation']); ?>
+              </option>
+            <?php } ?>
+          </select>
+        </div>
 
         <!-- Phone with Address -->
         <div class="input_field">
@@ -112,42 +121,39 @@ $departments = mysqli_query($connection, "SELECT * FROM department");
 </html>
 
 <?php
-
 if (isset($_POST['register'])) {
-    $name = $_POST['name'];
-    $departmentId = $_POST['department']; // Get the department ID
-    $password = $_POST['password'];
-    $cpassword = $_POST['confirm_password'];
-    $gender = $_POST['gender'];
-    $email = $_POST['email'];
-    $phone = $_POST['phone'];
-    $address = $_POST['address'];
-    $designation = $_POST['designation'];
+    $name = mysqli_real_escape_string($connection, $_POST['name']);
+    $department = mysqli_real_escape_string($connection, $_POST['department']);
+    $password = mysqli_real_escape_string($connection, $_POST['password']);
+    $cpassword = mysqli_real_escape_string($connection, $_POST['confirm_password']);
+    $gender = mysqli_real_escape_string($connection, $_POST['gender']);
+    $email = mysqli_real_escape_string($connection, $_POST['email']);
+    $phone = mysqli_real_escape_string($connection, $_POST['phone']);
+    $address = mysqli_real_escape_string($connection, $_POST['address']);
+    $designation = mysqli_real_escape_string($connection, $_POST['designation']);
 
     // Check for empty fields
-    if (!empty($name) && !empty($departmentId) && !empty($password) && !empty($cpassword) && !empty($gender) && !empty($email) && !empty($phone) && !empty($designation)) {
+    if (!empty($name) && !empty($department) && !empty($password) && !empty($cpassword) && !empty($gender) && !empty($email) && !empty($phone) && !empty($designation)) {
 
         // Check if passwords match
         if ($password === $cpassword) {
             // Update deptcount for the selected department
-            $updateDeptCountQuery = "UPDATE department SET deptcount = deptcount + 1 WHERE id = '$departmentId'"; // Use id for the update
+            $updateDeptCountQuery = "UPDATE department SET deptcount = deptcount + 1 WHERE department = '$department'";
             $updateDeptCountResult = mysqli_query($connection, $updateDeptCountQuery);
 
-            // Check if the update query was successful
             if (!$updateDeptCountResult) {
                 echo "Failed to update department count! Error: " . mysqli_error($connection);
             }
 
             // Insert user data into login_db
             $query = "INSERT INTO login_db (name, department, password, conpassword, gender, email, phone, address, designation)
-                      VALUES ('$name', '$departmentId', '$password', '$cpassword', '$gender', '$email', '$phone', '$address', '$designation')";
+                      VALUES ('$name', '$department', '$password', '$cpassword', '$gender', '$email', '$phone', '$address', '$designation')";
 
             $result = mysqli_query($connection, $query);
 
             if ($result) {
-                // Alert message and redirect after successful registration
                 echo "<script>alert('Employee registered successfully!'); window.location.href = 'display.php';</script>";
-                exit(); // Make sure to exit after redirecting
+                exit();
             } else {
                 echo "Data entry failed! Error: " . mysqli_error($connection);
             }

@@ -33,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href=""> <!-- Link your external CSS file -->
     <title>Add Location</title>
     <style>
         body {
@@ -47,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border: 1px solid #ddd;
             border-radius: 5px;
             background-color: #f9f9f9;
+            position: relative; /* For positioning the cross button */
         }
         .title {
             text-align: center;
@@ -94,12 +94,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .btn-cancel {
             margin-left: 10px;
         }
-
+        .cross-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #2c3e50;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <a href="locationcard_display.php" class="cross-btn">✖</a> <!-- Cross button -->
     <div class="title">
         <span>Add New Location</span>
     </div>
@@ -169,7 +178,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="btn-container">
             <button type="submit" class="btn-register">Register</button>
             <button type="button" class="btn-cancel" onclick="window.location.href='locationcard_display.php';">Cancel</button>
-
         </div>
     </form>
 </div>

@@ -30,8 +30,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
     $registration_no = mysqli_real_escape_string($connection, $_POST['registration_no']);
     $company_type = mysqli_real_escape_string($connection, $_POST['company_type']);
 
+    // Fetch existing company details to get the old logo
+    $query = "SELECT company_logo FROM company_card WHERE id = $id";
+    $result = mysqli_query($connection, $query);
+    $company = mysqli_fetch_assoc($result);
+
+    // Use the existing logo if no new file is uploaded
+    $company_logo = $company['company_logo'] ?? '';
+
     // Handle file upload if a new logo is uploaded
-    $company_logo = $company['company_logo'];
     if (!empty($_FILES["company_logo"]["name"])) {
         $target_dir = "uploads/";
         $target_file = $target_dir . basename($_FILES["company_logo"]["name"]);
@@ -93,13 +100,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
             border: 1px solid #ddd;
             border-radius: 5px;
             background-color: #f9f9f9;
+            position: relative; /* For positioning the cross button */
         }
         .title {
-          text-align: center;
-          font-size: 24px;
-          margin-bottom: 20px;
-          font-weight: bold;
-          margin-left: 50px;
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: bold;
         }
         .form-grid {
             display: grid;
@@ -120,9 +127,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
         }
         .btn-container {
             display: flex;
-            justify-content:flex-end;
+            justify-content: center; /* Center the buttons */
             margin-top: 20px;
-
         }
         .btn {
             padding: 10px 15px;
@@ -138,10 +144,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
             background-color: #2c3e50;
             margin-left: 10px;
         }
+        .cross-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #2c3e50;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
 <div class="container">
+    <a href="companycard.php" class="cross-btn">✖</a> <!-- Cross button -->
     <div class="title">Update Company Card</div>
     <form action="update_companycard.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="id" value="<?= $company['id'] ?>">
@@ -205,18 +221,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
                 <input type="text" name="registration_no" id="registration_no" value="<?= $company['registration_no'] ?>">
             </div>
             <div class="input_field" style="grid-column: span 2;">
-      <label for="company_logo">Company Logo</label>
-      <input type="file" name="company_logo" id="company_logo" accept="image/png, image/jpeg">
-      <?php if (!empty($company['company_logo'])): ?>
-          <p style="margin-top: 10px;"><?= basename($company['company_logo']); ?></p>
-      <?php endif; ?>
-  </div>
-
-          <div class="btn-container">
-              <button type="submit" class="btn btn-update">Update</button>
-              <a style="text-decoration:None;" href="companycard.php" class="btn btn-cancel">Cancel</a>
-          </div>
-      </form>
-  </div>
-  </body>
-  </html>
+                <label for="company_logo">Company Logo</label>
+                <input type="file" name="company_logo" id="company_logo" accept="image/png, image/jpeg">
+                <?php if (!empty($company['company_logo'])): ?>
+                    <p style="margin-top: 10px;"><?= basename($company['company_logo']); ?></p>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="btn-container">
+            <button type="submit" class="btn btn-update">Update</button>
+            <a style="text-decoration: none;" href="companycard.php" class="btn btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

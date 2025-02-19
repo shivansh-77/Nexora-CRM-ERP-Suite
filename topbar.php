@@ -77,7 +77,21 @@ if (!empty($fy_codes)) {
 <div class="container">
   <!-- Topbar -->
   <header class="topbar">
-    <img src="Splendid.avif" alt="Logo" class="sidebar-logo" />
+    <?php
+include('connection.php'); // Include database connection
+
+// Fetch company logo from database
+$query = "SELECT company_logo FROM company_card WHERE id = 1"; // Change `1` to the correct company ID
+$result = mysqli_query($connection, $query);
+$company = mysqli_fetch_assoc($result);
+
+// Set logo path (fallback to default if not available)
+$company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'uploads/default_logo.png';
+?>
+
+<!-- Display Dynamic Logo -->
+<img src="<?php echo $company_logo; ?>" alt="Logo" class="sidebar-logo" />
+
      <div class="topbar-left">Welcome to the Splendid Infotech CMS !</div>
 
 
@@ -182,9 +196,11 @@ if (!empty($fy_codes)) {
           <li><a href="gst_display.php">💰 GST</a></li>
           <li><a href="hsn_sac_display.php">💼 HSN/SAC</a></li>
           <li><a href="unit_measurement_display.php">⏳ Units</a></li>
-          <li><a href="item_unit_display.php">⚖️ Unit Values</a></li>
+
             <li><a href="item_category_display.php">🛒 Items</a></li>
               <li><a href="amc_display.php">📆 AMC</a></li>
+          <li><a href="department_display.php">🏢 Departments</a></li>
+          <li><a href="designation_display.php">🎓 Designations</a></li>
           <li><a href="display.php">👤 User</a></li>
         </ul>
       </li>
@@ -256,7 +272,7 @@ if (!empty($fy_codes)) {
     }
 
     .sidebar-logo {
-      width: 19.5%;
+      width: 18.5%;
       margin: 10px auto 10px;
       display: block;
       margin-left: -20px;

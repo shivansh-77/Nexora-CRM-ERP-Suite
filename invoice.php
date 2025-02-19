@@ -22,51 +22,49 @@ if (isset($_GET['id'])) {
 
         // Validate each item
         $validation_errors = [];
-  foreach ($item_ids as $index => $item_id) {
-      // Fetch product_id and product_name for the current item
-      $product_query = "SELECT product_id, product_name FROM invoice_items WHERE id = ?";
-      $stmt_product = $connection->prepare($product_query);
-      $stmt_product->bind_param("i", $item_id);
-      $stmt_product->execute();
-      $product_result = $stmt_product->get_result();
-      $product_row = $product_result->fetch_assoc();
-      $product_id = $product_row['product_id'];
-      $product_name = $product_row['product_name']; // Get product name
-      $stmt_product->close();
+        foreach ($item_ids as $index => $item_id) {
+            // Fetch product_id and product_name for the current item
+            $product_query = "SELECT product_id, product_name FROM invoice_items WHERE id = ?";
+            $stmt_product = $connection->prepare($product_query);
+            $stmt_product->bind_param("i", $item_id);
+            $stmt_product->execute();
+            $product_result = $stmt_product->get_result();
+            $product_row = $product_result->fetch_assoc();
+            $product_id = $product_row['product_id'];
+            $product_name = $product_row['product_name']; // Get product name
+            $stmt_product->close();
 
-      // Fetch tracking flags for the product
-      $tracking_query = "SELECT lot_tracking, expiration_tracking, amc_tracking FROM item WHERE item_code = ?";
-      $stmt_tracking = $connection->prepare($tracking_query);
-      $stmt_tracking->bind_param("s", $product_id);
-      $stmt_tracking->execute();
-      $tracking_result = $stmt_tracking->get_result();
-      $tracking_row = $tracking_result->fetch_assoc();
-      $lot_tracking = $tracking_row['lot_tracking'];
-      $expiration_tracking = $tracking_row['expiration_tracking'];
-      $amc_tracking = $tracking_row['amc_tracking'];
-      $stmt_tracking->close();
+            // Fetch tracking flags for the product
+            $tracking_query = "SELECT lot_tracking, expiration_tracking, amc_tracking FROM item WHERE item_code = ?";
+            $stmt_tracking = $connection->prepare($tracking_query);
+            $stmt_tracking->bind_param("s", $product_id);
+            $stmt_tracking->execute();
+            $tracking_result = $stmt_tracking->get_result();
+            $tracking_row = $tracking_result->fetch_assoc();
+            $lot_tracking = $tracking_row['lot_tracking'];
+            $expiration_tracking = $tracking_row['expiration_tracking'];
+            $amc_tracking = $tracking_row['amc_tracking'];
+            $stmt_tracking->close();
 
-      // Validate tracking flags
-      if ($lot_tracking == 1 && empty($lot_trackingids[$index])) {
-          $validation_errors[] = "Lot Tracking ID is required for product: " . $product_name;
-      }
+            // Validate tracking flags
+            if ($lot_tracking == 1 && empty($lot_trackingids[$index])) {
+                $validation_errors[] = "Lot Tracking ID is required for product: " . $product_name;
+            }
 
-      if ($expiration_tracking == 1 && empty($expiration_dates[$index])) {
-          $validation_errors[] = "Expiration Date is required for product: " . $product_name;
-      }
+            if ($expiration_tracking == 1 && empty($expiration_dates[$index])) {
+                $validation_errors[] = "Expiration Date is required for product: " . $product_name;
+            }
 
-      if ($amc_tracking == 1 && (empty($amc_codes[$index]) || empty($amc_paid_dates[$index]) || empty($amc_due_dates[$index]))) {
-          $validation_errors[] = "AMC details are required for product: " . $product_name;
-      }
-  }
+            if ($amc_tracking == 1 && (empty($amc_codes[$index]) || empty($amc_paid_dates[$index]) || empty($amc_due_dates[$index]))) {
+                $validation_errors[] = "AMC details are required for product: " . $product_name;
+            }
+        }
 
-  // If there are validation errors, show an alert and stop processing
-  if (!empty($validation_errors)) {
-      echo "<script>alert('" . implode("\\n", $validation_errors) . "'); window.history.back();</script>";
-      exit();
-  }
-
-
+        // If there are validation errors, show an alert and stop processing
+        if (!empty($validation_errors)) {
+            echo "<script>alert('" . implode("\\n", $validation_errors) . "'); window.history.back();</script>";
+            exit();
+        }
 
         // Generate the new invoice number before updating item_ledger_history
         $last_invoice_query = "SELECT MAX(CAST(SUBSTRING(invoice_no, 4) AS UNSIGNED)) AS last_invoice_no FROM invoices";
@@ -112,55 +110,68 @@ if (isset($_GET['id'])) {
 
             if ($update_successful) {
                 // Update the invoice status to 'Finalized'
-                $update_status_query = "UPDATE invoices SET status = 'Finalized' WHERE id = ?";
+                $update_status_query = "UPDATE invoices SET status = 'Finalized', invoice_no = ? WHERE id = ?";
                 $stmt_status = $connection->prepare($update_status_query);
-                $stmt_status->bind_param("i", $invoice_id);
+                $stmt_status->bind_param("si", $new_invoice_no, $invoice_id);
                 $stmt_status->execute();
                 $stmt_status->close();
 
-                // Update the new invoice number in the invoices table
-                $update_invoice_no_query = "UPDATE invoices SET invoice_no = ? WHERE id = ?";
-                $stmt_update_invoice_no = $connection->prepare($update_invoice_no_query);
-                $stmt_update_invoice_no->bind_param("si", $new_invoice_no, $invoice_id);
-                $stmt_update_invoice_no->execute();
-                $stmt_update_invoice_no->close();
+                // Update AMC references
+                $fetch_reference_query = "SELECT reference_invoice_no FROM invoice_items WHERE invoice_id = ? AND reference_invoice_no IS NOT NULL";
+                $stmt_fetch_reference = $connection->prepare($fetch_reference_query);
+                $stmt_fetch_reference->bind_param("i", $invoice_id);
+                $stmt_fetch_reference->execute();
+                $result_fetch_reference = $stmt_fetch_reference->get_result();
 
-                // Step 1: Find all invoice_items that have reference_invoice_no for the newly finalized invoice
-              $fetch_reference_query = "SELECT reference_invoice_no FROM invoice_items WHERE invoice_id = ? AND reference_invoice_no IS NOT NULL";
-              $stmt_fetch_reference = $connection->prepare($fetch_reference_query);
-              $stmt_fetch_reference->bind_param("i", $invoice_id);
-              $stmt_fetch_reference->execute();
-              $result_fetch_reference = $stmt_fetch_reference->get_result();
+                while ($row = $result_fetch_reference->fetch_assoc()) {
+                    $reference_invoice_no = $row['reference_invoice_no'];
 
-              while ($row = $result_fetch_reference->fetch_assoc()) {
-                  $reference_invoice_no = $row['reference_invoice_no'];
+                    $fetch_invoice_id_query = "SELECT id FROM invoices WHERE invoice_no = ?";
+                    $stmt_fetch_invoice_id = $connection->prepare($fetch_invoice_id_query);
+                    $stmt_fetch_invoice_id->bind_param("s", $reference_invoice_no);
+                    $stmt_fetch_invoice_id->execute();
+                    $result_invoice_id = $stmt_fetch_invoice_id->get_result();
 
-                  // Step 2: Find the corresponding invoice ID from invoices table
-                  $fetch_invoice_id_query = "SELECT id FROM invoices WHERE invoice_no = ?";
-                  $stmt_fetch_invoice_id = $connection->prepare($fetch_invoice_id_query);
-                  $stmt_fetch_invoice_id->bind_param("s", $reference_invoice_no);
-                  $stmt_fetch_invoice_id->execute();
-                  $result_invoice_id = $stmt_fetch_invoice_id->get_result();
+                    if ($invoice_row = $result_invoice_id->fetch_assoc()) {
+                        $ref_invoice_id = $invoice_row['id'];
 
-                  if ($invoice_row = $result_invoice_id->fetch_assoc()) {
-                      $ref_invoice_id = $invoice_row['id'];
+                        $update_amc_invoice_query = "UPDATE invoice_items SET new_amc_invoice_no = ?, new_amc_invoice_gen_date = NOW() WHERE invoice_id = ?";
+                        $stmt_update_amc_invoice = $connection->prepare($update_amc_invoice_query);
+                        $stmt_update_amc_invoice->bind_param("si", $new_invoice_no, $ref_invoice_id);
+                        $stmt_update_amc_invoice->execute();
+                        $stmt_update_amc_invoice->close();
+                    }
 
-                      // Step 3: Update new_amc_invoice_no and new_amc_generated_date in invoice_items where invoice_id = ref_invoice_id
-                  $update_amc_invoice_query = "UPDATE invoice_items SET new_amc_invoice_no = ?, new_amc_invoice_gen_date = NOW() WHERE invoice_id = ?";
-                  $stmt_update_amc_invoice = $connection->prepare($update_amc_invoice_query);
-                  $stmt_update_amc_invoice->bind_param("si", $new_invoice_no, $ref_invoice_id);
-                  $stmt_update_amc_invoice->execute();
-                  $stmt_update_amc_invoice->close();
+                    $stmt_fetch_invoice_id->close();
+                }
 
-                  }
+                $stmt_fetch_reference->close();
 
-                  $stmt_fetch_invoice_id->close();
-              }
+                // Insert entry into party_ledger table
+                $insert_party_ledger_query = "INSERT INTO party_ledger
+                    (ledger_type, party_no, party_name, party_type, document_type, document_no, amount, ref_doc_no)
+                    SELECT
+                        'Customer Ledger' AS ledger_type,
+                        client_id AS party_no,
+                        client_name AS party_name,
+                        'Customer' AS party_type,
+                        'Sales Invoice' AS document_type,
+                        ? AS document_no,
+                        -net_amount AS amount,
+                        reference_invoice_no AS ref_doc_no
+                    FROM invoices
+                    WHERE id = ?";
 
-              $stmt_fetch_reference->close();
+                $stmt_party_ledger = $connection->prepare($insert_party_ledger_query);
+                $stmt_party_ledger->bind_param("si", $new_invoice_no, $invoice_id);
 
+                if ($stmt_party_ledger->execute()) {
+                    echo "<script>alert('Record Updated Successfully and Party Ledger Entry Created'); window.location.href='invoice_display.php';</script>";
+                } else {
+                    echo "<script>alert('Record Updated Successfully but Failed to Create Party Ledger Entry'); window.location.href='invoice_display.php';</script>";
+                }
 
-                echo "<script>alert('Record Updated Successfully'); window.location.href='invoice_display.php';</script>";
+                $stmt_party_ledger->close();
             } else {
                 $update_message = "Error updating records.";
             }
@@ -202,7 +213,7 @@ if (isset($_GET['id'])) {
 $connection->close();
 ?>
 
-
+<!-- HTML form and other UI elements go here -->
 
 <!DOCTYPE html>
 <html lang="en">

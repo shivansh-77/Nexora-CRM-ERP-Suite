@@ -24,14 +24,13 @@ if (isset($_GET['id'])) {
 }
 
 // Check if the form is submitted
-// Check if the form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update'])) {
-    // Prepare the SQL query for updating the contact
+    // Prepare the SQL query for updating the contact, including the new gstno column
     $sql = "UPDATE contact SET
         lead_source = ?, lead_for = ?, lead_priority = ?, contact_person = ?, company_name = ?,
         mobile_no = ?, whatsapp_no = ?, email_id = ?, address = ?, country = ?, state = ?,
         city = ?, pincode = ?, reference_pname = ?, reference_pname_no = ?, estimate_amnt = ?,
-        followupdate = ?, employee = ?, remarks = ?
+        followupdate = ?, employee = ?, remarks = ?, gstno = ?
         WHERE id = ?";
 
     // Prepare the statement
@@ -44,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update'])) {
 
     // Bind the parameters to the prepared statement
     $stmt->bind_param(
-        'sssssssssssssssssssi', // 17 strings and 1 integer for the ID
+        'sssssssssssssssssss', // 18 strings and 1 integer for the ID
         $_POST['lead-source'],
         $_POST['lead-for'],
         $_POST['lead-priority'],
@@ -64,6 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update'])) {
         $_POST['next-follow-up-date'],
         $_POST['employee'],
         $_POST['remarks'],
+        $_POST['gstno'], // Added GST number field
         $contactId // Add the contact ID here
     );
 
@@ -83,6 +83,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update'])) {
 $connection->close();
 ?>
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -90,141 +91,147 @@ $connection->close();
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Update Contact</title>
   <style>
-    /* Same styles as your contact form */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #2c3e50;
+    }
+    .cancel-btn{
+      text-decoration: none;
+    }
+    .form-container {
+      width: 80%;
+      max-width: 1200px; /* To keep the form size manageable */
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px 30px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 24px;
+      color: #2c3e50;
+    }
+
+    .form-group {
+      display: flex;
+      gap: 10px; /* Space between input fields */
+      margin-bottom: 15px;
+      flex-wrap: wrap; /* Ensure fields wrap properly on smaller screens */
+    }
+
+    .form-group.full {
+      display: flex;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group select {
+      flex: 1; /* Each input takes equal space */
+      padding: 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #007bff;
+    }
+
+    .form-group.full input {
+      width: 100%;
+    }
+
+    .form-actions {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .form-actions button,
+    .cancel-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #2c3e50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .form-actions button:hover,
+    .cancel-btn:hover {
+      background: #2c3e50;
+    }
+
+    /* Ensure all fields align perfectly */
+    .form-group > div {
+      flex: 1;
+      display: flex;
+      flex-direction: column; /* Ensure label and input are stacked */
+    }
+
+    .form-group > div:last-child {
+      margin-right: 0; /* Prevent last column from adding unnecessary margin */
+    }
+
+    .form-group.full {
+      display: flex; /* Keep it flex like other rows */
+      flex-wrap: wrap; /* Allow wrapping for responsiveness */
+      gap: 10px;
+    }
+
+    .form-group.full label {
+      width: 100%; /* Ensure the label takes full width */
+      margin-bottom: 5px;
+    }
+
+    .form-group.full input {
+      flex: 1; /* Ensure the input spans the remaining width */
+      padding: 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    .form-group.full textarea {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+    }
+    .close-btn {
+        position: absolute;
+        top: 3px;
+        right: 100px;
+        font-size: 18px;
+        color: #2c3e50;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
   </style>
-</head>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #2c3e50;
-  }
-  .cancel-btn{
-    text-decoration: none;
-  }
-  .form-container {
-    width: 80%;
-    max-width: 1200px; /* To keep the form size manageable */
-    background: #fff;
-    border-radius: 10px;
-    padding: 20px 30px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .form-container h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 24px;
-    color: #2c3e50;
-  }
-
-  .form-group {
-    display: flex;
-    gap: 10px; /* Space between input fields */
-    margin-bottom: 15px;
-    flex-wrap: wrap; /* Ensure fields wrap properly on smaller screens */
-  }
-
-  .form-group.full {
-    display: flex;
-  }
-
-  .form-group label {
-    display: block;
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 5px;
-  }
-
-  .form-group input,
-  .form-group select {
-    flex: 1; /* Each input takes equal space */
-    padding: 12px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    outline: none;
-  }
-
-  .form-group input:focus,
-  .form-group select:focus {
-    border-color: #007bff;
-  }
-
-  .form-group.full input {
-    width: 100%;
-  }
-
-  .form-actions {
-    text-align: center;
-    margin-top: 20px;
-  }
-
-  .form-actions button,
-  .cancel-btn {
-    padding: 10px 20px;
-    font-size: 16px;
-    background: #2c3e50;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  .form-actions button:hover,
-  .cancel-btn:hover {
-    background: #2c3e50;
-  }
-
-  /* Ensure all fields align perfectly */
-  .form-group > div {
-    flex: 1;
-    display: flex;
-    flex-direction: column; /* Ensure label and input are stacked */
-  }
-
-  .form-group > div:last-child {
-    margin-right: 0; /* Prevent last column from adding unnecessary margin */
-  }
-
-  .form-group.full {
-    display: flex; /* Keep it flex like other rows */
-    flex-wrap: wrap; /* Allow wrapping for responsiveness */
-    gap: 10px;
-  }
-
-  .form-group.full label {
-    width: 100%; /* Ensure the label takes full width */
-    margin-bottom: 5px;
-  }
-
-  .form-group.full input {
-    flex: 1; /* Ensure the input spans the remaining width */
-    padding: 12px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    outline: none;
-  }
-
-  .form-group.full textarea {
-    width: 100%;
-    padding: 12px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    outline: none;
-  }
-
-</style>
 </head>
 <body>
 <div class="form-container">
+  <a style="text-decoration:None;"href="contact_display.php" class="close-btn">&times;</a>
   <h2>Add Contact</h2>
   <form method="POST" action="">
       <!-- Row 1 -->
@@ -400,51 +407,61 @@ $connection->close();
       </div>
 
       <!-- Row 8 -->
-      <div class="form-group">
-        <?php
-        // Fetch employee names from login_db
-        $conn = new mysqli('localhost', 'root', '', 'lead_management');
+  <div class="form-group">
+      <?php
+      // Fetch employee names from login_db
+      $conn = new mysqli('localhost', 'root', '', 'lead_management');
 
-        // Check for connection error
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
+      // Check for connection error
+      if ($conn->connect_error) {
+          die("Connection failed: " . $conn->connect_error);
+      }
 
-        // Fetch names from login_db
-        $employeeNames = [];
-        $query = "SELECT name FROM login_db";
-        $result = $conn->query($query);
+      // Fetch names from login_db
+      $employeeNames = [];
+      $query = "SELECT name FROM login_db";
+      $result = $conn->query($query);
 
-        if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $employeeNames[] = $row['name'];
-            }
-        }
-        $conn->close();
-        ?>
-        <div>
-            <label for="employee-name">Employee</label>
-            <select id="employee-name" name="employee" class="input-field">
-                <option value="">Select Employee</option>
-                <?php foreach ($employeeNames as $name): ?>
-                    <option value="<?php echo htmlspecialchars($name); ?>" <?php echo ($name == $contact['employee']) ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($name); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div>
-            <label for="remarks">Remarks</label>
-            <textarea id="remarks" name="remarks" placeholder="Enter Remarks" rows="2.5" class="input-field"><?php echo htmlspecialchars($contact['remarks']); ?></textarea>
-        </div>
+      if ($result && $result->num_rows > 0) {
+          while ($row = $result->fetch_assoc()) {
+              $employeeNames[] = $row['name'];
+          }
+      }
+      $conn->close();
+      ?>
+      <div>
+          <label for="employee-name">Employee</label>
+          <select id="employee-name" name="employee" class="input-field">
+              <option value="">Select Employee</option>
+              <?php foreach ($employeeNames as $name): ?>
+                  <option value="<?php echo htmlspecialchars($name); ?>" <?php echo ($name == $contact['employee']) ? 'selected' : ''; ?>>
+                      <?php echo htmlspecialchars($name); ?>
+                  </option>
+              <?php endforeach; ?>
+          </select>
       </div>
 
-      <!-- Row 9 (Actions) -->
-      <div class="form-actions">
-          <button type="submit" name="update" class="button">Update</button>
-          <a href="contact_display.php" class="cancel-btn">Cancel</a>
+      <div>
+          <label for="gst-no">GST No.</label>
+          <input type="text" id="gst-no" name="gst-no" placeholder="Enter GST Number" class="input-field" value="<?php echo htmlspecialchars($contact['gstno']); ?>">
       </div>
+  </div>
+
+  <!-- Row 9 (Remarks taking full width) -->
+  <div class="form-group">
+  <div style="grid-column: span 2;">
+    <label for="remarks">Remarks</label>
+    <textarea id="remarks" name="remarks" placeholder="Enter Remarks" rows="2" class="input-field"><?php echo htmlspecialchars($contact['remarks']); ?></textarea>
+</div>
+  </div>
+
+
+  <!-- Row 10 (Actions) -->
+  <div class="form-actions">
+      <button type="submit" name="update" class="button">Update</button>
+      <a href="contact_display.php" class="cancel-btn">Cancel</a>
+  </div>
+
   </form>
 
 </div>

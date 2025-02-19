@@ -246,10 +246,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       outline: none;
     }
 
+    .close-btn {
+        position: absolute;
+        top: 3px;
+        right: 100px;
+        font-size: 18px;
+        color: #2c3e50;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
   </style>
 </head>
 <body>
   <div class="form-container">
+    <a style="text-decoration:None;"href="contact_display.php" class="close-btn">&times;</a>
+
     <h2>Add Contact</h2>
     <form method="POST" action="">
       <!-- Row 1 -->

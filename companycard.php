@@ -50,6 +50,7 @@ include('topbar.php');
 
         .user-table td {
             text-align: left;
+            padding: 7px;
         }
 
         .user-table tr:nth-child(even) {
@@ -145,6 +146,7 @@ include('topbar.php');
             outline: none;
         }
     </style>
+
   </head>
   <body>
     <div class="leadforhead">

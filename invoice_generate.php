@@ -49,10 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $shipper_row = $shipper_result->fetch_assoc();
     $shipper_id = $shipper_row['id'];
 
-    // Get the next invoice number with 'INV' prefix
-    $next_invoice_no_result = $conn->query("SELECT CONCAT('INV', LPAD(COALESCE(MAX(id), 0) + 1, 4, '0')) AS next_invoice_no FROM invoices");
-    $next_invoice_no_row = $next_invoice_no_result->fetch_assoc();
-    $invoice_no = $next_invoice_no_row['next_invoice_no'];
+    // Generate the new invoice number before updating item_ledger_history
+    $last_invoice_query = "SELECT MAX(CAST(SUBSTRING(invoice_no, 4) AS UNSIGNED)) AS last_invoice_no FROM invoices";
+    $last_invoice_result = $conn->query($last_invoice_query);
+    $last_invoice = $last_invoice_result->fetch_assoc();
+    $invoice_no = 'INV' . str_pad($last_invoice['last_invoice_no'] + 1, 4, '0', STR_PAD_LEFT);
 
     // Insert into invoices table
     $insert_invoice = "INSERT INTO invoices (invoice_no, client_name, shipper_location_code, client_id, shipper_id, gross_amount, discount,

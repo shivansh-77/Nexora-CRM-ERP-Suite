@@ -28,175 +28,159 @@ if (isset($_GET['fy_code'])) {
     <meta charset="utf-8">
     <title>User FY Permission</title>
     <style>
-    /* Table Styles */
-    /* Center the table horizontally */
-    .user-table-wrapper {
-        display: flex;
-        justify-content: center; /* Center horizontally */
-        align-items: center; /* Center vertically if needed */
-        margin-top: 145px;
-        overflow-x: auto; /* Allow horizontal scrolling if needed */
-
+    html, body {
+        overflow: hidden;
+        height: 100%;
+        margin: 0;
     }
 
-    /* Adjust table width and column width */
-    .user-table {
-        width: 78%; /* Adjust width as needed */
-        border-collapse: collapse;
-        background-color: white;
-        table-layout: fixed; /* Fixed layout for equal column widths */
-        margin-left: 240px;
-    }
+        /* Table Styles */
+        .user-table-wrapper {
+            width: calc(100% - 260px); /* Adjust width to account for sidebar */
+            margin-left: 260px; /* Align with sidebar */
+            margin-top: 142px; /* Adjust for topbar */
+            overflow: auto; /* Enable scrolling for the table */
+            max-height: 475px; /* Set max height for vertical scrolling */
+        }
 
-    .user-table th, .user-table td {
-        padding: 20px; /* Padding for better spacing */
-        border: 1px solid #ddd;
-        text-align: left;
-        word-wrap: break-word; /* Wrap text if too long */
-    }
+        .user-table {
+            width: 100%; /* Full width */
+            border-collapse: collapse;
+            background-color: white;
+            table-layout: auto; /* Allow columns to adjust based on content */
+        }
 
-    .user-table th {
-        background-color: #2c3e50; /* Header color */
-        color: white;
-        font-size: 18px; /* Adjust font size for header */
-    }
+        .user-table th, .user-table td {
+            padding: 12px; /* Increased padding for wider columns */
+            border: 1px solid #ddd;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
+        .user-table th {
+            background-color: #2c3e50; /* Header color */
+            color: white;
+            text-align: left;
+            position: sticky; /* Make headers sticky */
+            top: 0; /* Stick to the top */
+            z-index: 1; /* Ensure headers are above the body */
+        }
+
+        .user-table td {
+            text-align: left;
+        }
+
+        .user-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .user-table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .user-table td:last-child {
+            text-align: right; /* Align buttons to the right */
+            width: auto; /* Further reduce the width of the action column */
+            padding: 5px 8px; /* Reduce padding further for action column */
+        }
+
+        .btn-primary, .btn-secondary, .btn-danger, .btn-warning {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn-primary { background-color: #a5f3fc; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-warning { background-color: #3498db; color: black; }
+
+        .leadforhead {
+            position: fixed;
+            width: 75%;
+            height: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2c3e50;
+            color: white;
+            padding: 0 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            overflow: visible; /* Ensure child elements are visible */
+            margin-left: 260px;
+            margin-top: 80px;
+        }
+
+        .lead-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-search {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-right: 40px;
+        }
+
+        .search-input {
+            border: none;
+            padding: 8px;
+            outline: none;
+            font-size: 14px;
+            width: 273px;
+        }
+
+        .search-input:focus {
+            border: none;
+            outline: none;
+        }
+        .user-table th,
     .user-table td {
-        font-size: 18px; /* Adjust font size for table data */
+        text-align: center; /* Center align content in all columns */
     }
 
-    .user-table tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-
-    .user-table tr:hover {
-        background-color: #f1f1f1;
-    }
-
-    /* Scrollbar styling */
-    .user-table {
-        overflow: auto;
-        white-space: nowrap;
-    }
-
-    .user-table th:last-child {
-         /* Center align buttons */
-        width: 12%; /* Adjust action column width */
-    }
-
-    /* Adjust action button column width */
+    /* Exclude the last column from center alignment */
+    .user-table th:last-child,
     .user-table td:last-child {
-         /* Center align buttons */
-        width: 12%; /* Adjust action column width */
+        text-align: center; /* Align last column to the left (or adjust as needed) */
     }
-
-    .btn-primary, .btn-secondary, .btn-danger, .btn-warning {
-      padding: 5px 10px;
-      border: none;
-      border-radius: 4px;
-      color: white;
-      cursor: pointer;
-    }
-
-    .btn-primary {
-      background-color: #a5f3fc;
-    }
-
-    .btn-secondary {
-      background-color: #6c757d;
-    }
-
-    .btn-danger {
-      background-color: #dc3545;
-    }
-
-    .btn-warning {
-      background-color: #3498db;
-      color: black;
-    }
-
-    .leadforhead {
-      position: fixed;
-      width: 75%;
-      height: 50px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #2c3e50;
-      color: white;
-      padding: 0 20px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-      margin-left: 260px;
-      margin-top: 80px;
-    }
-
-    .lead-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .btn-primary {
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .btn-search {
-      background-color: #3498db;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .search-bar {
-      display: flex;
-      align-items: center;
-      background-color: white;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      overflow: hidden;
-      margin-right: 40px;
-    }
-
-    .search-input {
-      border: none;
-      padding: 8px;
-      outline: none;
-      font-size: 14px;
-      width: 273px;
-    }
-
-    .search-input:focus {
-      border: none;
-      outline: none;
-    }
-    .user-table th,
-.user-table td {
-    text-align: center; /* Center align content in all columns */
+    table th:last-child, table td:last-child {
+    width: 100px; /* Adjust the width as needed */
+    text-align: center;
 }
-
-/* Exclude the last column from center alignment */
-.user-table th:last-child,
-.user-table td:last-child {
-    text-align: center; /* Align last column to the left (or adjust as needed) */
-    width: 15%;
+table th:first-child, table td:first-child {
+width: 100px; /* Adjust the width as needed */
+text-align: center;
 }
-
-.permission-checkbox {
-        width: 25px; /* Adjust width */
-        height: 25px; /* Adjust height */
-        cursor: pointer; /* Add a pointer cursor for better UX */
-    }
-
     </style>
   </head>
   <body>
