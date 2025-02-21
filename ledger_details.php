@@ -2,37 +2,39 @@
 // Include your database connection file
 include 'connection.php';
 
-// Get the contact_id from the URL
-$contact_id = $_GET['id'] ?? '';
+// Get the document_no and party_no from the URL
+$document_no = $_GET['document_no'] ?? '';
+$party_no = $_GET['party_no'] ?? '';
 
-// Fetch contact details from the contact table based on contact_id
+// Fetch ledger details from the party_ledger table based on document_no
+$ledger_details = [];
+if (!empty($document_no)) {
+    $stmt = $connection->prepare("SELECT * FROM party_ledger WHERE document_no = ?");
+    $stmt->bind_param("s", $document_no);
+    $stmt->execute();
+    $ledger_result = $stmt->get_result();
+    $ledger_details = $ledger_result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+}
+
+// Fetch contact details from the contact table based on party_no (which is client_id)
 $contact_details = [];
-if (!empty($contact_id)) {
+if (!empty($party_no)) {
     $stmt = $connection->prepare("SELECT contact_person, company_name, mobile_no, whatsapp_no, email_id, followupdate FROM contact WHERE id = ?");
-    $stmt->bind_param("i", $contact_id);
+    $stmt->bind_param("i", $party_no);
     $stmt->execute();
     $contact_result = $stmt->get_result();
     $contact_details = $contact_result->fetch_assoc();
     $stmt->close();
 }
 
-// Fetch payment history from the party_ledger table based on party_no (which is contact_id)
-$payment_history = [];
-if (!empty($contact_id)) {
-    $stmt = $connection->prepare("SELECT * FROM party_ledger WHERE party_no = ?");
-    $stmt->bind_param("i", $contact_id);
-    $stmt->execute();
-    $payment_history = $stmt->get_result();
-    $stmt->close();
-}
-
 // Calculate Amount Payable, Amount Paid, and Amount Yet to Be Paid
 $amount_payable = 0;
 $amount_paid = 0;
-if (!empty($contact_id)) {
+if (!empty($party_no)) {
     // Fetch all amounts for the given party_no
-    $stmt = $connection->prepare("SELECT amount FROM party_ledger WHERE party_no = ?");
-    $stmt->bind_param("i", $contact_id);
+    $stmt = $connection->prepare("SELECT amount FROM party_ledger WHERE document_no = ?");
+    $stmt->bind_param("i", $party_no);
     $stmt->execute();
     $amount_result = $stmt->get_result();
     $stmt->close();
@@ -57,7 +59,7 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment History</title>
+    <title>Ledger Details</title>
     <link rel="stylesheet" href="style.css"> <!-- Link to your CSS file -->
     <style>
     body {
@@ -213,7 +215,7 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
 <body>
     <div class="wrapper">
         <div class="container">
-          <h1 >Payment History</h1>
+          <h1>Ledger Details</h1>
             <a href="contact_display.php" style="position: absolute; top: 10px; right: 10px; text-decoration: none; font-size: 20px; color: #2c3e50; font-weight: bold; border-radius: 50%; width: 30px; height: 20px; display: flex; justify-content: center; align-items: center; background-color: #fff;">&times;</a>
 
             <!-- Contact Details Card -->
@@ -230,26 +232,25 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
             </div>
 
             <!-- Amount Summary Section -->
-  <div class="card">
-      <h2>Payment Summary</h2>
-      <div class="amount-summary">
-          <div>
-              <strong>Amount Payable</strong>
-              <p style="color: red; font-weight: bold;">₹<?= number_format($amount_payable, 2) ?></p>
-          </div>
-          <div>
-              <strong>Amount Paid</strong>
-              <p style="color: green; font-weight: bold;">₹<?= number_format($amount_paid, 2) ?></p>
-          </div>
-          <div>
-              <strong>Amount to Be Paid</strong>
-              <p style="color: red; font-weight: bold;">₹<?= number_format($amount_yet_to_be_paid, 2) ?></p>
-          </div>
-      </div>
-  </div>
+            <div class="card">
+                <h2>Payment Summary</h2>
+                <div class="amount-summary">
+                    <div>
+                        <strong>Amount Payable</strong>
+                        <p style="color: red; font-weight: bold;">₹<?= number_format($amount_payable, 2) ?></p>
+                    </div>
+                    <div>
+                        <strong>Amount Paid</strong>
+                        <p style="color: green; font-weight: bold;">₹<?= number_format($amount_paid, 2) ?></p>
+                    </div>
+                    <div>
+                        <strong>Amount to Be Paid</strong>
+                        <p style="color: red; font-weight: bold;">₹<?= number_format($amount_yet_to_be_paid, 2) ?></p>
+                    </div>
+                </div>
+            </div>
 
-
-            <!-- Payment History Table -->
+            <!-- Ledger Details Table -->
             <div class="table-container">
                 <table>
                     <thead>
@@ -266,8 +267,8 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
                         </tr>
                     </thead>
                     <tbody>
-      <?php if ($payment_history && $payment_history->num_rows > 0): ?>
-          <?php while ($row = $payment_history->fetch_assoc()): ?>
+      <?php if (!empty($ledger_details)): ?>
+          <?php foreach ($ledger_details as $row): ?>
               <?php
                   $amount = $row['amount'];
                   $amount_style = ($amount > 0) ? "style='color: green; font-weight: bold;'" : "style='color: red; font-weight: bold;'";
@@ -283,14 +284,13 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
                   <td><?= htmlspecialchars($row['ref_doc_no']) ?></td>
                   <td><?= htmlspecialchars($row['date']) ?></td>
               </tr>
-          <?php endwhile; ?>
+          <?php endforeach; ?>
       <?php else: ?>
           <tr>
-              <td colspan="9">No payment history available for contact ID: <?= htmlspecialchars($contact_id) ?></td>
+              <td colspan="9">No ledger details available for document no: <?= htmlspecialchars($document_no) ?></td>
           </tr>
       <?php endif; ?>
-  </tbody>
-
+                    </tbody>
                 </table>
             </div>
         </div>

@@ -49,6 +49,8 @@
 
 
 <?php
+error_reporting(E_ALL); // Report all PHP errors
+ini_set('display_errors', 1); // Display errors to the browser
 session_start(); // Start the session
 include("connection.php"); // Include the database connection file
 
@@ -87,6 +89,26 @@ if (isset($_POST['login'])) {
 
         // Store allowed fy_codes in session
         $_SESSION['allowed_fy_codes'] = $allowed_fy_codes;
+
+        // Step 3: Retrieve Allowed Submenus for the User
+        $submenu_stmt = $connection->prepare("SELECT menu_name, submenu_name FROM user_menu_permission WHERE user_id = ?");
+        $submenu_stmt->bind_param("i", $user_id);
+        $submenu_stmt->execute();
+        $submenu_result = $submenu_stmt->get_result();
+
+        // Fetch all allowed submenus into an associative array
+        $allowed_submenus = [];
+        while ($submenu_row = $submenu_result->fetch_assoc()) {
+            $allowed_submenus[$submenu_row['menu_name']][] = $submenu_row['submenu_name'];
+        }
+
+        // Store allowed submenus in session
+        $_SESSION['allowed_submenus'] = $allowed_submenus;
+
+        // Debug: Output session data
+        echo '<pre>';
+        print_r($_SESSION);
+        echo '</pre>';
 
         // Redirect to index.php
         header('Location: index.php');

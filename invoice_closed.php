@@ -8,6 +8,7 @@ include('topbar.php');
   <head>
     <meta charset="utf-8">
     <title>Invoice Display</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
     html, body {
         overflow: hidden;
@@ -144,6 +145,9 @@ include('topbar.php');
             border: none;
             outline: none;
         }
+        #downloadExcel{
+          background-color: green;
+        }
     </style>
   </head>
   <body>
@@ -154,9 +158,9 @@ include('topbar.php');
           <input type="text" id="searchInput" class="search-input" placeholder="Search...">
           <button class="btn-search" id="searchButton">🔍</button>
         </div>
-        <!-- <a href="invoice_generate.php">
-          <button class="btn-primary" id="openModal" data-mode="add">➕</button>
-        </a> -->
+        <button id="downloadExcel" class="btn-primary">
+          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+        </button>
       </div>
     </div>
     <div class="user-table-wrapper">
@@ -192,7 +196,6 @@ include('topbar.php');
                                <td>{$row['discount']}</td>
                                <td>{$row['net_amount']}</td>
                                <td>
-
                                    <button class='btn-secondary' onclick=\"window.location.href='invoice1.php?id={$row['id']}'\">🖨️</button>
                                </td>
                            </tr>";
@@ -227,6 +230,21 @@ include('topbar.php');
                       row.style.display = 'none';
                   }
               });
+          });
+
+          // Download Excel
+          const downloadExcelButton = document.getElementById('downloadExcel');
+          downloadExcelButton.addEventListener('click', function() {
+              const table = document.querySelector('.user-table');
+              const clonedTable = table.cloneNode(true);
+              const actionColumn = clonedTable.querySelectorAll('th:last-child, td:last-child');
+
+              actionColumn.forEach(col => col.remove());
+
+              const ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'Closed Invoices');
+              XLSX.writeFile(wb, 'closed_invoices.xlsx');
           });
       });
     </script>

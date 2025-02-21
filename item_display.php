@@ -8,6 +8,7 @@ include('topbar.php');
   <head>
     <meta charset="utf-8">
     <title>Item Sales</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
     html, body {
         overflow: hidden;
@@ -144,6 +145,9 @@ include('topbar.php');
             border: none;
             outline: none;
         }
+        #downloadExcel{
+          background-color: green;
+        }
     </style>
   </head>
   <body>
@@ -157,13 +161,15 @@ include('topbar.php');
         <a href="item_add.php">
           <button class="btn-primary" id="openModal" data-mode="add">➕</button>
         </a>
+        <button id="downloadExcel" class="btn-primary">
+          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+        </button>
       </div>
     </div>
     <div class="user-table-wrapper">
       <table class="user-table">
     <thead>
         <tr>
-
             <th>Item Code</th>
             <th>Item Name</th>
             <th>Category</th>
@@ -231,37 +237,48 @@ if (mysqli_num_rows($result) > 0) {
     </tbody>
 </table>
 
+    </div>
 
-</div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          const searchInput = document.getElementById('searchInput');
+          const tableRows = document.querySelectorAll('.user-table tbody tr');
 
+          searchInput.addEventListener('keyup', function() {
+              const searchTerm = searchInput.value.toLowerCase();
 
+              tableRows.forEach(function(row) {
+                  const cells = row.querySelectorAll('td');
+                  let rowText = '';
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-      const searchInput = document.getElementById('searchInput');
-      const tableRows = document.querySelectorAll('.user-table tbody tr');
+                  cells.forEach(function(cell) {
+                      rowText += cell.textContent.toLowerCase() + ' '; // Concatenate all cell texts
+                  });
 
-      searchInput.addEventListener('keyup', function() {
-          const searchTerm = searchInput.value.toLowerCase();
-
-          tableRows.forEach(function(row) {
-              const cells = row.querySelectorAll('td');
-              let rowText = '';
-
-              cells.forEach(function(cell) {
-                  rowText += cell.textContent.toLowerCase() + ' '; // Concatenate all cell texts
+                  // Toggle row visibility based on search term
+                  if (rowText.includes(searchTerm)) {
+                      row.style.display = ''; // Show row
+                  } else {
+                      row.style.display = 'none'; // Hide row
+                  }
               });
+          });
 
-              // Toggle row visibility based on search term
-              if (rowText.includes(searchTerm)) {
-                  row.style.display = ''; // Show row
-              } else {
-                  row.style.display = 'none'; // Hide row
-              }
+          // Download Excel
+          const downloadExcelButton = document.getElementById('downloadExcel');
+          downloadExcelButton.addEventListener('click', function() {
+              const table = document.querySelector('.user-table');
+              const clonedTable = table.cloneNode(true);
+              const actionColumn = clonedTable.querySelectorAll('th:last-child, td:last-child');
+
+              actionColumn.forEach(col => col.remove());
+
+              const ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'Item Sales');
+              XLSX.writeFile(wb, 'item_sales.xlsx');
           });
       });
-  });
-
-
-</script>
+  </script>
+  </body>
 </html>

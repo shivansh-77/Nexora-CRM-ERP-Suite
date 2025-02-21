@@ -286,42 +286,42 @@ html, body {
                 <th>Actions</th>
             </tr>
         </thead>
-            <tbody>
-              <?php
-              include('connection.php');
-              $query = "SELECT * FROM party_ledger";
-              $result = mysqli_query($connection, $query);
+        <tbody>
+      <?php
+      include('connection.php');
+      $query = "SELECT * FROM party_ledger";
+      $result = mysqli_query($connection, $query);
 
-              if (mysqli_num_rows($result) > 0) {
-                  while ($row = mysqli_fetch_assoc($result)) {
-                      $amount = $row['amount'];
-                      $amount_style = ($amount > 0) ? "style='font-weight: bold; color: green;'" : "style='font-weight: bold; color: red;'";
+      if (mysqli_num_rows($result) > 0) {
+          while ($row = mysqli_fetch_assoc($result)) {
+              $amount = $row['amount'];
+              $amount_style = ($amount > 0) ? "style='font-weight: bold; color: green;'" : "style='font-weight: bold; color: red;'";
 
-                      // Convert the date format to display properly
-                      $transactionDate = date("d-m-Y H:i:s", strtotime($row['date'])); // Format: DD-MM-YYYY HH:MM:SS
+              // Convert the date format to display properly
+              $transactionDate = date("d-m-Y H:i:s", strtotime($row['date'])); // Format: DD-MM-YYYY HH:MM:SS
 
-                      echo "<tr>
-                              <td>{$row['id']}</td>
-                              <td>{$row['ledger_type']}</td>
-                              <td>{$row['party_type']}</td>
-                              <td>{$row['party_no']}</td>
-                              <td>{$row['party_name']}</td>
-                              <td>{$row['document_type']}</td>
-                              <td>{$row['document_no']}</td>
-                              <td $amount_style>{$amount}</td>
-                              <td>{$row['ref_doc_no']}</td>
-                              <td>{$transactionDate}</td>
-                              <td>
-                                  <button class='btn-secondary' onclick=\"window.location.href='ledger_details.php?id={$row['id']}'\">📜 View</button>
-                              </td>
-                          </tr>";
-                  }
-              } else {
-                  echo "<tr><td colspan='11'>No records found</td></tr>";
-              }
-              ?>
+              echo "<tr>
+                      <td>{$row['id']}</td>
+                      <td>{$row['ledger_type']}</td>
+                      <td>{$row['party_type']}</td>
+                      <td>{$row['party_no']}</td>
+                      <td>{$row['party_name']}</td>
+                      <td>{$row['document_type']}</td>
+                      <td>{$row['document_no']}</td>
+                      <td $amount_style>{$amount}</td>
+                      <td>{$row['ref_doc_no']}</td>
+                      <td>{$transactionDate}</td>
+                      <td>
+                          <button class='btn-secondary' onclick=\"window.location.href='ledger_details.php?document_no=" . urlencode($row['document_no']) . "&party_no=" . urlencode($row['party_no']) . "'\">📜 View</button>
+                      </td>
+                  </tr>";
+          }
+      } else {
+          echo "<tr><td colspan='11'>No records found</td></tr>";
+      }
+      ?>
+  </tbody>
 
-            </tbody>
         </table>
     </div>
 

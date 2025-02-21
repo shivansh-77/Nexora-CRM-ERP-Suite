@@ -7,6 +7,7 @@ include('topbar.php');
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     <title>Contacts</title>
     <style>
     html, body {
@@ -144,6 +145,9 @@ include('topbar.php');
             border: none;
             outline: none;
         }
+        #downloadExcel{
+          background-color: green;
+        }
     </style>
   </head>
   <body>
@@ -157,6 +161,9 @@ include('topbar.php');
         <a href="contact.php">
           <button class="btn-primary" id="openModal" data-mode="add">➕</button>
         </a>
+        <button id="downloadExcel" class="btn-primary">
+          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+        </button>
       </div>
     </div>
     <div class="user-table-wrapper">
@@ -215,13 +222,10 @@ include('topbar.php');
                           <td>{$row['remarks']}</td>
                           <td>
                             <button class='btn-warning edit-btn followup-btn' onclick=\"window.location.href='followup_filter.php?id={$row['id']}'\">ℹ️</button>
-
-                              <button class='btn-warning edit-btn' onclick=\"window.location.href='update_contact.php?id={$row['id']}'\">✏️</button>
-
-                              <button class='btn-warning edit-btn followup-btn-add' onclick=\"window.location.href='followup_add.php?id={$row['id']}'\">📩</button>
-
-                              <button class='btn-warning edit-btn followup-btn payment' onclick=\"window.location.href='payment_history.php?id={$row['id']}'\">💰</button>
-                                <button class='btn-danger' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_contact.php?id={$row['id']}'; }\">🗑️</button>
+                            <button class='btn-warning edit-btn' onclick=\"window.location.href='update_contact.php?id={$row['id']}'\">✏️</button>
+                            <button class='btn-warning edit-btn followup-btn-add' onclick=\"window.location.href='followup_add.php?id={$row['id']}'\">📩</button>
+                            <button class='btn-warning edit-btn followup-btn payment' onclick=\"window.location.href='payment_history.php?id={$row['id']}'\">💰</button>
+                            <button class='btn-danger' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_contact.php?id={$row['id']}'; }\">🗑️</button>
                           </td>
                         </tr>";
               }
@@ -256,6 +260,36 @@ include('topbar.php');
                       row.style.display = 'none'; // Hide row
                   }
               });
+          });
+
+          const downloadExcel = document.getElementById('downloadExcel');
+          downloadExcel.addEventListener('click', function() {
+              const table = document.querySelector('.user-table');
+              const rows = table.querySelectorAll('tr');
+              const data = [];
+
+              // Extract headers
+              const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.textContent);
+              headers.pop(); // Remove the "Actions" header
+              data.push(headers);
+
+              // Extract rows
+              rows.forEach(row => {
+                  const cells = row.querySelectorAll('td');
+                  if (cells.length > 0 && row.style.display !== 'none') {
+                      const rowData = Array.from(cells).map(cell => cell.textContent);
+                      rowData.pop(); // Remove the "Actions" cell
+                      data.push(rowData);
+                  }
+              });
+
+              // Create a worksheet and workbook
+              const ws = XLSX.utils.aoa_to_sheet(data);
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'Contacts');
+
+              // Generate and download the Excel file
+              XLSX.writeFile(wb, 'contacts.xlsx');
           });
       });
     </script>

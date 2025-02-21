@@ -2,14 +2,13 @@
 session_start();
 include('connection.php');
 include('topbar.php');
-
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
     <title>AMC Dues</title>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
     html, body {
         overflow: hidden;
@@ -184,7 +183,7 @@ include('topbar.php');
         #downloadExcel {
             background-color: green;
         }
-    
+
     </style>
   </head>
   <body>
@@ -210,6 +209,9 @@ include('topbar.php');
         <a href="invoice_generate.php">
           <button class="btn-primary" id="openModal" data-mode="add">➕</button>
         </a>
+        <button id="downloadExcel" class="btn-primary">
+          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+        </button>
       </div>
     </div>
     <div class="user-table-wrapper">
@@ -283,7 +285,6 @@ include('topbar.php');
                           <td>{$row['reference_invoice_no']}</td>
                           <td>
                               <button class='btn-secondary' onclick=\"window.location.href='invoice1.php?id={$row['invoice_id']}'\">🖨️</button>
-
                               <button class='btn-secondary'
                                   onclick=\"if(confirm('Are you sure you want to renew this AMC record ?')) {
                                     window.location.href='amc_due_renew.php?id={$row['invoice_items_id']}';
@@ -297,7 +298,6 @@ include('topbar.php');
           ?>
       </tbody>
   </table>
-
 
     </div>
 
@@ -349,6 +349,21 @@ include('topbar.php');
           sortFilter.addEventListener('change', filterTable);
           startDateFilter.addEventListener('change', filterTable);
           endDateFilter.addEventListener('change', filterTable);
+
+          // Download Excel
+          const downloadExcelButton = document.getElementById('downloadExcel');
+          downloadExcelButton.addEventListener('click', function () {
+              const table = document.querySelector('.user-table');
+              const clonedTable = table.cloneNode(true);
+              const actionColumn = clonedTable.querySelectorAll('th:last-child, td:last-child');
+
+              actionColumn.forEach(col => col.remove());
+
+              const ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'AMC Dues');
+              XLSX.writeFile(wb, 'amc_dues.xlsx');
+          });
       });
   </script>
   </body>

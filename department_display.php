@@ -154,7 +154,7 @@ include('topbar.php');
               <tr>
                   <th>ID</th>
                   <th>Department</th>
-                  <th>Department Count</th>
+
                   <th>Actions</th>
               </tr>
           </thead>
@@ -169,7 +169,7 @@ include('topbar.php');
                       echo "<tr>
                               <td>" . ($row['id'] ?? 'N/A') . "</td>
                                 <td>" . ($row['department'] ?? 'N/A') . "</td>
-                              <td>" . ($row['deptcount'] ?? 'N/A') . "</td>
+                              
                               <td>
                                   <button class='btn-danger'
                                       onclick=\"if(confirm('Are you sure you want to delete this record?')) {

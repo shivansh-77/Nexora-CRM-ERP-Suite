@@ -231,7 +231,7 @@ $connection->close();
         }
         .invoice-container {
             /* max-width: 800px; */
-            width: 105%;
+            width: 115%;
             margin: 20px auto;
             background: #fff;
             padding: 20px;
@@ -330,6 +330,7 @@ $connection->close();
             margin-bottom: 20px;
             border-radius: 4px;
         }
+      
     </style>
 </head>
 <body>

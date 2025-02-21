@@ -68,14 +68,14 @@ while ($row = mysqli_fetch_assoc($result)) {
     $due_date_row = mysqli_fetch_assoc($result_due_date);
     $amc_due_date = $due_date_row['amc_due_date'];
 
-    // Step 5: Insert the new invoice items including AMC fields
     $insertQuery = "INSERT INTO invoice_items (invoice_id, product_name, product_id, unit, value, quantity, rate, gst, igst, cgst, sgst, amount, lot_tracking, expiration_tracking, expiration_date, lot_trackingid, reference_invoice_no, amc_code, amc_paid_date, amc_due_date, amc_amount)
-                    VALUES (
-                    '$new_invoice_id', '{$row['product_name']}', '{$row['product_id']}', '{$row['unit']}', '{$row['value']}',
-                    '{$row['quantity']}', '{$row['rate']}', '{$row['gst']}', '{$row['igst']}', '{$row['cgst']}',
-                    '{$row['sgst']}', '{$row['amount']}', '{$row['lot_tracking']}', '{$row['expiration_tracking']}',
-                    '{$row['expiration_date']}', '{$row['lot_trackingid']}', '$reference_invoice_no',
-                    '$amc_code', NOW(), '$amc_due_date', '$amc_amount')";
+                  VALUES (
+                  '$new_invoice_id', CONCAT('{$row['product_name']}', '-AMC'), '{$row['product_id']}', '{$row['unit']}', '{$row['value']}',
+                  '{$row['quantity']}', '{$row['rate']}', '{$row['gst']}', '{$row['igst']}', '{$row['cgst']}',
+                  '{$row['sgst']}', '{$row['amount']}', '{$row['lot_tracking']}', '{$row['expiration_tracking']}',
+                  '{$row['expiration_date']}', '{$row['lot_trackingid']}', '$reference_invoice_no',
+                  '$amc_code', NOW(), '$amc_due_date', '$amc_amount')";
+
 
     mysqli_query($connection, $insertQuery);
 }

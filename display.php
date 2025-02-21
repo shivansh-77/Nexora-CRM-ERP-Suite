@@ -176,33 +176,41 @@ include('topbar.php');
                 </tr>
             </thead>
             <tbody>
-                <?php
-                $query = "SELECT * FROM login_db"; // Update the table name as needed
-                $result = mysqli_query($connection, $query);
+              <?php
+              $query = "SELECT * FROM login_db"; // Update the table name as needed
+              $result = mysqli_query($connection, $query);
 
-                if (mysqli_num_rows($result) > 0) {
-                    while ($row = mysqli_fetch_assoc($result)) {
-                        echo "<tr>
-                                <td>{$row['id']}</td>
-                                <td>{$row['name']}</td>
-                                <td>{$row['department']}</td>
-                                <td>{$row['designation']}</td>
-                                <td>{$row['gender']}</td>
-                                <td>{$row['email']}</td>
-                                <td>{$row['phone']}</td>
-                                <td>{$row['address']}</td>
+              if (mysqli_num_rows($result) > 0) {
+                  while ($row = mysqli_fetch_assoc($result)) {
+                      echo "<tr>
+                              <td>{$row['id']}</td>
+                              <td>{$row['name']}</td>
+                              <td>{$row['department']}</td>
+                              <td>{$row['designation']}</td>
+                              <td>{$row['gender']}</td>
+                              <td>{$row['email']}</td>
+                              <td>{$row['phone']}</td>
+                              <td>{$row['address']}</td>
+                              <td>
+                                  <button class='btn-warning edit-btn' onclick=\"window.location.href='update_form.php?id={$row['id']}'\">
+                                      ✏️
+                                  </button>
+                                  <button class='btn-warning edit-btn' onclick=\"window.location.href='permission.php?id={$row['id']}'\">
+                                      🔑
+                                  </button>
+                                  <button class='btn-danger' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_employee.php?id={$row['id']}'; }\">
+                                      🗑️
+                                  </button>
+                              </td>
+                          </tr>";
+                  }
+              } else {
+                  echo "<tr><td colspan='12'>No employees found</td></tr>";
+              }
+              ?>
+          </tbody>
 
-                                <td>
-                                    <button class='btn-warning edit-btn' onclick=\"window.location.href='update_form.php?id={$row['id']}'\">✏️</button>
-                                    <button class='btn-danger' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_employee.php?id={$row['id']}'; }\">🗑️</button>
-                                </td>
-                            </tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='12'>No employees found</td></tr>";
-                }
-                ?>
-            </tbody>
+
         </table>
     </div>
 

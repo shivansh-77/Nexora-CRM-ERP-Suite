@@ -10,7 +10,8 @@ include('topbar.php');
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <title>Quotation Display</title>
+    <title>Item Ledger Display</title>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
     html, body {
         overflow: hidden;
@@ -147,6 +148,9 @@ include('topbar.php');
             border: none;
             outline: none;
         }
+        #downloadExcel{
+          background-color: green;
+        }
     </style>
   </head>
   <body>
@@ -157,9 +161,10 @@ include('topbar.php');
           <input type="text" id="searchInput" class="search-input" placeholder="Search...">
           <button class="btn-search" id="searchButton">🔍</button>
         </div>
-        <a href="create_item_ledger.php">
-          <button class="btn-primary" id="openModal" data-mode="add">➕</button>
-        </a>
+
+        <button id="downloadExcel" class="btn-primary">
+          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+        </button>
       </div>
     </div>
     <div class="user-table-wrapper">
@@ -178,7 +183,6 @@ include('topbar.php');
             <th>Date</th>
             <th>Lot ID</th>
             <th>Expiration Date</th>
-
         </tr>
     </thead>
     <tbody>
@@ -236,6 +240,16 @@ include('topbar.php');
                   row.style.display = 'none'; // Hide row
               }
           });
+      });
+
+      // Download Excel
+      const downloadExcelButton = document.getElementById('downloadExcel');
+      downloadExcelButton.addEventListener('click', function() {
+          const table = document.querySelector('.user-table');
+          const ws = XLSX.utils.table_to_sheet(table, { raw: true });
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Item Ledger');
+          XLSX.writeFile(wb, 'item_ledger.xlsx');
       });
   });
 </script>

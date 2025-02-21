@@ -8,6 +8,7 @@ include('topbar.php');
   <head>
     <meta charset="utf-8">
     <title>Invoice Display</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
 
     html, body {
@@ -206,6 +207,9 @@ include('topbar.php');
     table tr td:nth-last-child(2) {
         text-align: center;
     }
+    #downloadExcel{
+      background-color: green;
+    }
 </style>
   </head>
   <body>
@@ -219,6 +223,9 @@ include('topbar.php');
             <a href="invoice_generate.php">
                 <button class="btn-primary" id="openModal" data-mode="add">➕</button>
             </a>
+            <button id="downloadExcel" class="btn-primary">
+              <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+            </button>
         </div>
     </div>
     <div class="user-table-wrapper">
@@ -288,156 +295,151 @@ include('topbar.php');
     </div>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-          const searchInput = document.getElementById('searchInput');
-          const tableRows = document.querySelectorAll('.user-table tbody tr');
+    document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchInput');
+    const tableRows = document.querySelectorAll('.user-table tbody tr');
+    const downloadExcelButton = document.getElementById('downloadExcel');
 
-          searchInput.addEventListener('keyup', function() {
-              const searchTerm = searchInput.value.toLowerCase();
+    // Search functionality
+    searchInput.addEventListener('keyup', function () {
+        const searchTerm = searchInput.value.toLowerCase();
 
-              tableRows.forEach(function(row) {
-                  const cells = row.querySelectorAll('td');
-                  let rowText = '';
+        tableRows.forEach(function (row) {
+            const cells = row.querySelectorAll('td');
+            let rowText = '';
 
-                  cells.forEach(function(cell) {
-                      rowText += cell.textContent.toLowerCase() + ' ';
-                  });
+            cells.forEach(function (cell, index) {
+                // Skip last column (action buttons)
+                if (index !== cells.length - 1) {
+                    rowText += cell.textContent.toLowerCase() + ' ';
+                }
+            });
 
-                  if (rowText.includes(searchTerm)) {
-                      row.style.display = '';
-                  } else {
-                      row.style.display = 'none';
-                  }
-              });
-          });
+            row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+        });
+    });
 
-          // Pending Amount Button Click
-          const pendingButtons = document.querySelectorAll('.pending-button');
-          const popup = document.getElementById('popup');
-          const overlay = document.getElementById('overlay');
-          const popupNet = document.getElementById('popup-net');
-          const popupPending = document.getElementById('popup-pending');
-          const amountPaidInput = document.getElementById('amount-paid');
-          const submitPaymentButton = document.getElementById('submit-payment');
+    // Excel download functionality
+    downloadExcelButton.addEventListener('click', function () {
+        const table = document.querySelector('.user-table');
+        const visibleRows = Array.from(table.querySelectorAll('tbody tr')).filter(row => row.style.display !== 'none');
 
-          let currentId = null;
+        // Create a new workbook and worksheet
+        const workbook = XLSX.utils.book_new();
+        const worksheetData = [];
 
-          pendingButtons.forEach(button => {
-              button.addEventListener('click', function() {
-                  currentId = this.getAttribute('data-id');
-                  const netAmount = this.getAttribute('data-net');
-                  const pendingAmount = this.getAttribute('data-pending');
-
-                  popupNet.textContent = netAmount;
-                  popupPending.textContent = pendingAmount;
-                  amountPaidInput.value = '';
-                  popup.style.display = 'block';
-                  overlay.style.display = 'block';
-              });
-          });
-
-          // Submit Payment
-          submitPaymentButton.addEventListener('click', function() {
-              const amountPaid = parseFloat(amountPaidInput.value);
-              const pendingAmount = parseFloat(popupPending.textContent);
-
-              if (isNaN(amountPaid) || amountPaid <= 0 || amountPaid > pendingAmount) {
-                  alert('Please enter a valid amount.');
-                  return;
-              }
-
-              const newPendingAmount = pendingAmount - amountPaid;
-
-              // Update database via AJAX
-              fetch('update_pending_amount.php', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                      id: currentId,
-                      amount_paid: amountPaid,
-                      new_pending_amount: newPendingAmount
-                  }),
-              })
-              .then(response => response.json())
-              .then(data => {
-                  if (data.success) {
-                      // Update the button text
-                      const button = document.querySelector(`.pending-button[data-id='${currentId}']`);
-                      button.textContent = newPendingAmount;
-                      button.setAttribute('data-pending', newPendingAmount);
-
-                      // Close popup
-                      popup.style.display = 'none';
-                      overlay.style.display = 'none';
-                  } else {
-                      alert('Failed to update pending amount.');
-                  }
-              })
-              .catch(error => {
-                  console.error('Error:', error);
-                  alert('An error occurred while updating the pending amount.');
-              });
-          });
-
-          // Close popup when clicking outside
-          overlay.addEventListener('click', function() {
-              popup.style.display = 'none';
-              overlay.style.display = 'none';
-          });
-      });
-
-      submitPaymentButton.addEventListener('click', function() {
-    const amountPaid = parseFloat(amountPaidInput.value);
-    const pendingAmount = parseFloat(popupPending.textContent);
-
-    if (isNaN(amountPaid) || amountPaid <= 0 || amountPaid > pendingAmount) {
-        alert('Please enter a valid amount.');
-        return;
-    }
-
-    const newPendingAmount = pendingAmount - amountPaid;
-
-    // Update database via AJAX
-    fetch('update_pending_amount.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            id: currentId,
-            amount_paid: amountPaid,
-            new_pending_amount: newPendingAmount
-        }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Update the button text and style
-            const button = document.querySelector(`.pending-button[data-id='${currentId}']`);
-            if (newPendingAmount === 0) {
-                button.textContent = 'PAID';
-                button.classList.remove('btn-danger'); // Remove the red danger class
-                button.classList.add('paid-button'); // Add the green paid class
-                button.disabled = true; // Optional: Disable the button
-            } else {
-                button.textContent = newPendingAmount;
-                button.setAttribute('data-pending', newPendingAmount);
+        // Add header row, excluding last column
+        const headerRow = [];
+        table.querySelectorAll('thead th').forEach((header, index, arr) => {
+            if (index !== arr.length - 1) {
+                headerRow.push(header.textContent);
             }
+        });
+        worksheetData.push(headerRow);
 
-            // Close popup
-            popup.style.display = 'none';
-            overlay.style.display = 'none';
-        } else {
-            alert('Failed to update pending amount.');
+        // Add visible rows, excluding last column
+        visibleRows.forEach(row => {
+            const rowData = [];
+            row.querySelectorAll('td').forEach((cell, index, arr) => {
+                if (index !== arr.length - 1) { // Skip last column
+                    rowData.push(cell.textContent);
+                }
+            });
+            worksheetData.push(rowData);
+        });
+
+        // Convert data to worksheet
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Invoices');
+
+        // Export the workbook as an Excel file
+        XLSX.writeFile(workbook, 'Finalized_Invoices.xlsx');
+    });
+
+    // Pending Amount Button Click
+    const pendingButtons = document.querySelectorAll('.pending-button');
+    const popup = document.getElementById('popup');
+    const overlay = document.getElementById('overlay');
+    const popupNet = document.getElementById('popup-net');
+    const popupPending = document.getElementById('popup-pending');
+    const amountPaidInput = document.getElementById('amount-paid');
+    const submitPaymentButton = document.getElementById('submit-payment');
+
+    let currentId = null;
+
+    pendingButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            currentId = this.getAttribute('data-id');
+            const netAmount = this.getAttribute('data-net');
+            const pendingAmount = this.getAttribute('data-pending'); // Fetch from data attribute
+
+            popupNet.textContent = netAmount;
+            popupPending.textContent = pendingAmount;
+            amountPaidInput.value = '';
+            popup.style.display = 'block';
+            overlay.style.display = 'block';
+        });
+    });
+
+    // Submit Payment
+    submitPaymentButton.addEventListener('click', function () {
+        const amountPaid = parseFloat(amountPaidInput.value);
+        const pendingAmount = parseFloat(popupPending.textContent);
+
+        if (isNaN(amountPaid) || amountPaid <= 0 || amountPaid > pendingAmount) {
+            alert('Please enter a valid amount.');
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while updating the pending amount.');
+
+        const newPendingAmount = pendingAmount - amountPaid;
+
+        // Update database via AJAX
+        fetch('update_pending_amount.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: currentId,
+                amount_paid: amountPaid,
+                new_pending_amount: newPendingAmount
+            }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the button text and style
+                    const button = document.querySelector(`.pending-button[data-id='${currentId}']`);
+                    if (newPendingAmount === 0) {
+                        button.textContent = 'PAID';
+                        button.classList.remove('btn-danger'); // Remove red class
+                        button.classList.add('paid-button'); // Add green paid class
+                        button.disabled = true; // Disable button
+                    } else {
+                        button.textContent = newPendingAmount;
+                        button.setAttribute('data-pending', newPendingAmount);
+                    }
+
+                    // Close popup
+                    popup.style.display = 'none';
+                    overlay.style.display = 'none';
+                } else {
+                    alert('Failed to update pending amount.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the pending amount.');
+            });
+    });
+
+    // Close popup when clicking outside
+    overlay.addEventListener('click', function () {
+        popup.style.display = 'none';
+        overlay.style.display = 'none';
     });
 });
+
     </script>
   </body>
 </html>

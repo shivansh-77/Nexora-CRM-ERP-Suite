@@ -118,94 +118,150 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
   <nav class="sidebar">
     <h2 href="index.php" class="logo">My Dashboard</h2>
     <ul class="nav-menu">
+      <?php
+      // Check if allowed_submenus is set in the session
+      $allowed_submenus = $_SESSION['allowed_submenus'] ?? [];
+
+      // Function to check if a submenu is allowed
+      function is_submenu_allowed($menu, $submenu) {
+          global $allowed_submenus;
+          return isset($allowed_submenus[$menu]) && in_array($submenu, $allowed_submenus[$menu]);
+      }
+
+      // Function to check if a menu has any allowed submenus
+      function has_allowed_submenus($menu) {
+          global $allowed_submenus;
+          return isset($allowed_submenus[$menu]) && !empty($allowed_submenus[$menu]);
+      }
+      ?>
+
       <li><a href="index.php" class="active"><i class="icon">🏠</i>Dashboard</a></li>
-      <li>
-        <a href="#"><i class="icon">👥</i>CRM</a>
-        <ul class="submenu">
-    <li>
-        <a href="contact_display.php" style="display: flex; align-items: center;">
-            🧑‍🤝‍🧑 Contacts
-            <!-- <span class="circle"><?php echo $totalContactEntries; ?></span> -->
-        </a>
-    </li>
-    <li>
-        <a href="followup_display.php" style="display: flex; align-items: center;">
-            🌱 Fresh Followups
-            <span class="circle"><?php echo $totalFreshEntries; ?></span>
-        </a>
-    </li>
-    <li>
-        <a href="repeat_followups.php" style="display: flex; align-items: center;">
-            🔂 Repeat Followups
-            <span class="circle"><?php echo $totalRepeatEntries; ?></span>
-        </a>
-    </li>
-    <li>
-        <a href="today_followup.php" style="display: flex; align-items: center;">
-            ⏰ Today Followups
-            <span class="circle"><?php echo $totalTodayEntries; ?></span>
-        </a>
-    </li>
-    <li>
-        <a href="missed_followup.php" style="display: flex; align-items: center;">
-            ⚠️ Missed Followups
-            <span class="circle"><?php echo $totalMissedEntries; ?></span>
-        </a>
-    </li>
-          <li><a href="closed_followup.php">🔒 Closed Followups</a></li>
-        </ul>
-      </li>
-      <li>
-        <a href="#"><i class="icon">⚙️</i>CMS</a>
-        <ul class="submenu">
-          <li><a href="lead_for.php">📝 Lead For</a></li>
-          <li><a href="Source_Lead.php">🔍 Lead Source</a></li>
-        </ul>
-      </li>
-      <li>
-    <a href="#"><i class="icon">📊</i>Sales</a>
-    <ul class="submenu">
-      <li>
-          <a href="contact_display.php" style="display: flex; align-items: center;">
-              🧑‍🤝‍🧑 Contacts
-          </a>
-      </li>
-      <li><a href="item_display.php">📦 Items</a></li>
-      <li><a href="quotation_display.php">📋 Quotation</a></li>
-      <li>
-        <a href="#">📃 Invoice</a>
-        <ul class="submenu nested">
-          <li><a href="invoice_draft.php">📋📦 Drafts</a></li>
-          <li><a href="invoice_display.php">📋✅ Finalized Invoice</a></li>
-          <li><a href="invoice_closed.php">📃⛔ Returned Invoice</a></li>
-        </ul>
-      </li>
-      <li><a href="amc_due_display.php">📦 AMC Dues</a></li>
-      <li><a href="item_ledger_display.php">🚚 Item Ledger Display</a></li>
-      <li><a href="party_ledger.php">📜 Party Ledger</a></li>
-    </ul>
-  </li>
 
-      <li><a href="#"><i class="icon">🛒</i>Lead Follow ups</a></li>
-      <li>
-        <a href="#"><i class="icon">⚙️</i>Settings</a>
-        <ul class="submenu">
-          <li><a href="companycard.php">💼 Company Card</a></li>
-          <li><a href="locationcard_display.php">📌 Location Card</a></li>
-          <li><a href="financial_years_display.php">📈 Financial Year</a></li>
-          <li><a href="gst_display.php">💰 GST</a></li>
-          <li><a href="hsn_sac_display.php">💼 HSN/SAC</a></li>
-          <li><a href="unit_measurement_display.php">⏳ Units</a></li>
+      <?php if (has_allowed_submenus('CRM')): ?>
+        <li>
+          <a href="#"><i class="icon">👥</i>CRM</a>
+          <ul class="submenu">
+            <?php if (is_submenu_allowed('CRM', 'Contacts')): ?>
+              <li><a href="contact_display.php">🧑‍🤝‍🧑 Contacts</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('CRM', 'Fresh Followups')): ?>
+              <li><a href="followup_display.php">🌱 Fresh Followups <span class="circle"><?php echo $totalFreshEntries; ?></span></a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('CRM', 'Repeat Followups')): ?>
+              <li><a href="repeat_followups.php">🔂 Repeat Followups <span class="circle"><?php echo $totalRepeatEntries; ?></span></a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('CRM', 'Today Followups')): ?>
+              <li><a href="today_followup.php">⏰ Today Followups <span class="circle"><?php echo $totalTodayEntries; ?></span></a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('CRM', 'Missed Followups')): ?>
+              <li><a href="missed_followup.php">⚠️ Missed Followups <span class="circle"><?php echo $totalMissedEntries; ?></span></a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('CRM', 'Closed Followups')): ?>
+              <li><a href="closed_followup.php">🔒 Closed Followups</a></li>
+            <?php endif; ?>
+          </ul>
+        </li>
+      <?php endif; ?>
 
-            <li><a href="item_category_display.php">🛒 Items</a></li>
+      <?php if (has_allowed_submenus('CMS')): ?>
+        <li>
+          <a href="#"><i class="icon">⚙️</i>CMS</a>
+          <ul class="submenu">
+            <?php if (is_submenu_allowed('CMS', 'Lead For')): ?>
+              <li><a href="lead_for.php">📝 Lead For</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('CMS', 'Lead Source')): ?>
+              <li><a href="Source_Lead.php">🔍 Lead Source</a></li>
+            <?php endif; ?>
+          </ul>
+        </li>
+      <?php endif; ?>
+
+      <?php if (has_allowed_submenus('Sales')): ?>
+        <li>
+          <a href="#"><i class="icon">📊</i>Sales</a>
+          <ul class="submenu">
+            <?php if (is_submenu_allowed('Sales', 'Contacts')): ?>
+              <li><a href="contact_display.php">🧑‍🤝‍🧑 Contacts</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Sales', 'Items')): ?>
+              <li><a href="item_display.php">📦 Items</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Sales', 'Quotation')): ?>
+              <li><a href="quotation_display.php">📋 Quotation</a></li>
+            <?php endif; ?>
+            <li>
+              <a href="#">📃 Invoice</a>
+              <ul class="submenu nested">
+                <?php if (is_submenu_allowed('Sales', 'Draft Invoices')): ?>
+                  <li><a href="invoice_draft.php">📋📦 Draft Invoices</a></li>
+                <?php endif; ?>
+                <?php if (is_submenu_allowed('Sales', 'Finalized Invoice')): ?>
+                  <li><a href="invoice_display.php">📋✅ Finalized Invoice</a></li>
+                <?php endif; ?>
+                <?php if (is_submenu_allowed('Sales', 'Returned Invoice')): ?>
+                  <li><a href="invoice_closed.php">📃⛔ Returned Invoice</a></li>
+                <?php endif; ?>
+              </ul>
+            </li>
+            <?php if (is_submenu_allowed('Sales', 'AMC Dues')): ?>
+              <li><a href="amc_due_display.php">📦 AMC Dues</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Sales', 'Item Ledger Display')): ?>
+              <li><a href="item_ledger_display.php">🚚 Item Ledger Display</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Sales', 'Party Ledger')): ?>
+              <li><a href="party_ledger.php">📜 Party Ledger</a></li>
+            <?php endif; ?>
+          </ul>
+        </li>
+      <?php endif; ?>
+
+      <?php if (has_allowed_submenus('Settings')): ?>
+        <li>
+          <a href="#"><i class="icon">⚙️</i>Settings</a>
+          <ul class="submenu">
+            <?php if (is_submenu_allowed('Settings', 'Company Card')): ?>
+              <li><a href="companycard.php">💼 Company Card</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'Location Card')): ?>
+              <li><a href="locationcard_display.php">📌 Location Card</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'Financial Year')): ?>
+              <li><a href="financial_years_display.php">📈 Financial Year</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'GST')): ?>
+              <li><a href="gst_display.php">💰 GST</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'HSN/SAC')): ?>
+              <li><a href="hsn_sac_display.php">💼 HSN/SAC</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'Units')): ?>
+              <li><a href="unit_measurement_display.php">⏳ Units</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'Items')): ?>
+              <li><a href="item_category_display.php">🛒 Items</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'AMC')): ?>
               <li><a href="amc_display.php">📆 AMC</a></li>
-          <li><a href="department_display.php">🏢 Departments</a></li>
-          <li><a href="designation_display.php">🎓 Designations</a></li>
-          <li><a href="display.php">👤 User</a></li>
-        </ul>
-      </li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'Departments')): ?>
+              <li><a href="department_display.php">🏢 Departments</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'Designations')): ?>
+              <li><a href="designation_display.php">🎓 Designations</a></li>
+            <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'User')): ?>
+              <li><a href="display.php">👤 User</a></li>
+            <?php endif; ?>
+          </ul>
+        </li>
+      <?php endif; ?>
     </ul>
   </nav>
+
+
+
 
 
 
@@ -397,13 +453,13 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
     }
     .circle {
     display: inline-block;
-    width: 24px;  /* Adjust size as needed */
-    height: 24px; /* Adjust size as needed */
+    width: 20px;  /* Adjust size as needed */
+    height: 20px; /* Adjust size as needed */
     border-radius: 50%;
     background-color: #ff5733; /* Change color as needed */
     color: white;
     text-align: center;
-    line-height: 24px; /* Center the text vertically */
+    line-height: 22px; /* Center the text vertically */
     margin-left: 2; /* Remove space between link and circle */
     font-size: 14px; /* Adjust font size as needed */
     vertical-align: middle; /* Align vertically with text */
