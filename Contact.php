@@ -12,8 +12,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sql = "INSERT INTO contact (
         lead_source, lead_for, lead_priority, contact_person, company_name,
         mobile_no, whatsapp_no, email_id, address, country, state, city,
-        pincode, reference_pname, reference_pname_no, estimate_amnt, followupdate, employee,gstno, remarks
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,? ,?)";
+        pincode, reference_pname, reference_pname_no, estimate_amnt, followupdate, employee, gstno, remarks
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     // Prepare the statement
     $stmt = $connection->prepare($sql);
@@ -44,9 +44,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_POST['estimate-amount'], // Convert to float for estimate_amnt
         $_POST['next-follow-up-date'],
         $_POST['employee'],
-          $_POST['gstno'],
+        $_POST['gstno'],
         $_POST['remarks']
-
     );
 
     // Execute the statement
@@ -110,7 +109,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $connection->close(); // Use $connection for closing
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -273,11 +271,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Fetch Lead Source names from the lead_source table
     $leadSourceOptions = [];
-    $conn = new mysqli('localhost', 'root', '', 'lead_management'); // Update with your DB credentials
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-    $result = $conn->query("SELECT name FROM lead_sourc");
+    $result = $connection->query("SELECT name FROM lead_sourc");
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $leadSourceOptions[] = $row['name'];
@@ -305,13 +299,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Fetch Lead For names from the lead_for table
     $leadForOptions = [];
-    $result = $conn->query("SELECT name FROM lead_for");
+    $result = $connection->query("SELECT name FROM lead_for");
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $leadForOptions[] = $row['name'];
         }
     }
-    $conn->close();
     ?>
     <div style="position: relative;">
         <label for="lead-for">Lead For *</label>
@@ -326,7 +319,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </select>
 
     </div>
-
 
         <!-- Lead Priority Dropdown -->
         <div>
@@ -386,8 +378,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <input type="text" id="custom-country" name="custom-country" placeholder="Enter country" style="display:none;" />
 </div>
 
-
-
         <div>
       <label for="state">State</label>
       <select id="state" name="state" required>
@@ -403,7 +393,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           <option value="Himachal Pradesh">Himachal Pradesh</option>
           <option value="Jharkhand">Jharkhand</option>
           <option value="Karnataka">Karnataka</option>
-          <option value="Karnataka">Kashmir</option>
+          <option value="Kashmir">Kashmir</option>
           <option value="Kerala">Kerala</option>
           <option value="Madhya Pradesh">Madhya Pradesh</option>
           <option value="Maharashtra">Maharashtra</option>
@@ -467,24 +457,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <div class="form-group" >
           <?php
           // Fetch employee names from login_db
-          $conn = new mysqli('localhost', 'root', '', 'lead_management');
-
-          // Check for connection error
-          if ($conn->connect_error) {
-              die("Connection failed: " . $conn->connect_error);
-          }
-
-          // Fetch names from login_db
           $employeeNames = [];
           $query = "SELECT name FROM login_db";
-          $result = $conn->query($query);
+          $result = $connection->query($query);
 
           if ($result && $result->num_rows > 0) {
               while ($row = $result->fetch_assoc()) {
                   $employeeNames[] = $row['name'];
               }
           }
-          $conn->close();
           ?>
 
     <div>
@@ -506,10 +487,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
    </div> <!--Row 8 ends -->
 
-
   <!-- Row 9 (Actions) -->
   <div class="form-group">
-
 
   <div style="grid-column: span 2;">
     <label for="remarks">Remarks</label>
@@ -545,6 +524,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       }
   </script>
 </body>
-
-
 </html>

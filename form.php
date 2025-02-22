@@ -109,6 +109,16 @@ $designations = mysqli_query($connection, "SELECT * FROM designation");
             <option value="female">Female</option>
           </select>
         </div>
+        <!-- Role -->
+        <div class="input_field">
+          <label>Role <span class="required">*</span></label>
+          <select name="role" class="input" required>
+            <option value="">Select</option>
+            <option value="Admin">Admin</option>
+            <option value="Employee">Employee</option>
+          </select>
+        </div>
+
       </div>
 
       <div class="btn-container">
@@ -131,9 +141,10 @@ if (isset($_POST['register'])) {
     $phone = mysqli_real_escape_string($connection, $_POST['phone']);
     $address = mysqli_real_escape_string($connection, $_POST['address']);
     $designation = mysqli_real_escape_string($connection, $_POST['designation']);
+    $role = mysqli_real_escape_string($connection, $_POST['role']);
 
     // Check for empty fields
-    if (!empty($name) && !empty($department) && !empty($password) && !empty($cpassword) && !empty($gender) && !empty($email) && !empty($phone) && !empty($designation)) {
+    if (!empty($name) && !empty($department) && !empty($password) && !empty($cpassword) && !empty($gender) && !empty($email) && !empty($phone) && !empty($designation) && !empty($role)) {
 
         // Check if passwords match
         if ($password === $cpassword) {
@@ -146,8 +157,8 @@ if (isset($_POST['register'])) {
             }
 
             // Insert user data into login_db
-            $query = "INSERT INTO login_db (name, department, password, conpassword, gender, email, phone, address, designation)
-                      VALUES ('$name', '$department', '$password', '$cpassword', '$gender', '$email', '$phone', '$address', '$designation')";
+            $query = "INSERT INTO login_db (name, department, password, conpassword, gender, email, phone, address, designation, role)
+                      VALUES ('$name', '$department', '$password', '$cpassword', '$gender', '$email', '$phone', '$address', '$designation', '$role')";
 
             $result = mysqli_query($connection, $query);
 

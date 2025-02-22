@@ -6,10 +6,11 @@ include('topbar.php');
 // Fetch menu and user ID from the URL
 $menu = $_GET['menu'] ?? null;
 $user_id = $_GET['id'] ?? null;
+$user_name = $_GET['name'] ?? null;
+
 if (!$menu || !$user_id) {
     die("Invalid menu or user ID.");
 }
-
 // Define submenus based on the selected menu (hardcoded for now)
 $submenus = [];
 switch ($menu) {
@@ -215,7 +216,11 @@ $stmt->close();
 </head>
 <body>
     <div class="leadforhead">
-        <h2 class="leadfor">Submenu Permissions for <?= htmlspecialchars($menu) ?> (User ID: <?= htmlspecialchars($user_id) ?>)</h2>
+        <h2 class="leadfor">Submenu Permissions of <?= htmlspecialchars($menu) ?> For User: <?= htmlspecialchars($user_name)?></h2>
+        <div class="lead-actions">
+          <button style="background-color:#50C878;" class="btn btn-primary" id="checkAll">🔓</button>
+          <button style="background-color:#DC143C;" class="btn btn-primary" id="uncheckAll">🔏</button>
+        </div>
     </div>
     <div class="user-table-wrapper">
         <table class="user-table">
@@ -246,46 +251,87 @@ $stmt->close();
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const checkboxes = document.querySelectorAll('input[type="checkbox"][name="submenu_access[]"]');
+      const checkboxes = document.querySelectorAll('.user-table tbody input[type="checkbox"][name="submenu_access[]"]');
+      const checkAllButton = document.getElementById('checkAll');
+      const uncheckAllButton = document.getElementById('uncheckAll');
+
+      function updatePermissions(checkboxes, action) {
+        const updates = [];
         checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const submenu = this.value;
-                const userId = <?php echo json_encode($user_id); ?>;
-                const menuName = <?php echo json_encode($menu); ?>;
-                const hasAccess = this.checked ? 1 : 0;
+          checkbox.checked = action === 'check';
+          updates.push(updatePermission(checkbox));
+        });
 
-                console.log(`Updating: submenu=${submenu}, user_id=${userId}, menu=${menuName}, has_access=${hasAccess}`);
+        Promise.all(updates)
+          .then(results => {
+            const successCount = results.filter(r => r.success).length;
+            const failCount = results.length - successCount;
+            if (failCount === 0) {
+              alert(`All permissions ${action === 'check' ? 'granted' : 'revoked'} successfully.`);
+            } else {
+              alert(`${successCount} permissions ${action === 'check' ? 'granted' : 'revoked'} successfully. ${failCount} updates failed.`);
+            }
+          })
+          .catch(error => {
+            console.error('Error updating permissions:', error);
+            alert('An error occurred while updating permissions.');
+          });
+      }
 
-                this.disabled = true; // Disable while processing
-                fetch('update_submenu_permission.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `submenu=${encodeURIComponent(submenu)}&user_id=${userId}&menu=${encodeURIComponent(menuName)}&has_access=${hasAccess}`
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    this.disabled = false;
-                    if (data.success) {
-                        console.log(`Success: ${submenu} permission updated`);
-                        alert(`Permission ${hasAccess ? 'granted' : 'revoked'} for ${submenu}`);
-                    } else {
-                        console.error('Server error:', data.error);
-                        alert('Failed to update permission: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    this.disabled = false;
-                    console.error('Fetch error:', error);
-                    alert('An error occurred: ' + error.message);
-                });
+      checkAllButton.addEventListener('click', () => updatePermissions(checkboxes, 'check'));
+      uncheckAllButton.addEventListener('click', () => updatePermissions(checkboxes, 'uncheck'));
+
+      function updatePermission(checkbox) {
+        const submenu = checkbox.value;
+        const userId = <?php echo json_encode($user_id); ?>;
+        const menuName = <?php echo json_encode($menu); ?>;
+        const hasAccess = checkbox.checked ? 1 : 0;
+
+        console.log(`Updating: submenu=${submenu}, user_id=${userId}, menu=${menuName}, has_access=${hasAccess}`);
+
+        return fetch('update_submenu_permission.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `submenu=${encodeURIComponent(submenu)}&user_id=${userId}&menu=${encodeURIComponent(menuName)}&has_access=${hasAccess}`
+        })
+        .then(response => {
+          if (!response.ok) throw new Error('Network response was not ok');
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            console.log(`Success: ${submenu} permission updated`);
+            return { success: true };
+          } else {
+            console.error('Server error:', data.error);
+            return { success: false, error: data.error || 'Unknown error' };
+          }
+        })
+        .catch(error => {
+          console.error('Fetch error:', error);
+          return { success: false, error: error.message };
+        });
+      }
+
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          this.disabled = true;
+          updatePermission(this)
+            .then(result => {
+              this.disabled = false;
+              if (result.success) {
+                alert(`Permission ${this.checked ? 'granted' : 'revoked'} for ${this.value}`);
+              } else {
+                alert('Failed to update permission: ' + (result.error || 'Unknown error'));
+                this.checked = !this.checked; // Revert the checkbox state
+              }
             });
         });
+      });
     });
     </script>
+
 </body>
 </html>

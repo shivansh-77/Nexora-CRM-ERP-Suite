@@ -308,7 +308,7 @@ include('topbar.php');
                           <td>{$row['reporting_details']}</td>
                           <td>
                               <button class='btn-warning edit-btn'
-                                  onclick=\"window.location.href='update_followup.php?id={$row['followup_id']}'\">✏️</button>
+                                  onclick=\"window.location.href='update_repeat_followup.php?id={$row['followup_id']}'\">✏️</button>
                               <button class='btn-danger'
                                   onclick=\"if(confirm('Are you sure you want to delete this record?')) {
                                       window.location.href='delete_followup.php?id={$row['followup_id']}';

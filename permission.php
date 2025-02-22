@@ -3,8 +3,10 @@ session_start();
 include('connection.php');
 include('topbar.php');
 
-// Fetch user ID from the URL
+// Fetch user ID and name from the URL
 $user_id = $_GET['id'] ?? null;
+$user_name = $_GET['name'] ?? null;
+
 if (!$user_id) {
     die("Invalid user ID.");
 }
@@ -184,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="leadforhead">
-        <h2 class="leadfor">Permissions for User ID: <?php echo htmlspecialchars($user_id); ?></h2>
+        <h2 class="leadfor">Permissions for User: <?= htmlspecialchars($user_name) ?></h2>
         <div class="lead-actions">
             <div class="search-bar">
                 <input type="text" id="searchInput" class="search-input" placeholder="Search...">
@@ -201,17 +203,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($menus as $menu): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($menu) ?></td>
-                        <td>
-                            <button type="button" class="btn btn-view" onclick="window.location.href='submenu_view.php?menu=<?= urlencode($menu) ?>&id=<?php echo $user_id; ?>';">
-                                ℹ️
-                            </button>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
+        <?php foreach ($menus as $menu): ?>
+            <tr>
+                <td><?= htmlspecialchars($menu) ?></td>
+                <td>
+                    <button type="button" class="btn btn-view"
+                        onclick="window.location.href='submenu_view.php?menu=<?= urlencode($menu) ?>&id=<?= urlencode($user_id) ?>&name=<?= urlencode($user_name) ?>';">
+                        ℹ️
+                    </button>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    </tbody>
+
         </table>
     </div>
 </body>

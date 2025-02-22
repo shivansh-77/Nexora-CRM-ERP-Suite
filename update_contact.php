@@ -5,12 +5,9 @@ include('connection.php');
 if (isset($_GET['id'])) {
     $contactId = $_GET['id'];
 
-    // Prepare the SQL query to fetch the contact data by ID
-    $sql = "SELECT * FROM contact WHERE id = ?";
-    $stmt = $connection->prepare($sql);
-    $stmt->bind_param('i', $contactId);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Fetch the contact data by ID without prepared statements
+    $sql = "SELECT * FROM contact WHERE id = $contactId";
+    $result = $connection->query($sql);
     $contact = $result->fetch_assoc();
 
     // If no record is found, redirect to display.php
@@ -25,58 +22,64 @@ if (isset($_GET['id'])) {
 
 // Check if the form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update'])) {
-    // Prepare the SQL query for updating the contact, including the new gstno column
+    // Update query without prepared statements
     $sql = "UPDATE contact SET
-        lead_source = ?, lead_for = ?, lead_priority = ?, contact_person = ?, company_name = ?,
-        mobile_no = ?, whatsapp_no = ?, email_id = ?, address = ?, country = ?, state = ?,
-        city = ?, pincode = ?, reference_pname = ?, reference_pname_no = ?, estimate_amnt = ?,
-        followupdate = ?, employee = ?, remarks = ?, gstno = ?
-        WHERE id = ?";
+        lead_source = '{$_POST['lead-source']}',
+        lead_for = '{$_POST['lead-for']}',
+        lead_priority = '{$_POST['lead-priority']}',
+        contact_person = '{$_POST['contact-person']}',
+        company_name = '{$_POST['company-name']}',
+        mobile_no = '{$_POST['mobile-no']}',
+        whatsapp_no = '{$_POST['whatsapp-no']}',
+        email_id = '{$_POST['email']}',
+        address = '{$_POST['address']}',
+        country = '{$_POST['country']}',
+        state = '{$_POST['state']}',
+        city = '{$_POST['city']}',
+        pincode = '{$_POST['pincode']}',
+        reference_pname = '{$_POST['reference-person-name']}',
+        reference_pname_no = '{$_POST['reference-person-mobile']}',
+        estimate_amnt = '{$_POST['estimate-amount']}',
+        followupdate = '{$_POST['next-follow-up-date']}',
+        employee = '{$_POST['employee']}',
+        remarks = '{$_POST['remarks']}',
+        gstno = '{$_POST['gstno']}'
+        WHERE id = $contactId";
 
-    // Prepare the statement
-    $stmt = $connection->prepare($sql);
-
-    // Check if the prepare was successful
-    if (!$stmt) {
-        die("Preparation failed: " . $connection->error);
-    }
-
-    // Bind the parameters to the prepared statement
-    $stmt->bind_param(
-        'sssssssssssssssssss', // 18 strings and 1 integer for the ID
-        $_POST['lead-source'],
-        $_POST['lead-for'],
-        $_POST['lead-priority'],
-        $_POST['contact-person'],
-        $_POST['company-name'],
-        $_POST['mobile-no'],
-        $_POST['whatsapp-no'],
-        $_POST['email'],
-        $_POST['address'],
-        $_POST['country'],
-        $_POST['state'],
-        $_POST['city'],
-        $_POST['pincode'],
-        $_POST['reference-person-name'],
-        $_POST['reference-person-mobile'],
-        $_POST['estimate-amount'],
-        $_POST['next-follow-up-date'],
-        $_POST['employee'],
-        $_POST['remarks'],
-        $_POST['gstno'], // Added GST number field
-        $contactId // Add the contact ID here
-    );
-
-    // Execute the statement
-    if ($stmt->execute()) {
+    if ($connection->query($sql)) {
         echo "<script>alert('Record updated successfully!'); window.location.href = 'contact_display.php';</script>";
         exit();
     } else {
-        echo "Error: " . $stmt->error;
+        echo "Error: " . $connection->error;
     }
+}
 
-    // Close the statement
-    $stmt->close();
+// Fetch Lead Source names from the lead_source table
+$leadSourceOptions = [];
+$result = $connection->query("SELECT name FROM lead_sourc");
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $leadSourceOptions[] = $row['name'];
+    }
+}
+
+// Fetch Lead For names from the lead_for table
+$leadForOptions = [];
+$result = $connection->query("SELECT name FROM lead_for");
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $leadForOptions[] = $row['name'];
+    }
+}
+
+// Fetch employee names from login_db
+$employeeNames = [];
+$query = "SELECT name FROM login_db";
+$result = $connection->query($query);
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $employeeNames[] = $row['name'];
+    }
 }
 
 // Close the connection
@@ -232,25 +235,11 @@ $connection->close();
 <body>
 <div class="form-container">
   <a style="text-decoration:None;"href="contact_display.php" class="close-btn">&times;</a>
-  <h2>Add Contact</h2>
+  <h2>Update Contact</h2>
   <form method="POST" action="">
       <!-- Row 1 -->
       <div class="form-group">
     <!-- Lead Source Input -->
-    <?php
-    // Fetch Lead Source names from the lead_source table
-    $leadSourceOptions = [];
-    $conn = new mysqli('localhost', 'root', '', 'lead_management'); // Update with your DB credentials
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-    $result = $conn->query("SELECT name FROM lead_sourc");
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $leadSourceOptions[] = $row['name'];
-        }
-    }
-    ?>
     <div style="position: relative;">
         <label for="lead-source">Lead Source *</label>
         <select id="lead-source" name="lead-source">
@@ -266,17 +255,6 @@ $connection->close();
     </div>
 
     <!-- Lead For Input -->
-    <?php
-    // Fetch Lead For names from the lead_for table
-    $leadForOptions = [];
-    $result = $conn->query("SELECT name FROM lead_for");
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $leadForOptions[] = $row['name'];
-        }
-    }
-    $conn->close();
-    ?>
     <div style="position: relative;">
         <label for="lead-for">Lead For *</label>
         <select id="lead-for" name="lead-for">
@@ -290,7 +268,6 @@ $connection->close();
         </select>
 
     </div>
-
 
         <div>
           <label for="lead-priority">Lead Priority *</label>
@@ -408,27 +385,6 @@ $connection->close();
 
       <!-- Row 8 -->
   <div class="form-group">
-      <?php
-      // Fetch employee names from login_db
-      $conn = new mysqli('localhost', 'root', '', 'lead_management');
-
-      // Check for connection error
-      if ($conn->connect_error) {
-          die("Connection failed: " . $conn->connect_error);
-      }
-
-      // Fetch names from login_db
-      $employeeNames = [];
-      $query = "SELECT name FROM login_db";
-      $result = $conn->query($query);
-
-      if ($result && $result->num_rows > 0) {
-          while ($row = $result->fetch_assoc()) {
-              $employeeNames[] = $row['name'];
-          }
-      }
-      $conn->close();
-      ?>
       <div>
           <label for="employee-name">Employee</label>
           <select id="employee-name" name="employee" class="input-field">
@@ -443,7 +399,7 @@ $connection->close();
 
       <div>
           <label for="gst-no">GST No.</label>
-          <input type="text" id="gst-no" name="gst-no" placeholder="Enter GST Number" class="input-field" value="<?php echo htmlspecialchars($contact['gstno']); ?>">
+          <input type="text" id="gst-no" name="gstno" placeholder="Enter GST Number" class="input-field" value="<?php echo htmlspecialchars($contact['gstno']); ?>">
       </div>
   </div>
 
@@ -454,7 +410,6 @@ $connection->close();
     <textarea id="remarks" name="remarks" placeholder="Enter Remarks" rows="2" class="input-field"><?php echo htmlspecialchars($contact['remarks']); ?></textarea>
 </div>
   </div>
-
 
   <!-- Row 10 (Actions) -->
   <div class="form-actions">

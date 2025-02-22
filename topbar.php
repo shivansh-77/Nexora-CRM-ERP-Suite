@@ -459,7 +459,7 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
     background-color: #ff5733; /* Change color as needed */
     color: white;
     text-align: center;
-    line-height: 22px; /* Center the text vertically */
+    line-height: 24px; /* Center the text vertically */
     margin-left: 2; /* Remove space between link and circle */
     font-size: 14px; /* Adjust font size as needed */
     vertical-align: middle; /* Align vertically with text */
