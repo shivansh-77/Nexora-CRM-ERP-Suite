@@ -1,5 +1,5 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "lead_management");
+$conn = new mysqli("localhost", "root", "", "u766296854_crm");
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
@@ -475,7 +475,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
 
 <div class="container">
-  <a style="text-decoration: none; margin-left: 1217px; padding: 0px; position: relative; top: -34px; transform: translateY(-50%);" href="invoice_display.php" class="close-btn">&times;</a>
+  <a style="text-decoration: none; margin-left: 1347px; padding: 0px; position: relative; top: -34px; transform: translateY(-50%);" href="invoice_display.php" class="close-btn">&times;</a>
 
 
 

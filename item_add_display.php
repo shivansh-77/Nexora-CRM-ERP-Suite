@@ -3,7 +3,7 @@
 $host = 'localhost';
 $user = 'root';
 $password = '';
-$database = 'lead_management';
+$database = 'u766296854_crm';
 $conn = new mysqli($host, $user, $password, $database);
 
 // Check connection

@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Insert the new location into the database
     $query = "INSERT INTO location_card (company_name, location, location_code, pincode, city, state, country, contact_no, whatsapp_no, email_id, gstno, registration_no)
-              VALUES ('$company_name''$location', '$location_code', '$pincode', '$city', '$state', '$country', '$contact_no', '$whatsapp_no', '$email_id', '$gstno', '$registration_no')";
+              VALUES ('$company_name', '$location', '$location_code', '$pincode', '$city', '$state', '$country', '$contact_no', '$whatsapp_no', '$email_id', '$gstno', '$registration_no')";
 
     if (mysqli_query($connection, $query)) {
         echo "<script>alert('Location added successfully'); window.location.href='locationcard_display.php';</script>";
