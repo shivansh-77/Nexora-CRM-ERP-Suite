@@ -296,7 +296,7 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
     .topbar-left {
       font-size: 22px;
       font-weight: bold;
-      margin-right: 140px;
+      margin-right: 170px;
     }
 
     .logout-button {
@@ -328,7 +328,7 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
     }
 
     .sidebar-logo {
-      width: 18.5%;
+      width: 18.0%;
       margin: 10px auto 10px;
       display: block;
       margin-left: -20px;

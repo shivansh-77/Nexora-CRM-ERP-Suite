@@ -127,7 +127,7 @@ include('topbar.php');
 
     .leadforhead {
       position: fixed;
-      width: 75%;
+      width: 79%;
       height: 50px;
       display: flex;
       justify-content: space-between;

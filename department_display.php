@@ -63,7 +63,7 @@ include('topbar.php');
 
     .leadforhead {
         position: fixed;
-        width: 75%;
+        width: 79%;
         height: 50px;
         display: flex;
         justify-content: space-between;
@@ -169,7 +169,7 @@ include('topbar.php');
                       echo "<tr>
                               <td>" . ($row['id'] ?? 'N/A') . "</td>
                                 <td>" . ($row['department'] ?? 'N/A') . "</td>
-                              
+
                               <td>
                                   <button class='btn-danger'
                                       onclick=\"if(confirm('Are you sure you want to delete this record?')) {
