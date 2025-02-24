@@ -1,129 +1,241 @@
 <?php
-// Include database connection
+session_start();
 include('connection.php');
-
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'];
-    $status = $_POST['status'];
-
-    // Insert the new record into the database
-    $query = "INSERT INTO lead_sourc (name, status) VALUES ('$name', '$status')";
-    if (mysqli_query($connection, $query)) {
-        // Redirect to contact.php with the leadFor parameter (name from the inserted row)
-        header("Location: contact.php?leadSource=" . urlencode($name));
-        exit();
-    } else {
-        echo "<p style='color:red;'>Error: " . mysqli_error($connection) . "</p>";
-    }
-}
-
-// Close the database connection after the operation
-mysqli_close($connection);
+include('topbar.php');
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lead Source Entry</title>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Lead Source Display</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+    html, body {
+        overflow: hidden;
+        height: 100%;
+        margin: 0;
+    }
+
+        /* Table Styles */
+        .user-table-wrapper {
+            width: calc(100% - 260px); /* Adjust width to account for sidebar */
+            margin-left: 260px; /* Align with sidebar */
+            margin-top: 142px; /* Adjust for topbar */
+            overflow: auto; /* Enable scrolling for the table */
+            max-height: 475px; /* Set max height for vertical scrolling */
         }
 
-        .form-container {
-            width: 80%;
-            max-width: 600px;
-            background: #fff;
-            border-radius: 10px;
-            padding: 20px 30px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        .user-table {
+            width: 100%; /* Full width */
+            border-collapse: collapse;
+            background-color: white;
+            table-layout: auto; /* Allow columns to adjust based on content */
         }
 
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #2c3e50;
+        .user-table th, .user-table td {
+            padding: 12px; /* Increased padding for wider columns */
+            border: 1px solid #ddd;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        .form-group {
-            margin-bottom: 15px;
+        .user-table th {
+            background-color: #2c3e50; /* Header color */
+            color: white;
+            text-align: left;
+            position: sticky; /* Make headers sticky */
+            top: 0; /* Stick to the top */
+            z-index: 1; /* Ensure headers are above the body */
         }
 
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 5px;
+        .user-table td {
+            text-align: left;
         }
 
-        .form-group input,
-.form-group select {
-    width: 100%; /* Ensure all fields take up the same width */
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box; /* Includes padding and border in the width */
-    outline: none;
-}
-
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: #007bff;
+        .user-table tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
 
-        .form-actions {
-            text-align: center;
-            margin-top: 20px;
+        .user-table tr:hover {
+            background-color: #f1f1f1;
         }
 
-        .form-actions button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background: #2c3e50;
-            color: #fff;
+        .user-table td:last-child {
+            text-align: right; /* Align buttons to the right */
+            width: auto; /* Further reduce the width of the action column */
+            padding: 5px 8px; /* Reduce padding further for action column */
+        }
+
+        .btn-primary, .btn-secondary, .btn-danger, .btn-warning {
+            padding: 5px 10px;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
+            color: white;
             cursor: pointer;
         }
 
-        .form-actions button:hover {
-            background: #0056b3;
+        .btn-primary { background-color: #a5f3fc; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-warning { background-color: #3498db; color: black; }
+
+        .leadforhead {
+            position: fixed;
+            width: 75%;
+            height: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2c3e50;
+            color: white;
+            padding: 0 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            overflow: visible; /* Ensure child elements are visible */
+            margin-left: 260px;
+            margin-top: 80px;
         }
-        
+
+        .lead-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-search {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-right: 40px;
+        }
+
+        .search-input {
+            border: none;
+            padding: 8px;
+            outline: none;
+            font-size: 14px;
+            width: 273px;
+        }
+
+        .search-input:focus {
+            border: none;
+            outline: none;
+        }
+        .user-table th,
+    .user-table td {
+        text-align: center; /* Center align content in all columns */
+    }
+
+    /* Exclude the last column from center alignment */
+    .user-table th:last-child,
+    .user-table td:last-child {
+        text-align: center; /* Align last column to the left (or adjust as needed) */
+    }
+    table th:last-child, table td:last-child {
+    width: 100px; /* Adjust the width as needed */
+    text-align: center;
+}
     </style>
-</head>
-<body>
-    <div class="form-container">
-        <h2>Enter Lead Source</h2>
-        <form method="POST" action="lead_source_display.php">
-            <div class="form-group">
-                <label for="name">Lead Source Name</label>
-                <input type="text" id="name" name="name" placeholder="Enter Lead Source" required>
-            </div>
-
-            <div class="form-group">
-                <label for="status">Status</label>
-                <select id="status" name="status" required>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                </select>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit">Submit</button>
-            </div>
-        </form>
+  </head>
+  <body>
+    <div class="leadforhead">
+      <h2 class="leadfor">Lead Source</h2>
+      <div class="lead-actions">
+        <div class="search-bar">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+          <button class="btn-search" id="searchButton">🔍</button>
+        </div>
+        <a href="lead_source_add.php">
+          <button class="btn-primary" id="openModal" data-mode="add">➕</button>
+        </a>
+      </div>
     </div>
-</body>
+    <div class="user-table-wrapper">
+      <table class="user-table">
+          <thead>
+              <tr>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+              </tr>
+          </thead>
+          <tbody>
+              <?php
+              // Fetch data from the lead_source table
+              $query = "SELECT * FROM lead_sourc";
+              $result = mysqli_query($connection, $query);
+
+              if (mysqli_num_rows($result) > 0) {
+                  while ($row = mysqli_fetch_assoc($result)) {
+                      echo "<tr>
+                              <td>" . ($row['name'] ?? 'N/A') . "</td>
+                              <td>" . ($row['status'] ?? 'N/A') . "</td>
+                              <td>
+                                <button class='btn-warning edit-btn'
+                                      onclick=\"window.location.href='lead_source_edit.php?id={$row['id']}';\">✏️</button>
+                                  <button class='btn-danger'
+                                      onclick=\"if(confirm('Are you sure you want to delete this record?')) {
+                                          window.location.href='lead_source_delete.php?id={$row['id']}';
+                                      }\">🗑️</button>
+                              </td>
+                            </tr>";
+                  }
+              } else {
+                  echo "<tr><td colspan='4'>No Lead Source records found</td></tr>";
+              }
+              ?>
+          </tbody>
+      </table>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          const searchInput = document.getElementById('searchInput');
+          const tableRows = document.querySelectorAll('.user-table tbody tr');
+
+          searchInput.addEventListener('keyup', function() {
+              const searchTerm = searchInput.value.toLowerCase();
+
+              tableRows.forEach(function(row) {
+                  const cells = row.querySelectorAll('td');
+                  let rowText = '';
+
+                  cells.forEach(function(cell) {
+                      rowText += cell.textContent.toLowerCase() + ' '; // Concatenate all cell texts
+                  });
+
+                  // Toggle row visibility based on search term
+                  if (rowText.includes(searchTerm)) {
+                      row.style.display = ''; // Show row
+                  } else {
+                      row.style.display = 'none'; // Hide row
+                  }
+              });
+          });
+      });
+    </script>
+  </body>
 </html>

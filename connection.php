@@ -3,7 +3,7 @@
 $hostname = "localhost";
 $username = "root";
 $password = "";
-$database = "lead_management";
+$database = "u766296854_crm";
 
 $connection = mysqli_connect($hostname , $username , $password , $database);
 

@@ -8,10 +8,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = $_POST['status'];
 
     // Insert the new record into the database
-    $query = "INSERT INTO lead_for (name, status) VALUES ('$name', '$status')";
+    $query = "INSERT INTO lead_sourc (name, status) VALUES ('$name', '$status')";
     if (mysqli_query($connection, $query)) {
-        // Redirect to lead_for_display.php after successful insertion
-        header("Location: lead_for_display.php");
+        // Redirect to lead_source_display.php after successful insertion
+        header("Location: lead_source_display.php");
         exit();
     } else {
         echo "<p style='color:red;'>Error: " . mysqli_error($connection) . "</p>";
@@ -27,7 +27,7 @@ mysqli_close($connection);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lead For Entry</title>
+    <title>Lead Source Entry</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -104,11 +104,11 @@ mysqli_close($connection);
 </head>
 <body>
     <div class="form-container">
-        <h2>Enter Lead For</h2>
-        <form method="POST" action="lead_for_add.php">
+        <h2>Enter Lead Source</h2>
+        <form method="POST" action="lead_source_add.php">
             <div class="form-group">
-                <label for="name">Lead For Name</label>
-                <input type="text" id="name" name="name" placeholder="Enter Lead For Name" required>
+                <label for="name">Lead Source Name</label>
+                <input type="text" id="name" name="name" placeholder="Enter Lead Source" required>
             </div>
 
             <div class="form-group">
@@ -121,7 +121,6 @@ mysqli_close($connection);
 
             <div class="form-actions">
                 <button type="submit">Submit</button>
-                <button type="button" onclick="window.location.href='contact.php'">Cancel</button>
             </div>
         </form>
     </div>

@@ -168,10 +168,10 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
           <a href="#"><i class="icon">⚙️</i>CMS</a>
           <ul class="submenu">
             <?php if (is_submenu_allowed('CMS', 'Lead For')): ?>
-              <li><a href="lead_for.php">📝 Lead For</a></li>
+              <li><a href="lead_for_display.php">📝 Lead For</a></li>
             <?php endif; ?>
             <?php if (is_submenu_allowed('CMS', 'Lead Source')): ?>
-              <li><a href="Source_Lead.php">🔍 Lead Source</a></li>
+              <li><a href="lead_source_display.php">🔍 Lead Source</a></li>
             <?php endif; ?>
           </ul>
         </li>

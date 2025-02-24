@@ -2,15 +2,33 @@
 // Include database connection
 include('connection.php');
 
+// Fetch the existing record based on the ID from the URL
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $query = "SELECT * FROM lead_for WHERE id = $id";
+    $result = mysqli_query($connection, $query);
+
+    if ($result && $row = mysqli_fetch_assoc($result)) {
+        $name = $row['name'];
+        $status = $row['status'];
+    } else {
+        echo "<p style='color:red;'>Error: Record not found.</p>";
+        exit();
+    }
+} else {
+    echo "<p style='color:red;'>Error: No ID provided.</p>";
+    exit();
+}
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $status = $_POST['status'];
 
-    // Insert the new record into the database
-    $query = "INSERT INTO lead_for (name, status) VALUES ('$name', '$status')";
+    // Update the existing record in the database
+    $query = "UPDATE lead_for SET name = '$name', status = '$status' WHERE id = $id";
     if (mysqli_query($connection, $query)) {
-        // Redirect to lead_for_display.php after successful insertion
+        // Redirect to the lead source display page after successful update
         header("Location: lead_for_display.php");
         exit();
     } else {
@@ -27,7 +45,7 @@ mysqli_close($connection);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lead For Entry</title>
+    <title>Edit Lead Source</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -104,24 +122,23 @@ mysqli_close($connection);
 </head>
 <body>
     <div class="form-container">
-        <h2>Enter Lead For</h2>
-        <form method="POST" action="lead_for_add.php">
+        <h2>Edit Lead Source</h2>
+        <form method="POST" action="">
             <div class="form-group">
-                <label for="name">Lead For Name</label>
-                <input type="text" id="name" name="name" placeholder="Enter Lead For Name" required>
+                <label for="name">Lead Source Name</label>
+                <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($name); ?>" required>
             </div>
 
             <div class="form-group">
                 <label for="status">Status</label>
                 <select id="status" name="status" required>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="active" <?php echo ($status == 'active') ? 'selected' : ''; ?>>Active</option>
+                    <option value="inactive" <?php echo ($status == 'inactive') ? 'selected' : ''; ?>>Inactive</option>
                 </select>
             </div>
 
             <div class="form-actions">
-                <button type="submit">Submit</button>
-                <button type="button" onclick="window.location.href='contact.php'">Cancel</button>
+                <button type="submit">Update</button>
             </div>
         </form>
     </div>
