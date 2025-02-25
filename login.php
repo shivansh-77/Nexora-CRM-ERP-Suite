@@ -9,7 +9,20 @@
     <form action="" method="POST">
       <div class="center">
         <div class="logo-container">
-               <img src="Splendid.png" alt="Logo" class="logo">
+          <?php
+      include('connection.php'); // Include database connection
+
+      // Fetch company logo from database
+      $query = "SELECT company_logo FROM company_card WHERE id = 1"; // Change `1` to the correct company ID
+      $result = mysqli_query($connection, $query);
+      $company = mysqli_fetch_assoc($result);
+
+      // Set logo path (fallback to default if not available)
+      $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'uploads/default_logo.png';
+      ?>
+
+      <!-- Display Dynamic Logo -->
+      <img src="<?php echo $company_logo; ?>" alt="Logo" class="logo" />
 
         </div>
         <h1>Login</h1>

@@ -328,7 +328,7 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
     }
 
     .sidebar-logo {
-      width: 18.0%;
+      width: 250px;
       margin: 10px auto 10px;
       display: block;
       margin-left: -20px;
