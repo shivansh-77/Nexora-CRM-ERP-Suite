@@ -93,7 +93,7 @@ if (isset($_GET['id'])) {
             $stmt_history_insert->bind_param("iissssssssssss", $id, $contact_id, $followup_date_nxt, $followup_time_nxt, $status, $lead_status, $estimate_amount, $closed_amount, $lead_followup, $reporting_details, $followup_data['lead_source'], $followup_data['lead_for'], $followup_data['lead_priority'], $fy_code);
 
             if ($stmt_history_insert->execute()) {
-                echo "<script>alert('Record Updated and History Added Successfully'); window.location.href='followup_display.php';</script>";
+                echo "<script>alert('Record Updated and History Added Successfully'); window.location.href='today_followup.php';</script>";
             } else {
                 echo "Error adding to followup_history: " . $stmt_history_insert->error;
             }

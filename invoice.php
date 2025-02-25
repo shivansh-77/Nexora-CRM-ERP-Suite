@@ -109,8 +109,12 @@ if (isset($_GET['id'])) {
             $stmt_ledger->close();
 
             if ($update_successful) {
-                // Update the invoice status to 'Finalized'
-                $update_status_query = "UPDATE invoices SET status = 'Finalized', invoice_no = ? WHERE id = ?";
+              // Update the invoice status to 'Finalized' and populate pending_amount
+$update_status_query = "UPDATE invoices
+                         SET status = 'Finalized',
+                             invoice_no = ?,
+                             pending_amount = net_amount -- Set pending_amount to net_amount
+                         WHERE id = ?";
                 $stmt_status = $connection->prepare($update_status_query);
                 $stmt_status->bind_param("si", $new_invoice_no, $invoice_id);
                 $stmt_status->execute();
@@ -210,7 +214,7 @@ if (isset($_GET['id'])) {
     $update_message = "No ID provided.";
 }
 
-$connection->close();
+
 ?>
 
 <!-- HTML form and other UI elements go here -->
@@ -330,7 +334,7 @@ $connection->close();
             margin-bottom: 20px;
             border-radius: 4px;
         }
-      
+
     </style>
 </head>
 <body>
@@ -343,12 +347,10 @@ $connection->close();
             <img src="splendid.png" alt="Splendid Logo" class="logo">
             <h1>Invoice</h1>
         </div>
-
         <div class="invoice-info">
             <p><strong>Invoice No:</strong> <?php echo isset($invoice['invoice_no']) ? htmlspecialchars($invoice['invoice_no']) : ''; ?></p>
             <p><strong>Date:</strong> <?php echo isset($invoice['invoice_date']) ? htmlspecialchars($invoice['invoice_date']) : ''; ?></p>
         </div>
-
         <div class="details">
             <?php if ($invoice) { ?>
                 <div>
@@ -373,7 +375,6 @@ $connection->close();
                 <p>No details found for the given invoice ID.</p>
             <?php } ?>
         </div>
-
         <table>
             <thead>
                         <tr>
@@ -392,7 +393,6 @@ $connection->close();
                  <th>AMC Code</th>
                  <th>AMC Paid Date</th>
                  <th>AMC Due Date</th>
-
                  <th>AMC Amount</th>
              </tr>
           </thead>
@@ -416,28 +416,18 @@ $connection->close();
        <select name="amc_code[]" onchange="updateDueDate(this)">
            <option value="">Select Code</option>
            <?php
-           // Database connection
-           $conn = new mysqli("localhost", "root", "", "lead_management");
-           if ($conn->connect_error) {
-               die("Connection failed: " . $conn->connect_error);
-           }
-
-           // Fetch AMC data
+           // Fetch AMC data using $connection instead of $conn
            $query = "SELECT id, code, value FROM amc";
-           $result = $conn->query($query);
-
+           $result = $connection->query($query);
            // Populate dropdown
            while ($row = $result->fetch_assoc()) {
                echo '<option value="' . htmlspecialchars($row['value']) . '">' . htmlspecialchars($row['code']) . '</option>';
            }
-           $conn->close();
            ?>
        </select>
-
        <!-- Input field to store the AMC value -->
        <input type="text" name="amc_value[]" value="" readonly>
    </td>
-
                          <td><input type="date" name="amc_paid_date[]" value="<?php echo htmlspecialchars($item['amc_paid_date']); ?>"></td>
                          <td>
     <!-- AMC Due Date (To be auto-updated) -->
@@ -445,7 +435,6 @@ $connection->close();
 </td>
                          <td><input type="text" name="amc_amount[]" value="<?php echo htmlspecialchars($item['amc_amount']); ?>"></td>
                          <input type="hidden" name="item_id[]" value="<?php echo $item['id']; ?>">
-
                      </tr>
                     <?php } ?>
                 <?php } else { ?>
@@ -455,7 +444,6 @@ $connection->close();
                 <?php } ?>
             </tbody>
         </table>
-
         <div style="display: flex; justify-content: space-between; margin-top: 20px;">
             <div class="terms-conditions" style="width: 48%;">
                 <h4>Terms and Conditions</h4>
@@ -474,29 +462,24 @@ $connection->close();
                 <p><strong>Net Amount:</strong> <?php echo isset($invoice['net_amount']) ? htmlspecialchars($invoice['net_amount']) : ''; ?></p>
             </div>
         </div>
-
         <div class="footer">
             <p>Thank you for your business!</p>
         </div>
-
         <div class="no-print">
             <!-- <button onclick="window.print()">Print Invoice</button> -->
             <button type="submit">Save Changes</button>
         </div>
     </div>
     </form>
-
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
         var quill = new Quill('#editor', {
             theme: 'snow'
         });
-
         function printInvoice() {
             window.print();
         }
     </script>
-
     <script>
 function updateValue(selectElement) {
     // Get selected value and set it to the corresponding input field
@@ -504,18 +487,15 @@ function updateValue(selectElement) {
     var inputField = selectElement.nextElementSibling;
     inputField.value = selectedValue;
 }
-
 function updateDueDate(selectElement) {
     var selectedValue = parseInt(selectElement.value); // Get the selected value (days)
     var inputField = selectElement.nextElementSibling; // Reference to the AMC value field
     inputField.value = selectedValue; // Set the AMC value field
-
     // Calculate the new due date
     if (!isNaN(selectedValue)) {
         var today = new Date();
         today.setDate(today.getDate() + selectedValue); // Add selected days
         var formattedDate = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-
         // Update the AMC due date field in the same row
         var row = selectElement.closest("tr");
         var dueDateField = row.querySelector("input[name='amc_due_date[]']");
@@ -524,7 +504,6 @@ function updateDueDate(selectElement) {
         }
     }
 }
-
 </script>
 </body>
 </html>
