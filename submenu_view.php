@@ -11,6 +11,7 @@ $user_name = $_GET['name'] ?? null;
 if (!$menu || !$user_id) {
     die("Invalid menu or user ID.");
 }
+
 // Define submenus based on the selected menu (hardcoded for now)
 $submenus = [];
 switch ($menu) {
@@ -57,7 +58,8 @@ switch ($menu) {
             "AMC" => "amc_display.php",
             "Departments" => "department_display.php",
             "Designations" => "designation_display.php",
-            "User" => "display.php"
+            "User" => "display.php",
+            "Expense Tracker" => "expense_tracker_display.php" // Added Expense Tracker
         ];
         break;
     default:
@@ -96,7 +98,7 @@ $stmt->close();
             margin-left: 260px;
             margin-top: 142px;
             overflow: auto;
-            max-height: 455px;
+            max-height: 515px;
         }
         .user-table {
             width: 100%;

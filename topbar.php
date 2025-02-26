@@ -94,7 +94,6 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
 
      <div class="topbar-left">Welcome to the Splendid Infotech CMS !</div>
 
-
      <div class="avatar-dropdown">
    <div class="avatar-button">
      <div class="avatar-circle">
@@ -109,8 +108,6 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
      <a href="logout.php" class="dropdown-item">Logout</a>
    </div>
  </div>
-
-
 
   </header>
 
@@ -254,16 +251,14 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
             <?php if (is_submenu_allowed('Settings', 'User')): ?>
               <li><a href="display.php">👤 User</a></li>
             <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'Expense Tracker')): ?>
+              <li><a href="expense_tracker_display.php">💸 Expense Tracker</a></li>
+            <?php endif; ?>
           </ul>
         </li>
       <?php endif; ?>
     </ul>
   </nav>
-
-
-
-
-
 
   <style>
     /* General Styles */
@@ -388,7 +383,6 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
   font-size: 16px; /* Adjust this value for submenu links */
   padding: 8px 20px; /* Adjust padding if necessary */
 }
-
 
     .icon {
       margin-right: 10px;
@@ -577,7 +571,6 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
   font-size: 14px;
 }
 
-
   </style>
   <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -669,5 +662,7 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
     })
   })
 
-
   </script>
+
+</body>
+</html>

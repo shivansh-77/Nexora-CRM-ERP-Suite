@@ -46,12 +46,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $shipper_row = $shipper_result->fetch_assoc();
     $shipper_id = $shipper_row['id'];
 
-    // Get the next quotation number with QUO prefix
-    $next_quotation_no_result = $connection->query("SELECT CONCAT('QUO', LPAD(COALESCE(MAX(id), 0) + 1, 4, '0')) AS next_quotation_no FROM quotations");
-    $next_quotation_no_row = $next_quotation_no_result->fetch_assoc();
-    $quotation_no = $next_quotation_no_row['next_quotation_no'];
+    // Get the current year and format it to get the last two digits
+  $currentYear = date('y');
 
-    echo $quotation_no; // Output example: QUO
+  // Generate the new quotation number before updating item_ledger_history
+  $last_quotation_query = "
+      SELECT COALESCE(MAX(CAST(SUBSTRING(quotation_no, 8) AS UNSIGNED)), 0) AS last_quotation_no
+      FROM quotations
+      WHERE quotation_no LIKE 'QUO/$currentYear/%'
+  ";
+  $last_quotation_result = $connection->query($last_quotation_query);
+  $last_quotation_no = $last_quotation_result->fetch_assoc();
+
+  // Debug: Print the result of the query
+  // echo "Last Quotation No: " . $last_quotation_no['last_quotation_no'] . "<br>";
+
+  // Calculate the new sequential number
+  $new_sequence_no = $last_quotation_no['last_quotation_no'] + 1;
+
+  // Debug: Print the new sequence number
+  // echo "New Sequence No: " . $new_sequence_no . "<br>";
+
+  // Format the new quotation number
+  $quotation_no = 'QUO/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
+
+  // echo $quotation_no;
+
+
+  // echo $quotation_no;
+
 
     // Insert data into the quotations table
     $insert_quotation = "INSERT INTO quotations (client_name, shipper_location_code,
@@ -425,312 +448,6 @@ tr:hover {
     </style>
 </head>
 <body>
-
-  <?php
-  include("connection.php"); // Include your database connection
-
-  // Handle form submission
-  if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      // Retrieve form data
-      $quotation_date = $_POST['quotation_date'];
-      $client_name = $_POST['client_name'];
-      $shipper_location_code = $_POST['shipper_location_code'];
-      $gross_amount = $_POST['gross_amount'];
-      $discount = $_POST['discount'];
-      $net_amount = $_POST['net_amount'];
-      $base_amount = $_POST['base_amount'];
-
-      // Retrieve IGST, CGST, and SGST values from the form
-      $total_igst = $_POST['total_igst'];
-      $total_cgst = $_POST['total_cgst'];
-      $total_sgst = $_POST['total_sgst'];
-
-      // Retrieve form data for new columns (Client Details)
-      $client_address = $_POST['client_address'];
-      $client_phone = $_POST['client_phone'];
-      $client_city = $_POST['client_city'];
-      $client_state = $_POST['client_state'];
-      $client_country = $_POST['client_country'];
-      $client_pincode = $_POST['client_pincode'];
-      $client_gstno = $_POST['client_gstno'];
-
-      // Retrieve form data for new columns (Shipper Details)
-      $shipper_company_name = $_POST['shipper_company_name'];
-      $shipper_address = $_POST['shipper_address'];
-      $shipper_city = $_POST['shipper_city'];
-      $shipper_state = $_POST['shipper_state'];
-      $shipper_country = $_POST['shipper_country'];
-      $shipper_pincode = $_POST['shipper_pincode'];
-      $shipper_phone = $_POST['shipper_phone'];
-      $shipper_gstno = $_POST['shipper_gstno'];
-
-      // Fetch client_id based on client_name
-      $client_result = $connection->query("SELECT id FROM contact WHERE contact_person = '$client_name'");
-      $client_row = $client_result->fetch_assoc();
-      $client_id = $client_row['id'];
-
-      // Fetch shipper_id based on shipper_location_code
-      $shipper_result = $connection->query("SELECT id FROM location_card WHERE location_code = '$shipper_location_code'");
-      $shipper_row = $shipper_result->fetch_assoc();
-      $shipper_id = $shipper_row['id'];
-
-      // Get the next quotation number with QUO prefix
-      $next_quotation_no_result = $connection->query("SELECT CONCAT('QUO', LPAD(COALESCE(MAX(id), 0) + 1, 4, '0')) AS next_quotation_no FROM quotations");
-      $next_quotation_no_row = $next_quotation_no_result->fetch_assoc();
-      $quotation_no = $next_quotation_no_row['next_quotation_no'];
-
-      echo $quotation_no; // Output example: QUO
-
-      // Insert data into the quotations table
-      $insert_quotation = "INSERT INTO quotations (client_name, shipper_location_code,
-          quotation_no, client_id, shipper_id, gross_amount, discount,
-          net_amount, quotation_date, total_igst, total_cgst, total_sgst, base_amount,
-          client_address, client_phone, client_city, client_state, client_country,
-          client_pincode, client_gstno, shipper_company_name, shipper_address,
-          shipper_city, shipper_state, shipper_country, shipper_pincode,
-          shipper_phone, shipper_gstno
-      ) VALUES ('$client_name', '$shipper_location_code',
-          '$quotation_no', '$client_id', '$shipper_id', '$gross_amount',
-          '$discount', '$net_amount', '$quotation_date', '$total_igst', '$total_cgst',
-          '$total_sgst', '$base_amount', '$client_address', '$client_phone',
-          '$client_city', '$client_state', '$client_country', '$client_pincode',
-          '$client_gstno', '$shipper_company_name', '$shipper_address', '$shipper_city',
-          '$shipper_state', '$shipper_country', '$shipper_pincode', '$shipper_phone',
-          '$shipper_gstno'
-      )";
-
-      if ($connection->query($insert_quotation) === TRUE) {
-          $quotation_id = $connection->insert_id;
-
-          // Retrieve form data
-          $products = $_POST['product_name'];
-          $product_names = $_POST['product_name_actual'];
-          $quantities = $_POST['quantity'];
-          $rates = $_POST['rate'];
-          $gsts = $_POST['product_gst'];
-          $amounts = $_POST['amount'];
-          $units = $_POST['unit'];
-          $unit_values = $_POST['unit_value'];
-          $igsts = $_POST['igst'];
-          $cgsts = $_POST['cgst'];
-          $sgsts = $_POST['sgst'];
-
-          for ($i = 0; $i < count($products); $i++) {
-              $product_code = $products[$i];
-              $product_name = $product_names[$i];
-              $quantity = $quantities[$i];
-              $rate = $rates[$i];
-              $gst = $gsts[$i];
-              $amount = $amounts[$i];
-              $unit = $units[$i];
-              $unit_value = $unit_values[$i];
-              $igst = $igsts[$i];
-              $cgst = $cgsts[$i];
-              $sgst = $sgsts[$i];
-
-              // Insert into quotation_items
-              $insert_item = "INSERT INTO quotation_items (quotation_id, product_name, product_id, quantity, rate, gst, amount, unit, value, igst, cgst, sgst) VALUES
-                  ('$quotation_id', '$product_name', '$product_code', '$quantity', '$rate', '$gst', '$amount', '$unit', '$unit_value', '$igst', '$cgst', '$sgst')";
-              $connection->query($insert_item);
-          }
-
-          echo "<script>alert('Sales Quotation Saved!'); window.location.href='quotation_display.php';</script>";
-      } else {
-          echo "<p>Error saving invoice: " . $connection->error . "</p>";
-      }
-  }
-  ?>
-
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Invoice System</title>
-      <style>
-          body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-              background-color: #2c3e50;
-              margin: 0;
-              padding: 0;
-          }
-          .container {
-              width: 80%;
-              margin: 20px auto;
-              background: white;
-              padding: 30px;
-              border-radius: 8px;
-              box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-          }
-          h2, h3 {
-              text-align: center;
-              color: #2c3e50;
-              margin-bottom: 20px;
-          }
-          label {
-              font-weight: bold;
-              display: block;
-              margin-top: 15px;
-          }
-          input, select {
-              width: 100%;
-              padding: 10px;
-              margin: 5px 0;
-              border: 1px solid #ddd;
-              border-radius: 5px;
-              font-size: 16px;
-              box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-              transition: border-color 0.3s;
-          }
-          input:focus, select:focus {
-              border-color: #2c3e50;
-              outline: none;
-          }
-          table {
-              width: 100%;
-              border-collapse: collapse;
-          }
-          th, td {
-              padding: 10px;
-              text-align: left;
-              border: 1px solid #ccc;
-          }
-          th {
-              background-color: #2c3e50;
-              color: white;
-              text-align: center;
-          }
-          tr:hover {
-              background-color: #f5f5f5;
-          }
-          .remove-button {
-              padding: 5px 10px;
-              background-color: #e74c3c;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-          }
-          button {
-              padding: 10px 15px;
-              background-color: #2c3e50;
-              color: white;
-              border: none;
-              cursor: pointer;
-              margin-top: 15px;
-              border-radius: 5px;
-              font-size: 16px;
-              transition: background-color 0.3s, transform 0.3s;
-          }
-          button:hover {
-              background-color: #34495e;
-              transform: scale(1.05);
-          }
-          .form-section {
-              display: flex;
-              justify-content: space-between;
-              gap: 20px;
-              margin-top: 20px;
-          }
-          .column {
-              width: 48%;
-          }
-          .summary-section {
-              width: 100%;
-              max-width: 400px;
-              margin-left: auto;
-              margin-right: 0;
-              text-align: right;
-          }
-          .summary-row {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 10px;
-          }
-          .input-group {
-              display: flex;
-              justify-content: space-between;
-              width: 100%;
-          }
-          .input-group label {
-              font-size: 14px;
-              font-weight: bold;
-              width: 60%;
-              text-align: right;
-          }
-          .input-group span {
-              font-size: 14px;
-              font-weight: normal;
-              text-align: right;
-              width: 40%;
-              display: inline-block;
-              padding: 0px 0;
-              border-bottom: 1px solid #ccc;
-              margin-top: 15px;
-          }
-          .input-group input {
-              font-size: 14px;
-              font-weight: normal;
-              text-align: right;
-              border: none;
-              border-bottom: 1px solid #ccc;
-              width: 25%;
-              max-width: 60px;
-              margin-left: 10px;
-              padding: 3px;
-              box-shadow: none;
-          }
-          input[type="text"],
-          input[type="number"],
-          select {
-              width: 100%;
-              padding: 10px;
-              border: 1px solid #ccc;
-              border-radius: 4px;
-              box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-              transition: border-color 0.3s ease;
-          }
-          input[type="text"]:focus,
-          input[type="number"]:focus,
-          select:focus {
-              border-color: #3498db;
-          }
-          input[name="igst[]"],
-          input[name="cgst[]"],
-          input[name="sgst[]"] {
-              width: 80%;
-          }
-          td {
-              padding: 10px;
-              text-align: left;
-              border: 1px solid #ccc;
-          }
-          tr:hover {
-              background-color: #f5f5f5;
-          }
-          .close-btn {
-              font-size: 20px;
-              color: #2c3e50;
-              transition: color 0.3s;
-          }
-          .close-btn:hover {
-              color: darkred;
-          }
-          .unit-dropdown ul {
-              list-style-type: none;
-              padding: 0;
-              margin: 0;
-          }
-          .unit-dropdown ul li {
-              padding: 10px;
-              cursor: pointer;
-          }
-          .unit-dropdown ul li:hover {
-              background-color: #f0f0f0;
-          }
-      </style>
-  </head>
-  <body>
 
   <div class="container">
       <a style="text-decoration: none; margin-left: 1137px; padding: 0px; position: relative; top: -34px; transform: translateY(-50%);" href="quotation_display.php" class="close-btn">&times;</a>

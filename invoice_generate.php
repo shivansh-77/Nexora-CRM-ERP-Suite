@@ -47,11 +47,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $shipper_row = $shipper_result->fetch_assoc();
     $shipper_id = $shipper_row['id'];
 
-    // Generate the new invoice number before updating item_ledger_history
-    $last_invoice_query = "SELECT MAX(CAST(SUBSTRING(invoice_no, 4) AS UNSIGNED)) AS last_invoice_no FROM invoices";
-    $last_invoice_result = $connection->query($last_invoice_query);
-    $last_invoice = $last_invoice_result->fetch_assoc();
-    $invoice_no = 'INV' . str_pad($last_invoice['last_invoice_no'] + 1, 4, '0', STR_PAD_LEFT);
+    // Get the current year and format it to get the last two digits
+        $currentYear = date('y');
+
+        // Generate the new invoice number before updating item_ledger_history
+        $last_invoice_query = "SELECT MAX(CAST(SUBSTRING(invoice_no, 8) AS UNSIGNED)) AS last_invoice_no FROM invoices WHERE invoice_no LIKE 'INV/$currentYear/%'";
+        $last_invoice_result = $connection->query($last_invoice_query);
+        $last_invoice = $last_invoice_result->fetch_assoc();
+
+        // Calculate the new sequential number
+        $new_sequence_no = $last_invoice['last_invoice_no'] + 1;
+
+        // Format the new invoice number
+        $invoice_no = 'INV/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
+
 
     // Insert into invoices table
     $insert_invoice = "INSERT INTO invoices (

@@ -31,7 +31,7 @@ mysqli_close($connection);
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #2c3e50;
             margin: 0;
             padding: 0;
             display: flex;
@@ -41,8 +41,9 @@ mysqli_close($connection);
         }
 
         .form-container {
-            width: 80%;
-            max-width: 600px;
+            position: relative; /* Ensure the close button is positioned relative to this container */
+            width: 50%;
+            max-width: 500px;
             background: #fff;
             border-radius: 10px;
             padding: 20px 30px;
@@ -100,10 +101,21 @@ mysqli_close($connection);
         .form-actions button:hover {
             background: #0056b3;
         }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="form-container">
+        <button class="close-button" onclick="window.location.href='lead_for_display.php'">✖</button>
         <h2>Enter Lead For</h2>
         <form method="POST" action="lead_for_add.php">
             <div class="form-group">

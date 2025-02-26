@@ -212,6 +212,12 @@ include('topbar.php');
     #downloadExcel{
       background-color: green;
     }
+                                             
+    td:last-child {
+      text-align: left;
+      width:10px;
+    }
+
 </style>
     <!-- Include SheetJS library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>

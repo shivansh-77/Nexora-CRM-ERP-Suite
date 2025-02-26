@@ -66,11 +66,32 @@ if (isset($_GET['id'])) {
             exit();
         }
 
+        // Get the current year and format it to get the last two digits
+        $currentYear = date('y');
+
         // Generate the new invoice number before updating item_ledger_history
-        $last_invoice_query = "SELECT MAX(CAST(SUBSTRING(invoice_no, 4) AS UNSIGNED)) AS last_invoice_no FROM invoices";
+        $last_invoice_query = "
+            SELECT COALESCE(MAX(CAST(SUBSTRING(invoice_no, 8) AS UNSIGNED)), 0) AS last_invoice_no
+            FROM invoices
+            WHERE invoice_no LIKE 'INV/$currentYear/%'
+        ";
         $last_invoice_result = $connection->query($last_invoice_query);
         $last_invoice = $last_invoice_result->fetch_assoc();
-        $new_invoice_no = 'INV' . str_pad($last_invoice['last_invoice_no'] + 1, 4, '0', STR_PAD_LEFT);
+
+        // Debug: Print the result of the query
+        // echo "Last Invoice No: " . $last_invoice['last_invoice_no'] . "<br>";
+
+        // Calculate the new sequential number
+        $new_sequence_no = $last_invoice['last_invoice_no'] + 1;
+
+        // Debug: Print the new sequence number
+        // echo "New Sequence No: " . $new_sequence_no . "<br>";
+
+        // Format the new invoice number
+        $invoice_no = 'INV/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
+
+        // Debug: Print the new invoice number
+        // echo "New Invoice No: " . $invoice_no . "<br>";
 
         // Prepare the update statements
         $update_invoice_query = "UPDATE invoice_items SET lot_trackingid = ?, expiration_date = ?, amc_code = ?, amc_paid_date = ?, amc_due_date = ?, amc_amount = ? WHERE id = ? AND invoice_id = ?";
@@ -98,7 +119,7 @@ if (isset($_GET['id'])) {
                 }
 
                 // Update item_ledger_history table (only necessary fields)
-                $stmt_ledger->bind_param("ssii", $new_invoice_no, $lot_trackingid, $expiration_date, $item_id);
+                $stmt_ledger->bind_param("ssii", $invoice_no, $lot_trackingid, $expiration_date, $item_id);
                 if (!$stmt_ledger->execute()) {
                     $update_successful = false;
                 }
@@ -109,14 +130,14 @@ if (isset($_GET['id'])) {
             $stmt_ledger->close();
 
             if ($update_successful) {
-              // Update the invoice status to 'Finalized' and populate pending_amount
-$update_status_query = "UPDATE invoices
-                         SET status = 'Finalized',
-                             invoice_no = ?,
-                             pending_amount = net_amount -- Set pending_amount to net_amount
-                         WHERE id = ?";
+                // Update the invoice status to 'Finalized' and populate pending_amount
+                $update_status_query = "UPDATE invoices
+                                        SET status = 'Finalized',
+                                            invoice_no = ?,
+                                            pending_amount = net_amount -- Set pending_amount to net_amount
+                                        WHERE id = ?";
                 $stmt_status = $connection->prepare($update_status_query);
-                $stmt_status->bind_param("si", $new_invoice_no, $invoice_id);
+                $stmt_status->bind_param("si", $invoice_no, $invoice_id);
                 $stmt_status->execute();
                 $stmt_status->close();
 
@@ -141,7 +162,7 @@ $update_status_query = "UPDATE invoices
 
                         $update_amc_invoice_query = "UPDATE invoice_items SET new_amc_invoice_no = ?, new_amc_invoice_gen_date = NOW() WHERE invoice_id = ?";
                         $stmt_update_amc_invoice = $connection->prepare($update_amc_invoice_query);
-                        $stmt_update_amc_invoice->bind_param("si", $new_invoice_no, $ref_invoice_id);
+                        $stmt_update_amc_invoice->bind_param("si", $invoice_no, $ref_invoice_id);
                         $stmt_update_amc_invoice->execute();
                         $stmt_update_amc_invoice->close();
                     }
@@ -167,7 +188,7 @@ $update_status_query = "UPDATE invoices
                     WHERE id = ?";
 
                 $stmt_party_ledger = $connection->prepare($insert_party_ledger_query);
-                $stmt_party_ledger->bind_param("si", $new_invoice_no, $invoice_id);
+                $stmt_party_ledger->bind_param("si", $invoice_no, $invoice_id);
 
                 if ($stmt_party_ledger->execute()) {
                     echo "<script>alert('Record Updated Successfully and Party Ledger Entry Created'); window.location.href='invoice_display.php';</script>";
@@ -213,7 +234,6 @@ $update_status_query = "UPDATE invoices
 } else {
     $update_message = "No ID provided.";
 }
-
 
 ?>
 
@@ -340,11 +360,34 @@ $update_status_query = "UPDATE invoices
           display: block;
           margin-left: -20px;
         }
-    </style>
-</head>
-<body>
-    <form method="post" action="">
-    <div class="invoice-container">
+        .close-button {
+           position: absolute;
+           top: 2px;
+           right: 1px;
+           background: none;
+           border: none;
+           font-size: 14px;
+           cursor: pointer;
+       }
+       .invoice-container {
+           position: relative; /* Add this to ensure the button is positioned correctly */
+       }
+       .scrollable-table-container {
+       width: 100%;
+       overflow-x: auto;
+       margin-top: 20px;
+   }
+   table {
+       width: 100%;
+       border-collapse: collapse;
+       min-width: 1200px; /* Adjust based on your table's content */
+   }
+   </style>
+   </head>
+   <body>
+       <form method="post" action="">
+       <div class="invoice-container">
+           <button type="button" class="close-button" onclick="closeForm()">✖</button>
         <?php if (!empty($update_message)): ?>
             <div class="update-message"><?php echo $update_message; ?></div>
         <?php endif; ?>
