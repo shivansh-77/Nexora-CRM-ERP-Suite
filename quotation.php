@@ -46,35 +46,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $shipper_row = $shipper_result->fetch_assoc();
     $shipper_id = $shipper_row['id'];
 
+    // Fetch fy_code from financial_years table where is_current = 1
+    $fy_result = $connection->query("SELECT fy_code FROM financial_years WHERE is_current = 1 LIMIT 1");
+    $fy_row = $fy_result->fetch_assoc();
+    $fy_code = $fy_row ? $fy_row['fy_code'] : '';
+
     // Get the current year and format it to get the last two digits
-  $currentYear = date('y');
+    $currentYear = date('y');
 
-  // Generate the new quotation number before updating item_ledger_history
-  $last_quotation_query = "
-      SELECT COALESCE(MAX(CAST(SUBSTRING(quotation_no, 8) AS UNSIGNED)), 0) AS last_quotation_no
-      FROM quotations
-      WHERE quotation_no LIKE 'QUO/$currentYear/%'
-  ";
-  $last_quotation_result = $connection->query($last_quotation_query);
-  $last_quotation_no = $last_quotation_result->fetch_assoc();
+    // Generate the new quotation number before updating item_ledger_history
+    $last_quotation_query = "
+        SELECT COALESCE(MAX(CAST(SUBSTRING(quotation_no, 8) AS UNSIGNED)), 0) AS last_quotation_no
+        FROM quotations
+        WHERE quotation_no LIKE 'QUO/$currentYear/%'
+    ";
+    $last_quotation_result = $connection->query($last_quotation_query);
+    $last_quotation_no = $last_quotation_result->fetch_assoc();
 
-  // Debug: Print the result of the query
-  // echo "Last Quotation No: " . $last_quotation_no['last_quotation_no'] . "<br>";
+    // Calculate the new sequential number
+    $new_sequence_no = $last_quotation_no['last_quotation_no'] + 1;
 
-  // Calculate the new sequential number
-  $new_sequence_no = $last_quotation_no['last_quotation_no'] + 1;
-
-  // Debug: Print the new sequence number
-  // echo "New Sequence No: " . $new_sequence_no . "<br>";
-
-  // Format the new quotation number
-  $quotation_no = 'QUO/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
-
-  // echo $quotation_no;
-
-
-  // echo $quotation_no;
-
+    // Format the new quotation number
+    $quotation_no = 'QUO/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
 
     // Insert data into the quotations table
     $insert_quotation = "INSERT INTO quotations (client_name, shipper_location_code,
@@ -83,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         client_address, client_phone, client_city, client_state, client_country,
         client_pincode, client_gstno, shipper_company_name, shipper_address,
         shipper_city, shipper_state, shipper_country, shipper_pincode,
-        shipper_phone, shipper_gstno
+        shipper_phone, shipper_gstno, fy_code
     ) VALUES ('$client_name', '$shipper_location_code',
         '$quotation_no', '$client_id', '$shipper_id', '$gross_amount',
         '$discount', '$net_amount', '$quotation_date', '$total_igst', '$total_cgst',
@@ -91,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         '$client_city', '$client_state', '$client_country', '$client_pincode',
         '$client_gstno', '$shipper_company_name', '$shipper_address', '$shipper_city',
         '$shipper_state', '$shipper_country', '$shipper_pincode', '$shipper_phone',
-        '$shipper_gstno'
+        '$shipper_gstno', '$fy_code'
     )";
 
     if ($connection->query($insert_quotation) === TRUE) {
@@ -135,7 +128,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
-
 
 
 

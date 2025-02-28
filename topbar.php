@@ -77,39 +77,44 @@ if (!empty($fy_codes)) {
 <div class="container">
   <!-- Topbar -->
   <header class="topbar">
-    <?php
-include('connection.php'); // Include database connection
+      <?php
+      include('connection.php'); // Include database connection
 
-// Fetch company logo from database
-$query = "SELECT company_logo FROM company_card WHERE id = 1"; // Change `1` to the correct company ID
-$result = mysqli_query($connection, $query);
-$company = mysqli_fetch_assoc($result);
+      // Fetch company logo from database
+      $query = "SELECT company_logo FROM company_card WHERE id = 1"; // Change `1` to the correct company ID
+      $result = mysqli_query($connection, $query);
+      $company = mysqli_fetch_assoc($result);
 
-// Set logo path (fallback to default if not available)
-$company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'uploads/default_logo.png';
-?>
+      // Set logo path (fallback to default if not available)
+      $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'uploads/default_logo.png';
+      ?>
 
-<!-- Display Dynamic Logo -->
-<img src="<?php echo $company_logo; ?>" alt="Logo" class="sidebar-logo" />
+      <!-- Display Dynamic Logo -->
+      <img src="<?php echo $company_logo; ?>" alt="Logo" class="sidebar-logo" />
 
-     <div class="topbar-left">Welcome to the Splendid Infotech CMS !</div>
+      <div class="topbar-left">Welcome to the Splendid Infotech CMS !</div>
 
-     <div class="avatar-dropdown">
-   <div class="avatar-button">
-     <div class="avatar-circle">
-       <?php echo isset($_SESSION['user_name']) ? strtoupper(substr($_SESSION['user_name'], 0, 1)) : 'U'; ?>
-     </div>
-     <span class="username">
-       <?php echo isset($_SESSION['user_name']) ? htmlspecialchars($_SESSION['user_name']) : 'Username'; ?>
-     </span>
-   </div>
-   <div class="dropdown-menu">
-     <a href="update_form.php?id=<?php echo $_SESSION['user_id']; ?>" class="dropdown-item">Profile</a>
-     <a href="logout.php" class="dropdown-item">Logout</a>
-   </div>
- </div>
+      <!-- Button for Check-in/Check-out -->
+  <button id="checkInOutButton" class="check-in-out-button">CHECK-IN</button>
 
+      <div class="avatar-dropdown">
+          <div class="avatar-button">
+              <div class="avatar-circle">
+                  <?php echo isset($_SESSION['user_name']) ? strtoupper(substr($_SESSION['user_name'], 0, 1)) : 'U'; ?>
+              </div>
+              <span class="username">
+                  <?php echo isset($_SESSION['user_name']) ? htmlspecialchars($_SESSION['user_name']) : 'Username'; ?>
+              </span>
+          </div>
+          <div class="dropdown-menu">
+              <a href="update_form.php?id=<?php echo $_SESSION['user_id']; ?>" class="dropdown-item">Profile</a>
+              <a href="logout.php" class="dropdown-item">Logout</a>
+          </div>
+      </div>
   </header>
+
+</div>
+
 
   <!-- Sidebar -->
   <nav class="sidebar">
@@ -175,44 +180,48 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
       <?php endif; ?>
 
       <?php if (has_allowed_submenus('Sales')): ?>
+    <li>
+      <a href="#"><i class="icon">📊</i>Sales</a>
+      <ul class="submenu">
+        <?php if (is_submenu_allowed('Sales', 'Contacts')): ?>
+          <li><a href="contact_display.php">🧑‍🤝‍🧑 Contacts</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Sales', 'Items')): ?>
+          <li><a href="item_display.php">📦 Items</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Sales', 'Quotation')): ?>
+          <li><a href="quotation_display.php">📋 Quotation</a></li>
+        <?php endif; ?>
         <li>
-          <a href="#"><i class="icon">📊</i>Sales</a>
-          <ul class="submenu">
-            <?php if (is_submenu_allowed('Sales', 'Contacts')): ?>
-              <li><a href="contact_display.php">🧑‍🤝‍🧑 Contacts</a></li>
+          <a href="#">📃 Invoice</a>
+          <ul class="submenu nested">
+            <?php if (is_submenu_allowed('Sales', 'Draft Invoices')): ?>
+              <li><a href="invoice_draft.php">📋📦 Draft Invoices</a></li>
             <?php endif; ?>
-            <?php if (is_submenu_allowed('Sales', 'Items')): ?>
-              <li><a href="item_display.php">📦 Items</a></li>
+            <?php if (is_submenu_allowed('Sales', 'Finalized Invoice')): ?>
+              <li><a href="invoice_display.php">📋✅ Finalized Invoice</a></li>
             <?php endif; ?>
-            <?php if (is_submenu_allowed('Sales', 'Quotation')): ?>
-              <li><a href="quotation_display.php">📋 Quotation</a></li>
-            <?php endif; ?>
-            <li>
-              <a href="#">📃 Invoice</a>
-              <ul class="submenu nested">
-                <?php if (is_submenu_allowed('Sales', 'Draft Invoices')): ?>
-                  <li><a href="invoice_draft.php">📋📦 Draft Invoices</a></li>
-                <?php endif; ?>
-                <?php if (is_submenu_allowed('Sales', 'Finalized Invoice')): ?>
-                  <li><a href="invoice_display.php">📋✅ Finalized Invoice</a></li>
-                <?php endif; ?>
-                <?php if (is_submenu_allowed('Sales', 'Returned Invoice')): ?>
-                  <li><a href="invoice_closed.php">📃⛔ Returned Invoice</a></li>
-                <?php endif; ?>
-              </ul>
-            </li>
-            <?php if (is_submenu_allowed('Sales', 'AMC Dues')): ?>
-              <li><a href="amc_due_display.php">📦 AMC Dues</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Sales', 'Item Ledger Display')): ?>
-              <li><a href="item_ledger_display.php">🚚 Item Ledger Display</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Sales', 'Party Ledger')): ?>
-              <li><a href="party_ledger.php">📜 Party Ledger</a></li>
+            <?php if (is_submenu_allowed('Sales', 'Returned Invoice')): ?>
+              <li><a href="invoice_closed.php">📃⛔ Returned Invoice</a></li>
             <?php endif; ?>
           </ul>
         </li>
-      <?php endif; ?>
+        <?php if (is_submenu_allowed('Sales', 'AMC Dues')): ?>
+          <li><a href="amc_due_display.php">📦 AMC Dues</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Sales', 'Item Ledger Display')): ?>
+          <li><a href="item_ledger_display.php">🚚 Item Ledger Display</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Sales', 'Party Ledger')): ?>
+          <li><a href="party_ledger.php">📜 Party Ledger</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Sales', 'Expenses')): ?>
+          <li><a href="expense_display.php">💸 Expenses</a></li>
+        <?php endif; ?>
+      </ul>
+    </li>
+  <?php endif; ?>
+
 
       <?php if (has_allowed_submenus('Settings')): ?>
         <li>
@@ -248,11 +257,11 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
             <?php if (is_submenu_allowed('Settings', 'Designations')): ?>
               <li><a href="designation_display.php">🎓 Designations</a></li>
             <?php endif; ?>
+            <?php if (is_submenu_allowed('Settings', 'Expense Tracker')): ?>
+              <li><a href="expense_tracker_display.php">💸 Expense Type</a></li>
+            <?php endif; ?>
             <?php if (is_submenu_allowed('Settings', 'User')): ?>
               <li><a href="display.php">👤 User</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'Expense Tracker')): ?>
-              <li><a href="expense_tracker_display.php">💸 Expense Tracker</a></li>
             <?php endif; ?>
           </ul>
         </li>
@@ -571,6 +580,28 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
   font-size: 14px;
 }
 
+.check-in-out-button {
+    padding: 10px 18px;
+    font-size: 16px;
+    color: white;
+    background-color: green;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 4px #999;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+    margin-right: 10px; /* Space between button and avatar */
+}
+
+.check-in-out-button:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 #999;
+}
+
+.check-in-out-button.checked-out {
+    background-color: red;
+}
+
   </style>
   <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -662,7 +693,131 @@ $company_logo = !empty($company['company_logo']) ? $company['company_logo'] : 'u
     })
   })
 
+  // Function to get the user's current location with high accuracy
+  function getLocation(action) {
+      if (navigator.geolocation) {
+          const options = {
+              enableHighAccuracy: true, // Request high-precision location
+              timeout: 15000,          // Timeout after 15 seconds (increase if needed)
+              maximumAge: 0            // Force fresh location data
+          };
+          navigator.geolocation.getCurrentPosition(
+              (position) => showPosition(position, action),
+              handleError,
+              options
+          );
+      } else {
+          alert("Geolocation is not supported by this browser.");
+      }
+  }
+
+  // Function to handle errors from the Geolocation API
+  function handleError(error) {
+      switch (error.code) {
+          case error.PERMISSION_DENIED:
+              alert("User denied the request for Geolocation.");
+              break;
+          case error.POSITION_UNAVAILABLE:
+              alert("Location information is unavailable.");
+              break;
+          case error.TIMEOUT:
+              alert("The request to get user location timed out.");
+              break;
+          default:
+              alert("An unknown error occurred.");
+              break;
+      }
+  }
+
+  // Function to update the form with the user's coordinates and submit the form via AJAX
+  function showPosition(position, action) {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      console.log("Latitude:", latitude);
+      console.log("Longitude:", longitude);
+
+      // Prepare the data to send via AJAX
+      const data = new URLSearchParams();
+      data.append('checkin_latitude', latitude);
+      data.append('checkin_longitude', longitude);
+
+      // Send AJAX request
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", action === 'check-in' ? 'checkin.php' : 'checkout.php', true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+              if (xhr.status === 200) {
+                  const response = JSON.parse(xhr.responseText);
+                  if (response.status === "success") {
+                      // Toggle button state
+                      const button = document.getElementById("checkInOutButton");
+                      if (action === 'check-in') {
+                          button.classList.add('checked-out');
+                          button.textContent = 'CHECK-OUT';
+                      } else {
+                          button.classList.remove('checked-out');
+                          button.textContent = 'CHECK-IN';
+                      }
+
+                      // Show success message
+                      alert(response.message);
+
+                      // Refresh the page only after check-in
+                      if (action === 'check-in') {
+                          location.reload(); // Refresh the page
+                      }
+                  } else {
+                      alert(response.message); // Show error message
+                  }
+              } else {
+                  alert("An error occurred while processing your request.");
+              }
+          }
+      };
+      xhr.send(data);
+  }
+
+  // Function to check the user's session status on page load
+  function checkSessionStatus() {
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", "check_session_status.php", true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+              const response = JSON.parse(xhr.responseText);
+              if (response.status === "success") {
+                  const button = document.getElementById("checkInOutButton");
+                  if (response.session_status === "active") {
+                      button.classList.add('checked-out');
+                      button.textContent = 'CHECK-OUT';
+                  } else {
+                      button.classList.remove('checked-out');
+                      button.textContent = 'CHECK-IN';
+                  }
+              } else {
+                  alert(response.message); // Show error message
+              }
+          }
+      };
+      xhr.send();
+  }
+
+  // Attach the getLocation function to the button click event
+  document.addEventListener("DOMContentLoaded", function () {
+      // Check session status on page load
+      checkSessionStatus();
+
+      const button = document.getElementById("checkInOutButton");
+      button.addEventListener("click", function () {
+          const action = button.classList.contains('checked-out') ? 'check-out' : 'check-in';
+          getLocation(action);
+      });
+  });
   </script>
+
+
 
 </body>
 </html>

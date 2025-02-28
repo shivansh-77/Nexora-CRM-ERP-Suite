@@ -23,7 +23,7 @@ html, body {
     width: calc(100% - 260px);
     margin-left: 260px;
     margin-top: 140px;
-    max-height: 475px; /* Fixed height for the table wrapper */
+    max-height: 575px; /* Fixed height for the table wrapper */
     overflow-y: auto; /* Enable vertical scrolling only inside the table */
     border: 1px solid #ddd;
     background-color: white;
@@ -73,7 +73,7 @@ html, body {
 
         .user-table td {
             text-align: left;
-            padding: 6px;
+            padding: 12px;
         }
 
         .user-table tr:nth-child(even) {
@@ -185,7 +185,7 @@ html, body {
         /* Filter Styles */
         .filter-select {
             padding: 8px;
-            border-radius: 5px;
+            border-radius: 10px;
             border: 1px solid #ddd;
             font-size: 14px;
             margin-right: 10px;
@@ -215,6 +215,7 @@ html, body {
             width: 100%;
             padding: 6px;
             box-sizing: border-box;
+              border-radius: 6px;
         }
 
         #downloadExcel {

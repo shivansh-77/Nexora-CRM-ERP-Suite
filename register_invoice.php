@@ -25,7 +25,7 @@ if (isset($_GET['id'])) {
             client_name, client_address, client_phone, client_city, client_state, client_country,
             client_pincode, client_gstno, shipper_company_name, shipper_address, shipper_city,
             shipper_state, shipper_country, shipper_pincode, shipper_phone, shipper_gstno, client_id,
-            shipper_location_code, shipper_id, base_amount
+            shipper_location_code, shipper_id, base_amount, fy_code
         ) VALUES (
             NULL, '{$quotation['quotation_no']}', $quotation_id, {$quotation['gross_amount']}, {$quotation['discount']},
             {$quotation['net_amount']}, {$quotation['total_igst']}, {$quotation['total_cgst']}, {$quotation['total_sgst']},
@@ -34,7 +34,7 @@ if (isset($_GET['id'])) {
             '{$quotation['client_gstno']}', '{$quotation['shipper_company_name']}', '{$quotation['shipper_address']}',
             '{$quotation['shipper_city']}', '{$quotation['shipper_state']}', '{$quotation['shipper_country']}',
             '{$quotation['shipper_pincode']}', '{$quotation['shipper_phone']}', '{$quotation['shipper_gstno']}',
-            '{$quotation['client_id']}', '{$quotation['shipper_location_code']}', '{$quotation['shipper_id']}', '{$quotation['base_amount']}'
+            '{$quotation['client_id']}', '{$quotation['shipper_location_code']}', '{$quotation['shipper_id']}', '{$quotation['base_amount']}','{$quotation['fy_code']}'
         )";
 
         if ($connection->query($insert_invoice_query) === TRUE) {

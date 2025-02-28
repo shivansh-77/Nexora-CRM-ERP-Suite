@@ -2,21 +2,52 @@
 session_start();
 include('connection.php');
 include('topbar.php');
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php'); // Redirect to login page if not logged in
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Step 1: Fetch Allowed FY Codes
+$fy_codes = [];
+$fy_query = "SELECT fy_code FROM emp_fy_permission WHERE emp_id = ? AND permission = 1";
+$stmt = $connection->prepare($fy_query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $fy_codes[] = $row['fy_code'];
+}
+
+// Step 2: Fetch Draft Invoice Records
+if (!empty($fy_codes)) {
+    // Convert the fy_codes array to a comma-separated string for the SQL IN clause
+    $fy_codes_string = implode("','", $fy_codes);
+    $query = "SELECT * FROM invoices WHERE status = 'Closed' AND fy_code IN ('$fy_codes_string')";
+} else {
+    // If no fy_codes, set query to an empty result
+    $query = "SELECT * FROM invoices WHERE 0"; // Returns no results
+}
+
+$result = mysqli_query($connection, $query);
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
+<head>
     <meta charset="utf-8">
-    <title>Invoice Display</title>
+    <title>Closed Invoices</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
-    html, body {
-        overflow: hidden;
-        height: 100%;
-        margin: 0;
-    }
+        /* Your existing CSS styles */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            margin: 0;
+        }
 
-        /* Table Styles */
         .user-table-wrapper {
             width: calc(100% - 260px); /* Adjust width to account for sidebar */
             margin-left: 260px; /* Align with sidebar */
@@ -51,6 +82,7 @@ include('topbar.php');
 
         .user-table td {
             text-align: left;
+            padding: 7px;
         }
 
         .user-table tr:nth-child(even) {
@@ -62,9 +94,10 @@ include('topbar.php');
         }
 
         .user-table td:last-child {
-            text-align: right; /* Align buttons to the right */
-            width: auto; /* Further reduce the width of the action column */
+            text-align: center; /* Align buttons to the right */
+            width: 10px; /* Further reduce the width of the action column */
             padding: 5px 8px; /* Reduce padding further for action column */
+
         }
 
         .btn-primary, .btn-secondary, .btn-danger, .btn-warning {
@@ -145,68 +178,78 @@ include('topbar.php');
             border: none;
             outline: none;
         }
-        #downloadExcel{
-          background-color: green;
+
+
+        table tr td:nth-last-child(2) {
+            text-align: center;
         }
-    </style>
-  </head>
-  <body>
-    <div class="leadforhead">
-      <h2 class="leadfor">Closed Invoices</h2>
-      <div class="lead-actions">
-        <div class="search-bar">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-          <button class="btn-search" id="searchButton">🔍</button>
-        </div>
-        <button id="downloadExcel" class="btn-primary">
-          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
-        </button>
-      </div>
-    </div>
-    <div class="user-table-wrapper">
-      <table class="user-table">
-           <thead>
-               <tr>
-                   <th>Id</th>
-                   <th>Invoice No</th>
-                   <th>Quotation No</th>
-                   <th>Client Name</th>
-                   <th>Invoice Date</th>
-                   <th>Gross Amount</th>
-                   <th>Discount</th>
-                   <th>Net Amount</th>
-                   <th>Actions</th>
-               </tr>
-           </thead>
-           <tbody>
-               <?php
-               $query = "SELECT id, invoice_no, quotation_no, client_name, invoice_date, gross_amount, discount, net_amount
-                 FROM invoices
-                 WHERE status = 'closed'";
-               $result = mysqli_query($connection, $query);
-               if (mysqli_num_rows($result) > 0) {
-                   while ($row = mysqli_fetch_assoc($result)) {
-                       echo "<tr>
-                               <td>{$row['id']}</td>
-                               <td>{$row['invoice_no']}</td>
-                               <td>{$row['quotation_no']}</td>
-                               <td>{$row['client_name']}</td>
-                               <td>{$row['invoice_date']}</td>
-                               <td>{$row['gross_amount']}</td>
-                               <td>{$row['discount']}</td>
-                               <td>{$row['net_amount']}</td>
-                               <td>
-                                   <button class='btn-secondary' onclick=\"window.location.href='invoice1.php?id={$row['id']}'\">🖨️</button>
-                               </td>
-                           </tr>";
+
+
+        #downloadExcel {
+            background-color: green;
+        }
+
+        </style>
+   </head>
+   <body>
+       <div class="leadforhead">
+           <h2 class="leadfor">Closed Invoices</h2>
+           <div class="lead-actions">
+               <div class="search-bar">
+                   <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+                   <button class="btn-search" id="searchButton">🔍</button>
+               </div>
+               <a href="invoice_generate.php">
+                   <button class="btn-primary" id="openModal" data-mode="add">➕</button>
+               </a>
+               <button id="downloadExcel" class="btn-primary">
+                   <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+               </button>
+           </div>
+       </div>
+
+       <div class="user-table-wrapper">
+           <table class="user-table">
+               <thead>
+                   <tr>
+                       <th>Id</th>
+                       <th>Invoice No</th>
+                       <th>Quotation No</th>
+                       <th>Client Name</th>
+                       <th>Invoice Date</th>
+                       <th>Gross Amount</th>
+                       <th>Discount</th>
+                       <th>Net Amount</th>
+                       <th>Actions</th>
+                   </tr>
+               </thead>
+               <tbody>
+                   <?php
+                   if (mysqli_num_rows($result) > 0) {
+                       while ($row = mysqli_fetch_assoc($result)) {
+                           echo "<tr>
+                                   <td>{$row['id']}</td>
+                                   <td>{$row['invoice_no']}</td>
+                                   <td>{$row['quotation_no']}</td>
+                                   <td>{$row['client_name']}</td>
+                                   <td>{$row['invoice_date']}</td>
+                                   <td>{$row['gross_amount']}</td>
+                                   <td>{$row['discount']}</td>
+                                   <td>{$row['net_amount']}</td>
+                                   <td>
+                                       <button class='btn-secondary' onclick=\"window.location.href='invoice1.php?id={$row['id']}'\">🖨️</button>
+
+                                   </td>
+                               </tr>";
+                       }
+                   } else {
+                       echo "<tr><td colspan='9'>No records found</td></tr>";
                    }
-               } else {
-                   echo "<tr><td colspan='9'>No records found</td></tr>";
-               }
-               ?>
-           </tbody>
-       </table>
-    </div>
+                   ?>
+               </tbody>
+           </table>
+       </div>
+
 
     <script>
       document.addEventListener('DOMContentLoaded', function() {

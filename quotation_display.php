@@ -2,24 +2,51 @@
 session_start();
 include('connection.php');
 include('topbar.php');
- // Start the session at the beginning of the file
-// Check if user is logged in
 
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php'); // Redirect to login page if not logged in
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Step 1: Fetch Allowed FY Codes
+$fy_codes = [];
+$fy_query = "SELECT fy_code FROM emp_fy_permission WHERE emp_id = ? AND permission = 1";
+$stmt = $connection->prepare($fy_query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $fy_codes[] = $row['fy_code'];
+}
+
+// Step 2: Fetch Quotation Records
+if (!empty($fy_codes)) {
+    // Convert the fy_codes array to a comma-separated string for the SQL IN clause
+    $fy_codes_string = implode("','", $fy_codes);
+    $query = "SELECT * FROM quotations WHERE fy_code IN ('$fy_codes_string')";
+} else {
+    // If no fy_codes, set query to an empty result
+    $query = "SELECT * FROM quotations WHERE 0"; // Returns no results
+}
+
+$result = mysqli_query($connection, $query);
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Quotation Display</title>
     <style>
+        /* Your existing CSS styles */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            margin: 0;
+        }
 
-    html, body {
-        overflow: hidden;
-        height: 100%;
-        margin: 0;
-    }
-
-        /* Table Styles */
         .user-table-wrapper {
             width: calc(100% - 260px); /* Adjust width to account for sidebar */
             margin-left: 260px; /* Align with sidebar */
@@ -54,7 +81,7 @@ include('topbar.php');
 
         .user-table td {
             text-align: left;
-              padding: 7px;
+            padding: 7px;
         }
 
         .user-table tr:nth-child(even) {
@@ -150,138 +177,137 @@ include('topbar.php');
             outline: none;
         }
 
-    /* Popup Styles */
-    .popup {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 20px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        z-index: 1001;
-        width: 300px;
-        text-align: center;
-    }
+        /* Popup Styles */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            width: 300px;
+            text-align: center;
+        }
 
-    .popup input {
-        width: 100%;
-        padding: 8px;
-        margin: 10px 0;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-    }
+        .popup input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
 
-    .popup button {
-        padding: 8px 15px;
-        border: none;
-        border-radius: 4px;
-        background-color: #3498db;
-        color: white;
-        cursor: pointer;
-    }
+        .popup button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+        }
 
-    .popup button:hover {
-        background-color: #2980b9;
-    }
+        .popup button:hover {
+            background-color: #2980b9;
+        }
 
-    .overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-    }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
 
-    .paid-button {
-        background-color: green;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 5px;
-        cursor: default; /* Disable pointer events */
-    }
+        .paid-button {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: default; /* Disable pointer events */
+        }
 
-    table tr td:nth-last-child(2) {
-        text-align: center;
-    }
-    #downloadExcel{
-      background-color: green;
-    }
-                                             
-    td:last-child {
-      text-align: left;
-      width:10px;
-    }
+        table tr td:nth-last-child(2) {
+            text-align: center;
+        }
 
-</style>
+        #downloadExcel {
+            background-color: green;
+        }
+
+        td:last-child {
+            text-align: left;
+            width: 10px;
+        }
+    </style>
     <!-- Include SheetJS library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
-  </head>
-  <body>
+</head>
+<body>
     <div class="leadforhead">
-      <h2 class="leadfor">Quotation Display</h2>
-      <div class="lead-actions">
-        <div class="search-bar">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-          <button class="btn-search" id="searchButton">🔍</button>
+        <h2 class="leadfor">Quotation Display</h2>
+        <div class="lead-actions">
+            <div class="search-bar">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+                <button class="btn-search" id="searchButton">🔍</button>
+            </div>
+            <a href="quotation.php">
+                <button class="btn-primary" id="openModal" data-mode="add">➕</button>
+            </a>
+            <button id="downloadExcel" class="btn-primary">
+                <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+            </button>
         </div>
-        <a href="quotation.php">
-          <button class="btn-primary" id="openModal" data-mode="add">➕</button>
-        </a>
-        <button id="downloadExcel" class="btn-primary">
-          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
-        </button>
-      </div>
     </div>
+
     <div class="user-table-wrapper">
-      <table class="user-table" id="quotationTable">
-        <thead>
-          <tr>
-            <th>Id</th>
-            <th>Quotation No</th>
-            <th>Client Name</th>
-            <th>Gross Amount</th>
-            <th>GST Charge</th>
-            <th>Discount</th>
-            <th>Net Amount</th>
-            <th>Quotation Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php
-          $query = "SELECT * FROM quotations"; // Update the query to match your new table name
-          $result = mysqli_query($connection, $query);
-          if (mysqli_num_rows($result) > 0) {
-              while ($row = mysqli_fetch_assoc($result)) {
-                  echo "<tr>
-                          <td>{$row['id']}</td>
-                          <td>{$row['quotation_no']}</td>
-                          <td>{$row['client_name']}</td>
-                          <td>{$row['gross_amount']}</td>
-                          <td>{$row['gst_charge']}</td>
-                          <td>{$row['discount']}</td>
-                          <td>{$row['net_amount']}</td>
-                          <td>{$row['quotation_date']}</td>
-                          <td>
-                            <button class='btn-warning edit-btn  info' onclick=\"window.location.href='quotation_form_display.php?id={$row['id']}'\">📋</button>
-                            <button class='btn-warning edit-btn' onclick=\"window.location.href='quotation_edit2.php?id={$row['id']}'\">✏️</button>
-                            <button class='btn-warning edit-btn' onclick=\"if(confirm('Do you want to make an invoice for this quotation ?')) window.location.href='register_invoice.php?id={$row['id']}'\">📄</button>
-                            <button class='btn-danger' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_quotation.php?id={$row['id']}'; }\">🗑️</button>
-                          </td>
-                      </tr>";
-              }
-          } else {
-              echo "<tr><td colspan='10'>No records found</td></tr>";
-          }
-          ?>
-        </tbody>
-      </table>
+        <table class="user-table" id="quotationTable">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Quotation No</th>
+                    <th>Client Name</th>
+                    <th>Gross Amount</th>
+                    <th>GST Charge</th>
+                    <th>Discount</th>
+                    <th>Net Amount</th>
+                    <th>Quotation Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                if (mysqli_num_rows($result) > 0) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        echo "<tr>
+                                <td>{$row['id']}</td>
+                                <td>{$row['quotation_no']}</td>
+                                <td>{$row['client_name']}</td>
+                                <td>{$row['gross_amount']}</td>
+                                <td>{$row['gst_charge']}</td>
+                                <td>{$row['discount']}</td>
+                                <td>{$row['net_amount']}</td>
+                                <td>{$row['quotation_date']}</td>
+                                <td>
+                                    <button class='btn-warning edit-btn info' onclick=\"window.location.href='quotation_form_display.php?id={$row['id']}'\">📋</button>
+                                    <button class='btn-warning edit-btn' onclick=\"window.location.href='quotation_edit2.php?id={$row['id']}'\">✏️</button>
+                                    <button class='btn-warning edit-btn' onclick=\"if(confirm('Do you want to make an invoice for this quotation?')) window.location.href='register_invoice.php?id={$row['id']}'\">📄</button>
+                                    <button class='btn-danger' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_quotation.php?id={$row['id']}'; }\">🗑️</button>
+                                </td>
+                            </tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='10'>No records found</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
     </div>
 
     <script>

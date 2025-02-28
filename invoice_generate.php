@@ -47,6 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $shipper_row = $shipper_result->fetch_assoc();
     $shipper_id = $shipper_row['id'];
 
+    // Fetch fy_code from financial_years table where is_current = 1
+    $fy_result = $connection->query("SELECT fy_code FROM financial_years WHERE is_current = 1 LIMIT 1");
+    $fy_row = $fy_result->fetch_assoc();
+    $fy_code = $fy_row ? $fy_row['fy_code'] : '';
+
     // Get the current year and format it to get the last two digits
         $currentYear = date('y');
 
@@ -68,13 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         net_amount, invoice_date, total_igst, total_cgst, total_sgst, base_amount, client_address, client_phone,
         client_city, client_state, client_country, client_pincode, client_gstno, shipper_company_name,
         shipper_address, shipper_city, shipper_state, shipper_country, shipper_pincode, shipper_phone,
-        shipper_gstno, status, pending_amount
+        shipper_gstno, status, pending_amount,fy_code
     ) VALUES (
         '$invoice_no', '$client_name', '$shipper_location_code', '$client_id', '$shipper_id', '$gross_amount',
         '$discount', '$net_amount', '$invoice_date', '$total_igst', '$total_cgst', '$total_sgst', '$base_amount',
         '$client_address', '$client_phone', '$client_city', '$client_state', '$client_country', '$client_pincode',
         '$client_gstno', '$shipper_company_name', '$shipper_address', '$shipper_city', '$shipper_state',
-        '$shipper_country', '$shipper_pincode', '$shipper_phone', '$shipper_gstno', 'Finalized', '$net_amount'
+        '$shipper_country', '$shipper_pincode', '$shipper_phone', '$shipper_gstno', 'Finalized', '$net_amount','$fy_code'
     )";
 
     if ($connection->query($insert_invoice) === TRUE) {

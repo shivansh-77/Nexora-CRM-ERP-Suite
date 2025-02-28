@@ -43,7 +43,8 @@ switch ($menu) {
             ],
             "AMC Dues" => "amc_due_display.php",
             "Item Ledger Display" => "item_ledger_display.php",
-            "Party Ledger" => "party_ledger.php"
+            "Party Ledger" => "party_ledger.php",
+            "Expenses" => "expense_display.php" // Added Expenses
         ];
         break;
     case 'Settings':
@@ -59,7 +60,7 @@ switch ($menu) {
             "Departments" => "department_display.php",
             "Designations" => "designation_display.php",
             "User" => "display.php",
-            "Expense Tracker" => "expense_tracker_display.php" // Added Expense Tracker
+            "Expense Tracker" => "expense_tracker_display.php"
         ];
         break;
     default:

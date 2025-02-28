@@ -2,22 +2,54 @@
 session_start();
 include('connection.php');
 include('topbar.php');
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php'); // Redirect to login page if not logged in
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Step 1: Fetch Allowed FY Codes
+$fy_codes = [];
+$fy_query = "SELECT fy_code FROM emp_fy_permission WHERE emp_id = ? AND permission = 1";
+$stmt = $connection->prepare($fy_query);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $fy_codes[] = $row['fy_code'];
+}
+
+// Step 2: Fetch Invoice Records
+if (!empty($fy_codes)) {
+    // Convert the fy_codes array to a comma-separated string for the SQL IN clause
+    $fy_codes_string = implode("','", $fy_codes);
+    $query = "SELECT id, invoice_no, quotation_no, client_name, invoice_date, gross_amount, discount, net_amount, pending_amount
+              FROM invoices
+              WHERE status = 'Finalized' AND fy_code IN ('$fy_codes_string')";
+} else {
+    // If no fy_codes, set query to an empty result
+    $query = "SELECT * FROM invoices WHERE 0"; // Returns no results
+}
+
+$result = mysqli_query($connection, $query);
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Invoice Display</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
+        /* Your existing CSS styles */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            margin: 0;
+        }
 
-    html, body {
-        overflow: hidden;
-        height: 100%;
-        margin: 0;
-    }
-
-        /* Table Styles */
         .user-table-wrapper {
             width: calc(100% - 260px); /* Adjust width to account for sidebar */
             margin-left: 260px; /* Align with sidebar */
@@ -52,7 +84,7 @@ include('topbar.php');
 
         .user-table td {
             text-align: left;
-              padding: 7px;
+            padding: 7px;
         }
 
         .user-table tr:nth-child(even) {
@@ -148,71 +180,72 @@ include('topbar.php');
             outline: none;
         }
 
-    /* Popup Styles */
-    .popup {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 20px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        z-index: 1001;
-        width: 300px;
-        text-align: center;
-    }
+        /* Popup Styles */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            width: 300px;
+            text-align: center;
+        }
 
-    .popup input {
-        width: 100%;
-        padding: 8px;
-        margin: 10px 0;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-    }
+        .popup input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
 
-    .popup button {
-        padding: 8px 15px;
-        border: none;
-        border-radius: 4px;
-        background-color: #3498db;
-        color: white;
-        cursor: pointer;
-    }
+        .popup button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+        }
 
-    .popup button:hover {
-        background-color: #2980b9;
-    }
+        .popup button:hover {
+            background-color: #2980b9;
+        }
 
-    .overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-    }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
 
-    .paid-button {
-        background-color: green;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 5px;
-        cursor: default; /* Disable pointer events */
-    }
+        .paid-button {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: default; /* Disable pointer events */
+        }
 
-    table tr td:nth-last-child(2) {
-        text-align: center;
-    }
-    #downloadExcel{
-      background-color: green;
-    }
-</style>
-  </head>
-  <body>
+        table tr td:nth-last-child(2) {
+            text-align: center;
+        }
+
+        #downloadExcel {
+            background-color: green;
+        }
+    </style>
+</head>
+<body>
     <div class="leadforhead">
         <h2 class="leadfor">Finalized Invoices</h2>
         <div class="lead-actions">
@@ -224,10 +257,11 @@ include('topbar.php');
                 <button class="btn-primary" id="openModal" data-mode="add">➕</button>
             </a>
             <button id="downloadExcel" class="btn-primary">
-              <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+                <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
             </button>
         </div>
     </div>
+
     <div class="user-table-wrapper">
         <table class="user-table">
             <thead>
@@ -245,44 +279,42 @@ include('topbar.php');
                 </tr>
             </thead>
             <tbody>
-    <?php
-    $query = "SELECT id, invoice_no, quotation_no, client_name, invoice_date, gross_amount, discount, net_amount, pending_amount FROM invoices
-              WHERE status = 'Finalized'";
-    $result = mysqli_query($connection, $query);
-    if (mysqli_num_rows($result) > 0) {
-        while ($row = mysqli_fetch_assoc($result)) {
-            $pendingAmount = $row['pending_amount'];
-            $buttonClass = ($pendingAmount == 0) ? 'paid-button' : 'btn-danger';
-            $buttonText = ($pendingAmount == 0) ? 'PAID' : $pendingAmount;
-            $disabled = ($pendingAmount == 0) ? 'disabled' : '';
+                <?php
+                if (mysqli_num_rows($result) > 0) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        $pendingAmount = $row['pending_amount'];
+                        $buttonClass = ($pendingAmount == 0) ? 'paid-button' : 'btn-danger';
+                        $buttonText = ($pendingAmount == 0) ? 'PAID' : $pendingAmount;
+                        $disabled = ($pendingAmount == 0) ? 'disabled' : '';
 
-            echo "<tr>
-                    <td>{$row['id']}</td>
-                    <td>{$row['invoice_no']}</td>
-                    <td>{$row['quotation_no']}</td>
-                    <td>{$row['client_name']}</td>
-                    <td>{$row['invoice_date']}</td>
-                    <td>{$row['gross_amount']}</td>
-                    <td>{$row['discount']}</td>
-                    <td>{$row['net_amount']}</td>
-                    <td>
-                        <button class='{$buttonClass} pending-button' data-id='{$row['id']}' data-net='{$row['net_amount']}' data-pending='{$row['pending_amount']}' {$disabled}>
-                            {$buttonText}
-                        </button>
-                    </td>
-                    <td>
-                        <button class='btn-secondary' onclick=\"window.location.href='invoice1.php?id={$row['id']}'\">🖨️</button>
-                        <button class='btn-secondary' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button>
-                    </td>
-                </tr>";
-        }
-    } else {
-        echo "<tr><td colspan='10'>No records found</td></tr>";
-    }
-    ?>
-</tbody>
-       </table>
+                        echo "<tr>
+                                <td>{$row['id']}</td>
+                                <td>{$row['invoice_no']}</td>
+                                <td>{$row['quotation_no']}</td>
+                                <td>{$row['client_name']}</td>
+                                <td>{$row['invoice_date']}</td>
+                                <td>{$row['gross_amount']}</td>
+                                <td>{$row['discount']}</td>
+                                <td>{$row['net_amount']}</td>
+                                <td>
+                                    <button class='{$buttonClass} pending-button' data-id='{$row['id']}' data-net='{$row['net_amount']}' data-pending='{$row['pending_amount']}' {$disabled}>
+                                        {$buttonText}
+                                    </button>
+                                </td>
+                                <td>
+                                    <button class='btn-secondary' onclick=\"window.location.href='invoice1.php?id={$row['id']}'\">🖨️</button>
+                                    <button class='btn-secondary' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button>
+                                </td>
+                            </tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='10'>No records found</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
     </div>
+
 
     <!-- Popup for Pending Amount -->
     <div class="overlay" id="overlay"></div>
