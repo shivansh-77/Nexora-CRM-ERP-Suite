@@ -94,9 +94,8 @@ if (!empty($fy_codes)) {
 
       <div class="topbar-left">Welcome to the Splendid Infotech CMS !</div>
 
-      <!-- Button for Check-in/Check-out -->
-  <button id="checkInOutButton" class="check-in-out-button">CHECK-IN</button>
 
+      <button id="checkInOutButton" class="check-in-out-button">CHECK-IN</button>
       <div class="avatar-dropdown">
           <div class="avatar-button">
               <div class="avatar-circle">
@@ -108,6 +107,8 @@ if (!empty($fy_codes)) {
           </div>
           <div class="dropdown-menu">
               <a href="update_form.php?id=<?php echo $_SESSION['user_id']; ?>" class="dropdown-item">Profile</a>
+              <a href="user_checkinout_status.php?id=<?php echo $_SESSION['user_id']; ?>" class="dropdown-item">Attendance</a>
+              <a href="user_leave_display.php?id=<?php echo $_SESSION['user_id']; ?>" class="dropdown-item">Apply Leave</a>
               <a href="logout.php" class="dropdown-item">Logout</a>
           </div>
       </div>
@@ -223,49 +224,56 @@ if (!empty($fy_codes)) {
   <?php endif; ?>
 
 
-      <?php if (has_allowed_submenus('Settings')): ?>
-        <li>
-          <a href="#"><i class="icon">⚙️</i>Settings</a>
-          <ul class="submenu">
-            <?php if (is_submenu_allowed('Settings', 'Company Card')): ?>
-              <li><a href="companycard.php">💼 Company Card</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'Location Card')): ?>
-              <li><a href="locationcard_display.php">📌 Location Card</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'Financial Year')): ?>
-              <li><a href="financial_years_display.php">📈 Financial Year</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'GST')): ?>
-              <li><a href="gst_display.php">💰 GST</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'HSN/SAC')): ?>
-              <li><a href="hsn_sac_display.php">💼 HSN/SAC</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'Units')): ?>
-              <li><a href="unit_measurement_display.php">⏳ Units</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'Items')): ?>
-              <li><a href="item_category_display.php">🛒 Items</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'AMC')): ?>
-              <li><a href="amc_display.php">📆 AMC</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'Departments')): ?>
-              <li><a href="department_display.php">🏢 Departments</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'Designations')): ?>
-              <li><a href="designation_display.php">🎓 Designations</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'Expense Tracker')): ?>
-              <li><a href="expense_tracker_display.php">💸 Expense Type</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Settings', 'User')): ?>
-              <li><a href="display.php">👤 User</a></li>
-            <?php endif; ?>
-          </ul>
-        </li>
-      <?php endif; ?>
+  <?php if (has_allowed_submenus('Settings')): ?>
+    <li>
+      <a href="#"><i class="icon">⚙️</i>Settings</a>
+      <ul class="submenu">
+        <?php if (is_submenu_allowed('Settings', 'Company Card')): ?>
+          <li><a href="companycard.php">💼 Company Card</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'Location Card')): ?>
+          <li><a href="locationcard_display.php">📌 Location Card</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'Financial Year')): ?>
+          <li><a href="financial_years_display.php">📈 Financial Year</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'GST')): ?>
+          <li><a href="gst_display.php">💰 GST</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'HSN/SAC')): ?>
+          <li><a href="hsn_sac_display.php">💼 HSN/SAC</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'Units')): ?>
+          <li><a href="unit_measurement_display.php">⏳ Units</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'Items')): ?>
+          <li><a href="item_category_display.php">🛒 Items</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'AMC')): ?>
+          <li><a href="amc_display.php">📆 AMC</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'Departments')): ?>
+          <li><a href="department_display.php">🏢 Departments</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'Designations')): ?>
+          <li><a href="designation_display.php">🎓 Designations</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'Attendance')): ?>
+          <li><a href="attendance_display.php">🕒 Attendance</a></li> <!-- Added Attendance before User -->
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'Leave Applications')): ?>
+          <li><a href="leave_display.php">📅 Leave Requests</a></li> <!-- Added Attendance before User -->
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'User')): ?>
+          <li><a href="display.php">👤 User</a></li>
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'Expense Tracker')): ?>
+          <li><a href="expense_tracker_display.php">💸 Expense Type</a></li>
+        <?php endif; ?>
+      </ul>
+    </li>
+  <?php endif; ?>
+
     </ul>
   </nav>
 
@@ -693,6 +701,7 @@ if (!empty($fy_codes)) {
     })
   })
 
+
   // Function to get the user's current location with high accuracy
   function getLocation(action) {
       if (navigator.geolocation) {
@@ -756,18 +765,18 @@ if (!empty($fy_codes)) {
                       if (action === 'check-in') {
                           button.classList.add('checked-out');
                           button.textContent = 'CHECK-OUT';
+                          startTimer(); // Start the timer
                       } else {
                           button.classList.remove('checked-out');
                           button.textContent = 'CHECK-IN';
+                          stopTimer(); // Stop the timer
                       }
 
                       // Show success message
                       alert(response.message);
 
-                      // Refresh the page only after check-in
-                      if (action === 'check-in') {
-                          location.reload(); // Refresh the page
-                      }
+                      // Refresh the page after both check-in and check-out
+                      location.reload(); // Refresh the page
                   } else {
                       alert(response.message); // Show error message
                   }
@@ -792,6 +801,7 @@ if (!empty($fy_codes)) {
                   if (response.session_status === "active") {
                       button.classList.add('checked-out');
                       button.textContent = 'CHECK-OUT';
+                      startTimer(); // Start the timer if the session is active
                   } else {
                       button.classList.remove('checked-out');
                       button.textContent = 'CHECK-IN';
@@ -812,11 +822,13 @@ if (!empty($fy_codes)) {
       const button = document.getElementById("checkInOutButton");
       button.addEventListener("click", function () {
           const action = button.classList.contains('checked-out') ? 'check-out' : 'check-in';
-          getLocation(action);
+          const confirmationMessage = action === 'check-in' ? 'Do you want to check-in?' : 'Do you want to check-out?';
+          if (confirm(confirmationMessage)) {
+              getLocation(action);
+          }
       });
   });
-  </script>
-
+</script>
 
 
 </body>

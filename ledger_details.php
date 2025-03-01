@@ -31,10 +31,10 @@ if (!empty($party_no)) {
 // Calculate Amount Payable, Amount Paid, and Amount Yet to Be Paid
 $amount_payable = 0;
 $amount_paid = 0;
-if (!empty($party_no)) {
-    // Fetch all amounts for the given party_no
-    $stmt = $connection->prepare("SELECT amount FROM party_ledger WHERE document_no = ?");
-    $stmt->bind_param("i", $party_no);
+if (!empty($party_no) && !empty($document_no)) {
+    // Fetch all amounts for the given party_no and document_no
+    $stmt = $connection->prepare("SELECT amount, document_type FROM party_ledger WHERE party_no = ? AND document_no = ?");
+    $stmt->bind_param("is", $party_no, $document_no);
     $stmt->execute();
     $amount_result = $stmt->get_result();
     $stmt->close();
@@ -42,10 +42,16 @@ if (!empty($party_no)) {
     // Calculate totals
     while ($row = $amount_result->fetch_assoc()) {
         $amount = $row['amount'];
+        $document_type = $row['document_type'];
+
+        // Amount Payable: Sum of negative amounts (regardless of document_type)
         if ($amount < 0) {
-            $amount_payable += abs($amount); // Sum of negative amounts (payable)
-        } else {
-            $amount_paid += $amount; // Sum of positive amounts (paid)
+            $amount_payable += abs($amount);
+        }
+
+        // Amount Paid: Sum of positive amounts (regardless of document_type)
+        if ($amount > 0) {
+            $amount_paid += $amount;
         }
     }
 }

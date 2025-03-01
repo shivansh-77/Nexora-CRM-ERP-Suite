@@ -117,143 +117,149 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contact Form</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background-color: #2c3e50;
-    }
-    .cancel-btn{
-      text-decoration: none;
-    }
-    .form-container {
-      width: 80%;
-      max-width: 1200px; /* To keep the form size manageable */
-      background: #fff;
-      border-radius: 10px;
-      padding: 20px 30px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #2c3e50;
+  }
 
-    .form-container h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 24px;
-      color: #2c3e50;
-    }
+  .cancel-btn {
+    text-decoration: none;
+  }
 
-    .form-group {
-      display: flex;
-      gap: 10px; /* Space between input fields */
-      margin-bottom: 15px;
-      flex-wrap: wrap; /* Ensure fields wrap properly on smaller screens */
-    }
+  .form-container {
+    width: 80%;
+    max-width: 1200px; /* To keep the form size manageable */
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    position: relative; /* Add this line */
+  }
 
-    .form-group.full {
-      display: flex;
-    }
+  .form-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #2c3e50;
+  }
 
-    .form-group label {
-      display: block;
-      font-size: 14px;
-      color: #555;
-      margin-bottom: 5px;
-    }
+  .form-group {
+    display: flex;
+    gap: 10px; /* Space between input fields */
+    margin-bottom: 15px;
+    flex-wrap: wrap; /* Ensure fields wrap properly on smaller screens */
+  }
 
-    .form-group input,
-    .form-group select {
-      flex: 1; /* Each input takes equal space */
-      padding: 12px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      outline: none;
-    }
+  .form-group.full {
+    display: flex;
+  }
 
-    .form-group input:focus,
-    .form-group select:focus {
-      border-color: #007bff;
-    }
+  .form-group label {
+    display: block;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 5px;
+  }
 
-    .form-group.full input {
-      width: 100%;
-    }
+  .form-group input,
+  .form-group select {
+    flex: 1; /* Each input takes equal space */
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+  }
 
-    .form-actions {
-      text-align: center;
-      margin-top: 20px;
-    }
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: #007bff;
+  }
 
-    .form-actions button,
-    .cancel-btn {
-      padding: 10px 20px;
-      font-size: 16px;
-      background: #2c3e50;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+  .form-group.full input {
+    width: 100%;
+  }
 
-    .form-actions button:hover,
-    .cancel-btn:hover {
-      background: #2c3e50;
-    }
+  .form-actions {
+    text-align: center;
+    margin-top: 20px;
+  }
 
-    /* Ensure all fields align perfectly */
-    .form-group > div {
-      flex: 1;
-      display: flex;
-      flex-direction: column; /* Ensure label and input are stacked */
-    }
+  .form-actions button,
+  .cancel-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    background: #2c3e50;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
 
-    .form-group > div:last-child {
-      margin-right: 0; /* Prevent last column from adding unnecessary margin */
-    }
+  .form-actions button:hover,
+  .cancel-btn:hover {
+    background: #2c3e50;
+  }
 
-    .form-group.full {
-      display: flex; /* Keep it flex like other rows */
-      flex-wrap: wrap; /* Allow wrapping for responsiveness */
-      gap: 10px;
-    }
+  /* Ensure all fields align perfectly */
+  .form-group > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column; /* Ensure label and input are stacked */
+  }
 
-    .form-group.full label {
-      width: 100%; /* Ensure the label takes full width */
-      margin-bottom: 5px;
-    }
+  .form-group > div:last-child {
+    margin-right: 0; /* Prevent last column from adding unnecessary margin */
+  }
 
-    .form-group.full input {
-      flex: 1; /* Ensure the input spans the remaining width */
-      padding: 12px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      outline: none;
-    }
+  .form-group.full {
+    display: flex; /* Keep it flex like other rows */
+    flex-wrap: wrap; /* Allow wrapping for responsiveness */
+    gap: 10px;
+  }
 
-    .form-group.full textarea {
-      width: 100%;
-      padding: 12px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      outline: none;
-    }
+  .form-group.full label {
+    width: 100%; /* Ensure the label takes full width */
+    margin-bottom: 5px;
+  }
 
-    .close-btn {
-        position: absolute;
-        top: 3px;
-        right: 100px;
-        font-size: 18px;
-        color: #2c3e50;
-        cursor: pointer;
-        transition: color 0.3s;
-    }
+  .form-group.full input {
+    flex: 1; /* Ensure the input spans the remaining width */
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+  }
 
+  .form-group.full textarea {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 10px; /* Adjust this value as needed */
+    right: 10px; /* Adjust this value as needed */
+    font-size: 24px; /* Increase size for better visibility */
+    color: #2c3e50;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+
+  .close-btn:hover {
+    color: #e74c3c; /* Change color on hover for better UX */
+  }
   </style>
 </head>
 <body>

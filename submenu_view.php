@@ -47,22 +47,25 @@ switch ($menu) {
             "Expenses" => "expense_display.php" // Added Expenses
         ];
         break;
-    case 'Settings':
-        $submenus = [
-            "Company Card" => "companycard.php",
-            "Location Card" => "locationcard_display.php",
-            "Financial Year" => "financial_years_display.php",
-            "GST" => "gst_display.php",
-            "HSN/SAC" => "hsn_sac_display.php",
-            "Units" => "unit_measurement_display.php",
-            "Items" => "item_category_display.php",
-            "AMC" => "amc_display.php",
-            "Departments" => "department_display.php",
-            "Designations" => "designation_display.php",
-            "User" => "display.php",
-            "Expense Tracker" => "expense_tracker_display.php"
-        ];
-        break;
+        case 'Settings':
+      $submenus = [
+          "Company Card" => "companycard.php",
+          "Location Card" => "locationcard_display.php",
+          "Financial Year" => "financial_years_display.php",
+          "GST" => "gst_display.php",
+          "HSN/SAC" => "hsn_sac_display.php",
+          "Units" => "unit_measurement_display.php",
+          "Items" => "item_category_display.php",
+          "AMC" => "amc_display.php",
+          "Departments" => "department_display.php",
+          "Designations" => "designation_display.php",
+          "Attendance" => "attendance_display.php", // Added Attendance before User
+          "Leave Applications" => "leave_display.php",
+          "User" => "display.php", // Corrected the missing comma
+          "Expense Tracker" => "expense_tracker_display.php"
+      ];
+      break;
+
     default:
         $submenus = [];
 }
@@ -257,13 +260,27 @@ $stmt->close();
       const checkboxes = document.querySelectorAll('.user-table tbody input[type="checkbox"][name="submenu_access[]"]');
       const checkAllButton = document.getElementById('checkAll');
       const uncheckAllButton = document.getElementById('uncheckAll');
+      const userId = <?php echo json_encode($user_id); ?>;
 
       function updatePermissions(checkboxes, action) {
         const updates = [];
         checkboxes.forEach(checkbox => {
+          // For user ID 1, don't uncheck already checked boxes
+          if (userId == 1 && action === 'uncheck' && checkbox.checked) {
+            // Skip this checkbox - don't uncheck it
+            return;
+          }
+
           checkbox.checked = action === 'check';
           updates.push(updatePermission(checkbox));
         });
+
+        if (updates.length === 0) {
+          if (userId == 1 && action === 'uncheck') {
+            alert("Permission can't be revoked or unchecked for this user");
+          }
+          return;
+        }
 
         Promise.all(updates)
           .then(results => {
@@ -286,7 +303,6 @@ $stmt->close();
 
       function updatePermission(checkbox) {
         const submenu = checkbox.value;
-        const userId = <?php echo json_encode($user_id); ?>;
         const menuName = <?php echo json_encode($menu); ?>;
         const hasAccess = checkbox.checked ? 1 : 0;
 
@@ -320,6 +336,14 @@ $stmt->close();
 
       checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
+          // Check if this is user ID 1 and trying to uncheck a permission
+          if (userId == 1 && this.checked === false) {
+            // Prevent unchecking by setting back to checked
+            this.checked = true;
+            alert("Permission can't be revoked or unchecked for this user");
+            return;
+          }
+
           this.disabled = true;
           updatePermission(this)
             .then(result => {
@@ -335,6 +359,5 @@ $stmt->close();
       });
     });
     </script>
-
 </body>
 </html>

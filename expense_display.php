@@ -2,21 +2,55 @@
 session_start();
 include('connection.php');
 include('topbar.php');
+
+// Function to get the start and end dates for filters
+function getDateRange($filter) {
+    $today = date('Y-m-d');
+    switch ($filter) {
+        case 'today':
+            return ["start" => $today, "end" => $today];
+        case 'this_month':
+            return ["start" => date('Y-m-01'), "end" => date('Y-m-t')];
+        case 'last_3_months':
+            return ["start" => date('Y-m-01', strtotime('-2 months')), "end" => date('Y-m-t')];
+        case 'this_year':
+            return ["start" => date('Y-01-01'), "end" => date('Y-12-31')];
+        default:
+            return ["start" => null, "end" => null];
+    }
+}
+
+// Handle filter selection
+$filter = $_GET['filter'] ?? null;
+$startDate = $_GET['start_date'] ?? null;
+$endDate = $_GET['end_date'] ?? null;
+
+if ($filter) {
+    $dateRange = getDateRange($filter);
+    $startDate = $dateRange['start'];
+    $endDate = $dateRange['end'];
+}
+
+// Build the query based on filters
+$query = "SELECT * FROM expense";
+if ($startDate && $endDate) {
+    $query .= " WHERE date BETWEEN '$startDate' AND '$endDate'";
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Expense Tracker Display</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
-    html, body {
-        overflow: hidden;
-        height: 100%;
-        margin: 0;
-    }
+        /* Your existing CSS styles */
+        html, body {
+            overflow: hidden;
+            height: 100%;
+            margin: 0;
+        }
 
-        /* Table Styles */
         .user-table-wrapper {
             width: calc(100% - 260px); /* Adjust width to account for sidebar */
             margin-left: 260px; /* Align with sidebar */
@@ -145,113 +179,163 @@ include('topbar.php');
             border: none;
             outline: none;
         }
-        #downloadExcel{
-          background-color: green;
+
+        #downloadExcel {
+            background-color: green;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+        .filter-container select,
+        .filter-container input[type="date"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
         }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="leadforhead">
-      <h2 class="leadfor">Expense Tracker</h2>
-      <div class="lead-actions">
-        <div class="search-bar">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-          <button class="btn-search" id="searchButton">🔍</button>
+        <h2 class="leadfor">Expense Tracker</h2>
+        <div class="lead-actions">
+            <div class="search-bar">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+                <button class="btn-search" id="searchButton">🔍</button>
+            </div>
+            <div class="filter-container">
+      <select id="dateFilter">
+          <option value="all">All</option>
+          <option value="today">Today</option>
+          <option value="this_month">This Month</option>
+          <option value="last_3_months">Last 3 Months</option>
+          <option value="this_year">This Year</option>
+      </select>
+      <input type="date" id="startDate">
+      <input type="date" id="endDate">
+  </div>
+
+            <a href="expense_add.php">
+                <button class="btn-primary" id="openModal" data-mode="add">➕</button>
+            </a>
+            <button id="downloadExcel" class="btn-primary">
+                <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+            </button>
         </div>
-        <a href="expense_add.php">
-          <button class="btn-primary" id="openModal" data-mode="add">➕</button>
-        </a>
-        <button id="downloadExcel" class="btn-primary">
-          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
-        </button>
-      </div>
     </div>
     <div class="user-table-wrapper">
-      <table class="user-table">
-    <thead>
-        <tr>
-            <th>Voucher No.</th>
-            <th>Expense Type</th>
-            <th>Amount</th>
-            <th>Date</th>
-            <th>Remark</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-      <?php
-// Fetch data from the expense_tracker table
-$query = "SELECT * FROM expense"; // Adjust query as necessary for your database
-$result = mysqli_query($connection, $query);
-
-if (mysqli_num_rows($result) > 0) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        echo "<tr>
-                <td>" . ($row['voucher_no'] ?? 'N/A') . "</td>
-                <td>" . ($row['expense_type'] ?? 'N/A') . "</td>
-                <td>" . ($row['amount'] ?? 'N/A') . "</td>
-                <td>" . ($row['date'] ?? 'N/A') . "</td>
-                <td>" . ($row['remark'] ?? 'N/A') . "</td>
-                <td>
-                    <button class='btn-warning edit-btn'
-                        onclick=\"window.location.href='expense_edit.php?id={$row['id']}';\">✏️</button>
-                    <button class='btn-danger'
-                        onclick=\"if(confirm('Are you sure you want to delete this record?')) {
-                            window.location.href='expense_delete.php?id={$row['id']}';
-                        }\">🗑️</button>
-                </td>
-              </tr>";
-    }
-} else {
-    echo "<tr><td colspan='6'>No expense records found</td></tr>";
-}
-?>
-
-    </tbody>
-</table>
-
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Voucher No.</th>
+                    <th>Expense Type</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Remark</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $result = mysqli_query($connection, $query);
+                if (mysqli_num_rows($result) > 0) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        echo "<tr>
+                                <td>{$row['voucher_no']}</td>
+                                <td>{$row['expense_type']}</td>
+                                <td>{$row['amount']}</td>
+                                <td>{$row['date']}</td>
+                                <td>{$row['remark']}</td>
+                                <td>
+                                    <button class='btn-warning edit-btn'
+                                        onclick=\"window.location.href='expense_edit.php?id={$row['id']}';\">✏️</button>
+                                    <button class='btn-danger'
+                                        onclick=\"if(confirm('Are you sure you want to delete this record?')) {
+                                            window.location.href='expense_delete.php?id={$row['id']}';
+                                        }\">🗑️</button>
+                                </td>
+                              </tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='6'>No expense records found</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
     </div>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-          const searchInput = document.getElementById('searchInput');
-          const tableRows = document.querySelectorAll('.user-table tbody tr');
+  document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.getElementById('searchInput');
+      const tableRows = document.querySelectorAll('.user-table tbody tr');
+      const dateFilter = document.getElementById('dateFilter');
+      const startDateInput = document.getElementById('startDate');
+      const endDateInput = document.getElementById('endDate');
 
-          searchInput.addEventListener('keyup', function() {
-              const searchTerm = searchInput.value.toLowerCase();
+      // Search functionality
+      searchInput.addEventListener('keyup', function() {
+          const searchTerm = searchInput.value.toLowerCase();
 
-              tableRows.forEach(function(row) {
-                  const cells = row.querySelectorAll('td');
-                  let rowText = '';
+          tableRows.forEach(function(row) {
+              const cells = row.querySelectorAll('td');
+              let rowText = '';
 
-                  cells.forEach(function(cell) {
-                      rowText += cell.textContent.toLowerCase() + ' '; // Concatenate all cell texts
-                  });
-
-                  // Toggle row visibility based on search term
-                  if (rowText.includes(searchTerm)) {
-                      row.style.display = ''; // Show row
-                  } else {
-                      row.style.display = 'none'; // Hide row
-                  }
+              cells.forEach(function(cell) {
+                  rowText += cell.textContent.toLowerCase() + ' ';
               });
-          });
 
-          // Download Excel
-          const downloadExcelButton = document.getElementById('downloadExcel');
-          downloadExcelButton.addEventListener('click', function() {
-              const table = document.querySelector('.user-table');
-              const clonedTable = table.cloneNode(true);
-              const actionColumn = clonedTable.querySelectorAll('th:last-child, td:last-child');
-
-              actionColumn.forEach(col => col.remove());
-
-              const ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
-              const wb = XLSX.utils.book_new();
-              XLSX.utils.book_append_sheet(wb, ws, 'Expense Tracker');
-              XLSX.writeFile(wb, 'expense_tracker.xlsx');
+              if (rowText.includes(searchTerm)) {
+                  row.style.display = '';
+              } else {
+                  row.style.display = 'none';
+              }
           });
       });
+
+      // Apply filter functionality
+      dateFilter.addEventListener('change', applyFilters);
+      startDateInput.addEventListener('change', applyFilters);
+      endDateInput.addEventListener('change', applyFilters);
+
+      function applyFilters() {
+          const filter = dateFilter.value;
+          const start = startDateInput.value;
+          const end = endDateInput.value;
+
+          let url = 'expense_display.php?';
+
+          if (filter === 'all') {
+              url += 'filter=all';
+          } else if (filter) {
+              url += `filter=${filter}`;
+          } else if (start && end) {
+              url += `start_date=${start}&end_date=${end}`;
+          }
+
+          window.location.href = url;
+      }
+
+      // Download Excel
+      const downloadExcelButton = document.getElementById('downloadExcel');
+      downloadExcelButton.addEventListener('click', function() {
+          const table = document.querySelector('.user-table');
+          const clonedTable = table.cloneNode(true);
+          const actionColumn = clonedTable.querySelectorAll('th:last-child, td:last-child');
+
+          actionColumn.forEach(col => col.remove());
+
+          const ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Expense Tracker');
+          XLSX.writeFile(wb, 'expense_tracker.xlsx');
+      });
+  });
   </script>
-  </body>
+
+</body>
 </html>

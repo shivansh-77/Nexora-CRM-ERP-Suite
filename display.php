@@ -200,6 +200,13 @@ include('topbar.php');
                             <button class='btn-warning edit-btn' onclick=\"window.location.href='permission.php?id={$row['id']}&name=" . urlencode($row['name']) . "'\">
                                 🔑
                             </button>
+
+                            <button class='btn-warning edit-btn' onclick=\"window.location.href='user_checkinout_status.php?id={$row['id']}'\">
+                                🕒
+                            </button>
+                            <button class='btn-warning edit-btn' onclick=\"window.location.href='user_leave_display.php?id={$row['id']}'\">
+                                📅
+                            </button>
                             <button class='btn-danger' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_employee.php?id={$row['id']}'; }\">
                                 🗑️
                             </button>
