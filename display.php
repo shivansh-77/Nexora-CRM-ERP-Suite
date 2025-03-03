@@ -207,7 +207,7 @@ include('topbar.php');
                             <button class='btn-warning edit-btn' onclick=\"window.location.href='user_leave_display.php?id={$row['id']}'\">
                                 📅
                             </button>
-                            <button class='btn-danger' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_employee.php?id={$row['id']}'; }\">
+                            <button class='btn-danger' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_form.php?id={$row['id']}'; }\">
                                 🗑️
                             </button>
                         </td>

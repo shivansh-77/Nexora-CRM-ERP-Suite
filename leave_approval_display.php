@@ -11,11 +11,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_id']) && isset(
     $leave_id = $_POST['leave_id'];
     $status = $_POST['status'];
 
+    // Fetch the leave details from the database
+    $sql = "SELECT user_id, leave_type, total_days FROM user_leave WHERE id = ?";
+    $stmt = $connection->prepare($sql);
+    $stmt->bind_param("i", $leave_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $leave = $result->fetch_assoc();
+
     // Update the leave status in the database
     $sql = "UPDATE user_leave SET status = ?, approved_on = NOW() WHERE id = ?";
     $stmt = $connection->prepare($sql);
     $stmt->bind_param("si", $status, $leave_id);
     $stmt->execute();
+
+    // If the leave is approved, update the user_leave_balance table
+    if ($status === 'Approved') {
+        $user_id = $leave['user_id'];
+        $leave_type = $leave['leave_type'];
+        $total_days = $leave['total_days'];
+
+        // Determine which column to update based on the leave type
+        if ($leave_type === 'Sick Leave') {
+            $column_to_update = 'sick_leaves_taken';
+        } elseif ($leave_type === 'Earned Leave') {
+            $column_to_update = 'earned_leaves_taken';
+        } elseif ($leave_type === 'Half Day') {
+            $column_to_update = 'half_day_leaves_taken';
+        } else {
+            // Handle other leave types if necessary
+            $column_to_update = null;
+        }
+
+        // Update the user_leave_balance table
+        if ($column_to_update) {
+            $sql = "UPDATE user_leave_balance SET $column_to_update = $column_to_update + ? WHERE user_id = ?";
+            $stmt = $connection->prepare($sql);
+            $stmt->bind_param("di", $total_days, $user_id); // Use "d" for decimal values
+            $stmt->execute();
+        }
+    }
 
     // Close the statement
     $stmt->close();
@@ -233,12 +268,11 @@ $result = $stmt->get_result();
                 <button class="btn-search" id="searchButton">🔍</button>
             </div>
             <select id="statusFilter" class="btn-primary">
-              <option value="All" <?php echo ($filter === 'All') ? 'selected' : ''; ?>>All</option>
-              <option value="Pending" <?php echo ($filter === 'Pending') ? 'selected' : ''; ?>>Pending</option>
-              <option value="Approved" <?php echo ($filter === 'Approved') ? 'selected' : ''; ?>>Approved</option>
-              <option value="Rejected" <?php echo ($filter === 'Rejected') ? 'selected' : ''; ?>>Rejected</option>
-          </select>
-          
+                <option value="All" <?php echo ($filter === 'All') ? 'selected' : ''; ?>>All</option>
+                <option value="Pending" <?php echo ($filter === 'Pending') ? 'selected' : ''; ?>>Pending</option>
+                <option value="Approved" <?php echo ($filter === 'Approved') ? 'selected' : ''; ?>>Approved</option>
+                <option value="Rejected" <?php echo ($filter === 'Rejected') ? 'selected' : ''; ?>>Rejected</option>
+            </select>
             <button id="downloadExcel" class="btn-primary">
                 <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
             </button>
@@ -249,7 +283,7 @@ $result = $stmt->get_result();
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>User ID</th>
+                    <th>User Name</th>
                     <th>Leave Type</th>
                     <th>Start Date</th>
                     <th>End Date</th>
@@ -263,7 +297,7 @@ $result = $stmt->get_result();
                 <?php while ($row = $result->fetch_assoc()): ?>
                     <tr>
                         <td><?php echo $row['id']; ?></td>
-                        <td><?php echo $row['user_id']; ?></td>
+                        <td><?php echo $row['user_name']; ?></td>
                         <td><?php echo $row['leave_type']; ?></td>
                         <td><?php echo $row['start_date']; ?></td>
                         <td><?php echo $row['end_date']; ?></td>
@@ -315,23 +349,22 @@ $result = $stmt->get_result();
         }
 
         // Handle filter change
-        // Handle filter change
-    const statusFilter = document.getElementById('statusFilter');
-    statusFilter.addEventListener('change', function() {
-        const filter = this.value;
-        window.location.href = `leave_approval_display.php?filter=${filter}`;
-    });
+        const statusFilter = document.getElementById('statusFilter');
+        statusFilter.addEventListener('change', function() {
+            const filter = this.value;
+            window.location.href = `leave_approval_display.php?filter=${filter}`;
+        });
 
-    // Update the action header based on the selected filter
-    const actionHeader = document.getElementById('actionHeader');
-    const filter = "<?php echo $filter; ?>";
-    if (filter === 'Approved') {
-        actionHeader.textContent = 'Approved on';
-    } else if (filter === 'Rejected') {
-        actionHeader.textContent = 'Rejected on';
-    } else {
-        actionHeader.textContent = 'Action';
-    }
+        // Update the action header based on the selected filter
+        const actionHeader = document.getElementById('actionHeader');
+        const filter = "<?php echo $filter; ?>";
+        if (filter === 'Approved') {
+            actionHeader.textContent = 'Approved on';
+        } else if (filter === 'Rejected') {
+            actionHeader.textContent = 'Rejected on';
+        } else {
+            actionHeader.textContent = 'Action';
+        }
     </script>
 </body>
 </html>

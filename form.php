@@ -27,9 +27,6 @@ $designations = mysqli_query($connection, "SELECT * FROM designation");
       text-decoration: none;
       color: #000;
     }
-    /* .close-btn:hover {
-      color: #f00;
-    } */
     .container {
       position: relative;
     }
@@ -163,8 +160,20 @@ if (isset($_POST['register'])) {
             $result = mysqli_query($connection, $query);
 
             if ($result) {
-                echo "<script>alert('Employee registered successfully!'); window.location.href = 'display.php';</script>";
-                exit();
+                // Get the last inserted user_id
+                $user_id = mysqli_insert_id($connection);
+
+                // Insert a record into user_leave_balance with default values
+                $leaveBalanceQuery = "INSERT INTO user_leave_balance (user_id, name, `D.O.J`, total_sick_leaves, total_earned_leaves, sick_leaves_taken, earned_leaves_taken, half_day_leaves_taken, last_updated)
+                                      VALUES ($user_id, '$name', CURDATE(), 6.00, 0.00, 0.00, 0.00, 0.00, CURDATE())";
+                $leaveBalanceResult = mysqli_query($connection, $leaveBalanceQuery);
+
+                if ($leaveBalanceResult) {
+                    echo "<script>alert('Employee registered successfully!'); window.location.href = 'display.php';</script>";
+                    exit();
+                } else {
+                    echo "Failed to create leave balance record! Error: " . mysqli_error($connection);
+                }
             } else {
                 echo "Data entry failed! Error: " . mysqli_error($connection);
             }

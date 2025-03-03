@@ -8,7 +8,7 @@ include('topbar.php');
 <html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
-    <title>Leave Display</title>
+    <title>Leave Balance Display</title>
     <style>
         /* Table Styles */
         /* Prevent the body from scrolling */
@@ -225,7 +225,7 @@ include('topbar.php');
 </head>
 <body>
     <div class="leadforhead">
-        <h2 class="leadfor">Leave Display</h2>
+        <h2 class="leadfor">Leave Balance Display</h2>
         <div class="lead-actions">
             <input type="text" id="globalSearch" class="filter-input" placeholder="Search all records...">
             <select id="timePeriodFilter" class="filter-select">
@@ -240,7 +240,6 @@ include('topbar.php');
             <button id="downloadExcel" class="btn-primary">
                 <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
             </button>
-            <!-- <a style="text-decoration:None;" href="user_leave_add.php" class="btn-primary">➕</a> -->
         </div>
     </div>
 
@@ -251,54 +250,53 @@ include('topbar.php');
                 <tr>
                     <th><input type="text" id="idFilter" class="filter-input" placeholder="Search ID"></th>
                     <th><input type="text" id="userNameFilter" class="filter-input" placeholder="Search User Name"></th>
-                    <th><input type="text" id="leaveTypeFilter" class="filter-input" placeholder="Search Leave Type"></th>
-                    <th><input type="text" id="startDateFilter" class="filter-input" placeholder="Search Start Date"></th>
-                    <th><input type="text" id="endDateFilter" class="filter-input" placeholder="Search End Date"></th>
-                    <th><input type="text" id="totalDaysFilter" class="filter-input" placeholder="Search Total Days"></th>
-                    <th>
-                        <select id="statusFilter" class="filter-select">
-                            <option value="all">All</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                    </th>
-                    <th><input type="text" id="approverNameFilter" class="filter-input" placeholder="Search Approver Name"></th>
+                    <th><input type="text" id="dojFilter" class="filter-input" placeholder="Search D.O.J"></th>
+                    <th><input type="text" id="totalSickLeavesFilter" class="filter-input" placeholder="Search Total Sick Leaves"></th>
+                    <th><input type="text" id="totalEarnedLeavesFilter" class="filter-input" placeholder="Search Total Earned Leaves"></th>
+                    <th><input type="text" id="sickLeavesTakenFilter" class="filter-input" placeholder="Search Sick Leaves Taken"></th>
+                    <th><input type="text" id="earnedLeavesTakenFilter" class="filter-input" placeholder="Search Earned Leaves Taken"></th>
+                    <th><input type="text" id="halfDayLeavesTakenFilter" class="filter-input" placeholder="Search Half Day Leaves Taken"></th>
+                    <th><input type="text" id="lastUpdatedFilter" class="filter-input" placeholder="Search Last Updated"></th>
+                    <th><input type="text" id="nextUpdateFilter" class="filter-input" placeholder="Search Next Update"></th>
                 </tr>
 
                 <!-- Table Headings Row -->
                 <tr>
                     <th>ID</th>
                     <th>User Name</th>
-                    <th>Leave Type</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Total Days</th>
-                    <th>Status</th>
-                    <th>Approver Name</th>
+                    <th>D.O.J</th>
+                    <th>Total Sick Leaves</th>
+                    <th>Total Earned Leaves</th>
+                    <th>Sick Leaves Taken</th>
+                    <th>Earned Leaves Taken</th>
+                    <th>Half Day Leaves Taken</th>
+                    <th>Last Updated</th>
+                    <th>Next Update</th>
                 </tr>
             </thead>
             <tbody>
                 <?php
-                // Fetch all entries from the user_leave table
-                $query = "SELECT * FROM user_leave";
+                // Fetch all entries from the user_leave_balance table
+                $query = "SELECT * FROM user_leave_balance";
                 $result = mysqli_query($connection, $query);
 
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
                         echo "<tr>
                                 <td>{$row['id']}</td>
-                                <td>{$row['user_name']}</td>
-                                <td>{$row['leave_type']}</td>
-                                <td>{$row['start_date']}</td>
-                                <td>{$row['end_date']}</td>
-                                <td>{$row['total_days']}</td>
-                                <td>{$row['status']}</td>
-                                <td>{$row['approver_name']}</td>
+                                <td>{$row['name']}</td>
+                                <td>{$row['D.O.J']}</td>
+                                <td>{$row['total_sick_leaves']}</td>
+                                <td>{$row['total_earned_leaves']}</td>
+                                <td>{$row['sick_leaves_taken']}</td>
+                                <td>{$row['earned_leaves_taken']}</td>
+                                <td>{$row['half_day_leaves_taken']}</td>
+                                <td>{$row['last_updated']}</td>
+                                <td>{$row['next_update']}</td>
                               </tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='8'>No leave records found</td></tr>";
+                    echo "<tr><td colspan='10'>No leave balance records found</td></tr>";
                 }
                 mysqli_free_result($result);
                 ?>
@@ -321,8 +319,8 @@ include('topbar.php');
             let wb = XLSX.utils.book_new();
             let ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
 
-            XLSX.utils.book_append_sheet(wb, ws, "Leave Records");
-            XLSX.writeFile(wb, "Leave_Records.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "Leave Balance Records");
+            XLSX.writeFile(wb, "Leave_Balance_Records.xlsx");
         });
     </script>
 
@@ -362,12 +360,14 @@ include('topbar.php');
         document.getElementById('globalSearch').addEventListener('input', filterTable);
         document.getElementById('idFilter').addEventListener('input', filterTable);
         document.getElementById('userNameFilter').addEventListener('input', filterTable);
-        document.getElementById('leaveTypeFilter').addEventListener('input', filterTable);
-        document.getElementById('startDateFilter').addEventListener('input', filterTable);
-        document.getElementById('endDateFilter').addEventListener('input', filterTable);
-        document.getElementById('totalDaysFilter').addEventListener('input', filterTable);
-        document.getElementById('statusFilter').addEventListener('change', filterTable);
-        document.getElementById('approverNameFilter').addEventListener('input', filterTable);
+        document.getElementById('dojFilter').addEventListener('input', filterTable);
+        document.getElementById('totalSickLeavesFilter').addEventListener('input', filterTable);
+        document.getElementById('totalEarnedLeavesFilter').addEventListener('input', filterTable);
+        document.getElementById('sickLeavesTakenFilter').addEventListener('input', filterTable);
+        document.getElementById('earnedLeavesTakenFilter').addEventListener('input', filterTable);
+        document.getElementById('halfDayLeavesTakenFilter').addEventListener('input', filterTable);
+        document.getElementById('lastUpdatedFilter').addEventListener('input', filterTable);
+        document.getElementById('nextUpdateFilter').addEventListener('input', filterTable);
         document.getElementById('timePeriodFilter').addEventListener('change', function () {
             const selectedOption = this.value;
             const today = new Date();
@@ -412,48 +412,39 @@ include('topbar.php');
             const searchQuery = document.getElementById('globalSearch').value.toLowerCase();
             const idFilter = document.getElementById('idFilter').value.toLowerCase();
             const userNameFilter = document.getElementById('userNameFilter').value.toLowerCase();
-            const leaveTypeFilter = document.getElementById('leaveTypeFilter').value.toLowerCase();
-            const startDateFilterValue = document.getElementById('startDateFilter').value;
-            const endDateFilterValue = document.getElementById('endDateFilter').value;
-            const totalDaysFilter = document.getElementById('totalDaysFilter').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-            const approverNameFilter = document.getElementById('approverNameFilter').value.toLowerCase();
+            const dojFilter = document.getElementById('dojFilter').value.toLowerCase();
+            const totalSickLeavesFilter = document.getElementById('totalSickLeavesFilter').value.toLowerCase();
+            const totalEarnedLeavesFilter = document.getElementById('totalEarnedLeavesFilter').value.toLowerCase();
+            const sickLeavesTakenFilter = document.getElementById('sickLeavesTakenFilter').value.toLowerCase();
+            const earnedLeavesTakenFilter = document.getElementById('earnedLeavesTakenFilter').value.toLowerCase();
+            const halfDayLeavesTakenFilter = document.getElementById('halfDayLeavesTakenFilter').value.toLowerCase();
+            const lastUpdatedFilter = document.getElementById('lastUpdatedFilter').value.toLowerCase();
+            const nextUpdateFilter = document.getElementById('nextUpdateFilter').value.toLowerCase();
 
             document.querySelectorAll('.user-table tbody tr').forEach(row => {
                 const rowText = row.innerText.toLowerCase();
                 const idText = row.children[0].textContent.trim().toLowerCase();
                 const userNameText = row.children[1].textContent.trim().toLowerCase();
-                const leaveTypeText = row.children[2].textContent.trim().toLowerCase();
-                const startDateText = row.children[3].textContent.trim();
-                const endDateText = row.children[4].textContent.trim();
-                const totalDaysText = row.children[5].textContent.trim().toLowerCase();
-                const statusText = row.children[6].textContent.trim();
-                const approverNameText = row.children[7].textContent.trim().toLowerCase();
-
-                // Parse the start and end dates into Date objects
-                const rowStartDate = parseDate(startDateText);
-                const rowEndDate = parseDate(endDateText);
-                const startDate = parseDate(startDateFilterValue);
-                const endDate = parseDate(endDateFilterValue);
-
-                // Check if the row date falls within the selected range
-                let dateMatch = true;
-                if (startDate && endDate) {
-                    dateMatch = rowStartDate && rowStartDate >= startDate && rowEndDate <= endDate;
-                } else if (startDate) {
-                    dateMatch = rowStartDate && rowStartDate >= startDate;
-                } else if (endDate) {
-                    dateMatch = rowEndDate && rowEndDate <= endDate;
-                }
+                const dojText = row.children[2].textContent.trim().toLowerCase();
+                const totalSickLeavesText = row.children[3].textContent.trim().toLowerCase();
+                const totalEarnedLeavesText = row.children[4].textContent.trim().toLowerCase();
+                const sickLeavesTakenText = row.children[5].textContent.trim().toLowerCase();
+                const earnedLeavesTakenText = row.children[6].textContent.trim().toLowerCase();
+                const halfDayLeavesTakenText = row.children[7].textContent.trim().toLowerCase();
+                const lastUpdatedText = row.children[8].textContent.trim().toLowerCase();
+                const nextUpdateText = row.children[9].textContent.trim().toLowerCase();
 
                 // Check if the row matches all filters
                 let showRow = (idFilter === '' || idText.includes(idFilter)) &&
                               (userNameFilter === '' || userNameText.includes(userNameFilter)) &&
-                              (leaveTypeFilter === '' || leaveTypeText.includes(leaveTypeFilter)) &&
-                              (totalDaysFilter === '' || totalDaysText.includes(totalDaysFilter)) &&
-                              (statusFilter === 'all' || statusText === statusFilter) &&
-                              (approverNameFilter === '' || approverNameText.includes(approverNameFilter)) &&
-                              dateMatch &&
+                              (dojFilter === '' || dojText.includes(dojFilter)) &&
+                              (totalSickLeavesFilter === '' || totalSickLeavesText.includes(totalSickLeavesFilter)) &&
+                              (totalEarnedLeavesFilter === '' || totalEarnedLeavesText.includes(totalEarnedLeavesFilter)) &&
+                              (sickLeavesTakenFilter === '' || sickLeavesTakenText.includes(sickLeavesTakenFilter)) &&
+                              (earnedLeavesTakenFilter === '' || earnedLeavesTakenText.includes(earnedLeavesTakenFilter)) &&
+                              (halfDayLeavesTakenFilter === '' || halfDayLeavesTakenText.includes(halfDayLeavesTakenFilter)) &&
+                              (lastUpdatedFilter === '' || lastUpdatedText.includes(lastUpdatedFilter)) &&
+                              (nextUpdateFilter === '' || nextUpdateText.includes(nextUpdateFilter)) &&
                               (searchQuery === '' || rowText.includes(searchQuery));
 
                 // Show or hide the row based on the filters

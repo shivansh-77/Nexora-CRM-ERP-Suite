@@ -1,6 +1,10 @@
 <?php
 include('connection.php');
 
+// Start the session to get the logged-in user's ID
+session_start();
+$loggedInUserId = $_SESSION['user_id']; // Assuming the logged-in user's ID is stored in the session
+
 // Check if an ID is provided in the URL
 if (isset($_GET['id'])) {
     $userId = $_GET['id'];
@@ -34,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $phone = $_POST['phone'];
     $address = $_POST['address'];
     $designation = $_POST['designation'];
+    $role = isset($_POST['role']) ? $_POST['role'] : $user['role']; // Get role if provided, otherwise use existing role
 
     // Check for empty fields
     if (!empty($name) && !empty($departmentId) && !empty($password) && !empty($cpassword) && !empty($gender) && !empty($email) && !empty($phone) && !empty($designation)) {
@@ -50,8 +55,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             email = '$email',
                             phone = '$phone',
                             address = '$address',
-                            designation = '$designation'
-                            WHERE id = '$userId'";
+                            designation = '$designation'";
+
+            // Include role in the update query if the logged-in user's ID is 1
+            if ($loggedInUserId == 1) {
+                $updateQuery .= ", role = '$role'";
+            }
+
+            $updateQuery .= " WHERE id = '$userId'";
 
             $updateResult = mysqli_query($connection, $updateQuery);
 
@@ -89,9 +100,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       text-decoration: none;
       color: #000;
     }
-    /* .close-btn:hover {
-      color: #f00;
-    } */
     .container {
       position: relative;
     }
@@ -169,6 +177,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <option value="Female" <?php echo ($user['gender'] === 'Female') ? 'selected' : ''; ?>>Female</option>
           </select>
         </div>
+
+        <!-- Role (only visible to the logged-in user with ID 1) -->
+        <?php if ($loggedInUserId == 1): ?>
+          <div class="input_field">
+            <label>Role <span class="required">*</span></label>
+            <select name="role" class="input" required>
+              <option value="Employee" <?php echo ($user['role'] === 'Employee') ? 'selected' : ''; ?>>Employee</option>
+              <option value="Admin" <?php echo ($user['role'] === 'Admin') ? 'selected' : ''; ?>>Admin</option>
+            </select>
+          </div>
+        <?php endif; ?>
       </div>
 
       <div class="btn-container">

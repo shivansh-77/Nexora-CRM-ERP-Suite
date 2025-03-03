@@ -13,44 +13,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $startDate = "$startYear-04-01"; // 1st April of the start year
         $endDate = "$endYear-03-31";    // 31st March of the end year
 
-        // Insert into financial_years table with is_current set to 1 by default
-        $stmt = $connection->prepare("INSERT INTO financial_years (start_date, end_date, fy_code, is_current) VALUES (?, ?, ?, 1)");
-        $stmt->bind_param("sss", $startDate, $endDate, $fycode);
+        // Update the existing entry with is_current set to 1 to 0
+        $updateStmt = $connection->prepare("UPDATE financial_years SET is_current = 0 WHERE is_current = 1");
+        if ($updateStmt->execute()) {
+            // Insert into financial_years table with is_current set to 1 by default
+            $stmt = $connection->prepare("INSERT INTO financial_years (start_date, end_date, fy_code, is_current) VALUES (?, ?, ?, 1)");
+            $stmt->bind_param("sss", $startDate, $endDate, $fycode);
 
-        if ($stmt->execute()) {
-            // Fetch all users from login_db
-            $userQuery = $connection->query("SELECT id, name FROM login_db");
+            if ($stmt->execute()) {
+                // Fetch all users from login_db
+                $userQuery = $connection->query("SELECT id, name FROM login_db");
 
-            // Check if users exist
-            if ($userQuery->num_rows > 0) {
-                // Prepare statement for emp_fy_permission table
-                $permissionStmt = $connection->prepare("INSERT INTO emp_fy_permission (emp_id, emp_name, fy_code, permission) VALUES (?, ?, ?, 'Not Allowed')");
+                // Check if users exist
+                if ($userQuery->num_rows > 0) {
+                    // Prepare statement for emp_fy_permission table
+                    $permissionStmt = $connection->prepare("INSERT INTO emp_fy_permission (emp_id, emp_name, fy_code, permission) VALUES (?, ?, ?, 'Not Allowed')");
 
-                while ($row = $userQuery->fetch_assoc()) {
-                    $empId = $row['id'];
-                    $empName = $row['name'];
+                    while ($row = $userQuery->fetch_assoc()) {
+                        $empId = $row['id'];
+                        $empName = $row['name'];
 
-                    // Bind and execute for each user
-                    $permissionStmt->bind_param("iss", $empId, $empName, $fycode);
-                    $permissionStmt->execute();
+                        // Bind and execute for each user
+                        $permissionStmt->bind_param("iss", $empId, $empName, $fycode);
+                        $permissionStmt->execute();
+                    }
+
+                    $permissionStmt->close();
                 }
 
-                $permissionStmt->close();
+                echo "<script>alert('New Financial Year Added Successfully'); window.location.href='financial_years_display.php';</script>";
+            } else {
+                echo "Error: " . $stmt->error;
             }
 
-            echo "<script>alert('New Financial Year Added Successfully'); window.location.href='financial_years_display.php';</script>";
+            $stmt->close();
         } else {
-            echo "Error: " . $stmt->error;
+            echo "Error: " . $updateStmt->error;
         }
 
-        $stmt->close();
+        $updateStmt->close();
     } else {
-        echo "<script>alert('Error:The Financial years must be consecutive for example 2024 - 2025');</script>";
+        echo "<script>alert('Error: The Financial years must be consecutive for example 2024 - 2025');</script>";
     }
 }
 
 $connection->close();
 ?>
+
 
 
 
