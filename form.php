@@ -164,8 +164,8 @@ if (isset($_POST['register'])) {
                 $user_id = mysqli_insert_id($connection);
 
                 // Insert a record into user_leave_balance with default values
-                $leaveBalanceQuery = "INSERT INTO user_leave_balance (user_id, name, `D.O.J`, total_sick_leaves, total_earned_leaves, sick_leaves_taken, earned_leaves_taken, half_day_leaves_taken, last_updated)
-                                      VALUES ($user_id, '$name', CURDATE(), 6.00, 0.00, 0.00, 0.00, 0.00, CURDATE())";
+                $leaveBalanceQuery = "INSERT INTO user_leave_balance (user_id, name, `D.O.J`, total_sick_leaves, total_earned_leaves, sick_leaves_taken, earned_leaves_taken, half_day_leaves_taken, last_updated, next_update)
+                          VALUES ($user_id, '$name', CURDATE(), 6.00, 0.00, 0.00, 0.00, 0.00, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 MONTH))";
                 $leaveBalanceResult = mysqli_query($connection, $leaveBalanceQuery);
 
                 if ($leaveBalanceResult) {
