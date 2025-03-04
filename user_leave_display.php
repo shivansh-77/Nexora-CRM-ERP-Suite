@@ -3,13 +3,17 @@ session_start();
 include('connection.php');
 include('topbar.php');
 
-// Fetch user ID from the URL
-$user_id = isset($_GET['id']) ? $_GET['id'] : null;
+// Fetch user ID and name from the URL
+$user_id = $_GET['id'] ?? null;
+$user_name = $_GET['name'] ?? null;
 
-if (!$user_id) {
-    die("Invalid user ID.");
+if (!$user_id || !$user_name) {
+    die("Invalid user ID or name.");
 }
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -232,7 +236,7 @@ if (!$user_id) {
 </head>
 <body>
     <div class="leadforhead">
-        <h2 class="leadfor">Leave Display</h2>
+        <h2 >Leave Display:<?php echo htmlspecialchars($user_name); ?></h2>
         <div class="lead-actions">
             <input type="text" id="globalSearch" class="filter-input" placeholder="Search all records...">
             <select id="timePeriodFilter" class="filter-select">

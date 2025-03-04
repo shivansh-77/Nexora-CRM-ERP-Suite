@@ -1,7 +1,57 @@
 <?php
-session_start();
+session_start(); // Start the session
+
+// Include your database connection file
 include('connection.php');
-include('topbar.php');
+
+// Check if the user is logged in (optional, depending on your use case)
+if (!isset($_SESSION['user_id'])) {
+    echo "<script>alert('User not logged in.'); window.location.href='login.php';</script>";
+    exit;
+}
+
+// Get today's date
+$today = new DateTime();
+$todayFormatted = $today->format('Y-m-d');
+
+// Fetch all users from the user_leave_balance table
+$leaveBalanceQuery = "SELECT * FROM user_leave_balance";
+$stmt = $connection->prepare($leaveBalanceQuery);
+$stmt->execute();
+$leaveBalanceResult = $stmt->get_result();
+
+if ($leaveBalanceResult && mysqli_num_rows($leaveBalanceResult) > 0) {
+    while ($leaveBalance = $leaveBalanceResult->fetch_assoc()) {
+        $user_id = $leaveBalance['user_id'];
+        $next_update = $leaveBalance['next_update'];
+
+        // Check if today's date matches or exceeds the next_update date
+        if ($today >= new DateTime($next_update)) {
+            // Add 1.5 earned leaves
+            $earnedLeavesToAdd = 1.5;
+            $newTotalEarnedLeaves = $leaveBalance['total_earned_leaves'] + $earnedLeavesToAdd;
+
+            // Calculate the next_update date (next month's same date)
+            $nextUpdateDate = new DateTime($next_update);
+            $nextUpdateDate->modify('+1 month');
+            $nextUpdateDateFormatted = $nextUpdateDate->format('Y-m-d');
+
+            // Update the user_leave_balance table for this user
+            $updateQuery = "UPDATE user_leave_balance
+                            SET total_earned_leaves = ?, last_updated = ?, next_update = ?
+                            WHERE user_id = ?";
+            $stmt = $connection->prepare($updateQuery);
+            $stmt->bind_param("dssi", $newTotalEarnedLeaves, $todayFormatted, $nextUpdateDateFormatted, $user_id);
+            $stmt->execute();
+        }
+    }
+} else {
+    echo "<script>alert('No users found in leave balance table.'); window.location.href='user_leave_display.php';</script>";
+    exit;
+}
+
+// Optionally, you can redirect or display a success message
+echo "<script>alert('Leave balances updated for all users.'); window.location.href='user_leave_display.php';</script>";
 ?>
 
 <!DOCTYPE html>
@@ -220,6 +270,16 @@ include('topbar.php');
 
         #downloadExcel {
             background-color: green;
+        }
+
+
+        .highlight-red {
+          background-color: #ffcccc; /* Light red background */
+          }
+
+               /* Ensure the highlight remains on hover */
+          .highlight-red:hover {
+          background-color: #ffcccc !important; /* Force the same color on hover */
         }
     </style>
 </head>

@@ -61,6 +61,7 @@ switch ($menu) {
           "Designations" => "designation_display.php",
           "Attendance" => "attendance_display.php", // Added Attendance before User
           "Leave Applications" => "leave_display.php",
+            "Leave Balance" => "leave_balance_display.php",
           "User" => "display.php", // Corrected the missing comma
           "Expense Tracker" => "expense_tracker_display.php"
       ];

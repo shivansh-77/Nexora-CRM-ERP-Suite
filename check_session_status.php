@@ -1,21 +1,18 @@
 <?php
-session_start(); // Start the session to access session variables
+session_start();
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     die(json_encode(["status" => "error", "message" => "User not logged in."]));
 }
 
-include("connection.php"); // Include the database connection file
+include("connection.php");
 
-// Get user ID from session
 $user_id = $_SESSION['user_id'];
 
-// Check if the user has an active session
 $stmt = $connection->prepare("
-    SELECT session_status
+    SELECT session_status, checkin_time
     FROM attendance
-    WHERE user_id = ? AND session_status = 'active'
+    WHERE user_id = ?
     ORDER BY checkin_time DESC
     LIMIT 1
 ");
@@ -24,14 +21,17 @@ if (!$stmt) {
 }
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$stmt->store_result();
+$result = $stmt->get_result();
 
-if ($stmt->num_rows > 0) {
-    $stmt->bind_result($session_status);
-    $stmt->fetch();
-    echo json_encode(["status" => "success", "session_status" => $session_status]);
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    echo json_encode([
+        "status" => "success",
+        "session_status" => $row['session_status'],
+        "start_time" => $row['checkin_time']
+    ]);
 } else {
-    echo json_encode(["status" => "success", "session_status" => "inactive"]);
+    echo json_encode(["status" => "error", "message" => "No session found."]);
 }
 
 $stmt->close();

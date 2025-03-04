@@ -127,7 +127,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($stmt->execute()) {
             // echo "<script>alert('Leave request submitted successfully'); window.location.href='user_leave_display.php?id=" . $_SESSION['user_id'] . "';</script>";
-           echo "<script>alert('Leave request submitted successfully'); window.location.href='user_leave_display.php?id=" . $_SESSION['user_id'] . "';</script>";
+            echo "<script>
+      alert('Leave request submitted successfully');
+      window.location.href='user_leave_display.php?id=" . $_SESSION['user_id'] . "&name=" . urlencode($_SESSION['user_name']) . "';
+  </script>";
+
         } else {
             echo "<script>alert('Error submitting leave request: " . $stmt->error . "'); window.location.href='user_leave_add.php';</script>";
         }
@@ -253,7 +257,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <!-- Leave Application Form -->
 <div class="container">
-    <a href="user_leave_display.php?id=<?php echo $_SESSION['user_id']; ?>" class="cross-btn">✖</a> <!-- Cross button redirects to user_leave_display.php -->
+  <a href="user_leave_display.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" class="cross-btn">✖</a>
+
     <div class="title">
         <span>Apply for Leave</span>
     </div>

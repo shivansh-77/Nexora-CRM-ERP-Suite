@@ -107,8 +107,8 @@ if (!empty($fy_codes)) {
           </div>
           <div class="dropdown-menu">
               <a href="update_form.php?id=<?php echo $_SESSION['user_id']; ?>" class="dropdown-item">Profile</a>
-              <a href="user_checkinout_status.php?id=<?php echo $_SESSION['user_id']; ?>" class="dropdown-item">Attendance</a>
-              <a href="user_leave_display.php?id=<?php echo $_SESSION['user_id']; ?>" class="dropdown-item">Apply Leave</a>
+              <a href="user_checkinout_status.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" class="dropdown-item">Attendance</a>
+              <a href="user_leave_display.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" class="dropdown-item">Apply Leave</a>
               <a href="logout.php" class="dropdown-item">Logout</a>
           </div>
       </div>
@@ -263,6 +263,9 @@ if (!empty($fy_codes)) {
         <?php endif; ?>
         <?php if (is_submenu_allowed('Settings', 'Leave Applications')): ?>
           <li><a href="leave_display.php">📅 Leave Requests</a></li> <!-- Added Attendance before User -->
+        <?php endif; ?>
+        <?php if (is_submenu_allowed('Settings', 'Leave Balance')): ?>
+          <li><a href="leave_balance_display.php">📅 Leave Balance</a></li> <!-- Added Attendance before User -->
         <?php endif; ?>
         <?php if (is_submenu_allowed('Settings', 'User')): ?>
           <li><a href="display.php">👤 User</a></li>
@@ -798,10 +801,19 @@ if (!empty($fy_codes)) {
               const response = JSON.parse(xhr.responseText);
               if (response.status === "success") {
                   const button = document.getElementById("checkInOutButton");
+                  const currentTime = new Date();
+                  const startTime = new Date(response.start_time);
+                  const timeDifference = (currentTime - startTime) / (1000 * 60 * 60); // Difference in hours
+
                   if (response.session_status === "active") {
-                      button.classList.add('checked-out');
-                      button.textContent = 'CHECK-OUT';
-                      startTimer(); // Start the timer if the session is active
+                      if (timeDifference >= 12) {
+                          // Automatically check out if the session exceeds 12 hours
+                          checkOutSession();
+                      } else {
+                          button.classList.add('checked-out');
+                          button.textContent = 'CHECK-OUT';
+                          startTimer(); // Start the timer if the session is active
+                      }
                   } else {
                       button.classList.remove('checked-out');
                       button.textContent = 'CHECK-IN';
@@ -813,6 +825,28 @@ if (!empty($fy_codes)) {
       };
       xhr.send();
   }
+
+  // Function to automatically check out the user
+function checkOutSession() {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "checkout.php", true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.status === "success") {
+                const button = document.getElementById("checkInOutButton");
+                button.classList.remove('checked-out');
+                button.textContent = 'CHECK-IN';
+                alert("Automatically checked out due to inactivity.");
+            } else {
+                alert(response.message); // Show error message
+            }
+        }
+    };
+    xhr.send('auto=true'); // Send the auto parameter
+}
+
 
   // Attach the getLocation function to the button click event
   document.addEventListener("DOMContentLoaded", function () {
@@ -828,6 +862,7 @@ if (!empty($fy_codes)) {
           }
       });
   });
+
 </script>
 
 

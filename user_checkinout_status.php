@@ -3,13 +3,17 @@ session_start();
 include('connection.php');
 include('topbar.php');
 
-// Fetch user ID from the URL
+// Fetch user ID and name from the URL
 $user_id = $_GET['id'] ?? null;
+$user_name = $_GET['name'] ?? null;
 
-if (!$user_id) {
-    die("Invalid user ID.");
+if (!$user_id || !$user_name) {
+    die("Invalid user ID or name.");
 }
 ?>
+
+
+
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
@@ -228,11 +232,21 @@ html, body {
         #downloadExcel {
             background-color: green;
         }
+        <style>
+
+    .highlight-red {
+        background-color: #ffcccc !important; /* Light red background */
+    }
+
+    /* Ensure the highlight remains on hover */
+
+    }
+
     </style>
   </head>
   <body>
     <div class="leadforhead">
-      <h2 class="leadfor">User Check-in/Check-out Status</h2>
+      <h2 class="leadfor">Checkin-out Status:<?php echo htmlspecialchars($user_name); ?></h2>
       <div class="lead-actions">
         <input type="text" id="globalSearch" class="filter-input" placeholder="Search all records...">
         <select id="timePeriodFilter" class="filter-select">
@@ -278,39 +292,69 @@ html, body {
             <th>User Name</th>
             <th>Checkin Time</th>
             <th>Checkout Time</th>
-            <th>Session Duration</th>
+            <th>Working Hours</th>
             <th>Session Status</th>
             <th>Location</th>
           </tr>
         </thead>
         <tbody>
-          <?php
-          include('connection.php');
-          $query = "SELECT * FROM attendance WHERE user_id = ?";
-          $stmt = $connection->prepare($query);
-          $stmt->bind_param("i", $user_id);
-          $stmt->execute();
-          $result = $stmt->get_result();
+    <?php
+    include('connection.php');
 
-          if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-              echo "<tr>
-                      <td>{$row['id']}</td>
-                      <td>{$row['user_id']}</td>
-                      <td>{$row['user_name']}</td>
-                      <td>{$row['checkin_time']}</td>
-                      <td>{$row['checkout_time']}</td>
-                      <td>{$row['session_duration']}</td>
-                      <td>{$row['session_status']}</td>
-                      <td>{$row['checkin_location']}</td>
-                    </tr>";
+    // Use a prepared statement to safely include user_id in the query
+    $query = "SELECT * FROM attendance WHERE user_id = ?";
+    $stmt = mysqli_prepare($connection, $query);
+
+    // Assuming you have a user_id to bind, replace `$user_id` with the actual user ID variable
+
+    mysqli_stmt_bind_param($stmt, "i", $user_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if (mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            // Initialize variables for highlighting
+            $highlightClass = '';
+            $sessionStatusStyle = '';
+            $sessionDurationStyle = '';
+
+            // Check if session_status is "Auto Checkout"
+            if ($row['session_status'] === 'Auto Checkout') {
+                $highlightClass = 'highlight-red'; // Highlight entire row
+                $sessionStatusStyle = 'color: red; font-weight:bold;'; // Make "Auto Checkout" red
             }
-          } else {
-            echo "<tr><td colspan='9'>No records found</td></tr>";
-          }
-          $stmt->close();
-          ?>
-        </tbody>
+            // Check if session_status is "ended" and session_duration is less than 8 hours
+            elseif ($row['session_status'] === 'ended') {
+                // Convert session_duration (time) to total hours
+                $sessionDuration = $row['session_duration'];
+                if (!empty($sessionDuration)) {
+                    list($hours, $minutes, $seconds) = explode(':', $sessionDuration);
+                    $totalHours = (float) $hours + ((float) $minutes / 60) + ((float) $seconds / 3600);
+
+                    if ($totalHours < 8) {
+                        $sessionDurationStyle = 'color: red; font-weight: bold;'; // Make session_duration dark bold red
+                    }
+                }
+            }
+
+            echo "<tr class='$highlightClass'>
+                    <td>{$row['id']}</td>
+                    <td>{$row['user_id']}</td>
+                    <td>{$row['user_name']}</td>
+                    <td>{$row['checkin_time']}</td>
+                    <td>{$row['checkout_time']}</td>
+                    <td style='$sessionDurationStyle'>{$row['session_duration']}</td>
+                    <td style='$sessionStatusStyle'>{$row['session_status']}</td>
+                    <td>{$row['checkin_location']}</td>
+
+                  </tr>";
+        }
+    } else {
+        echo "<tr><td colspan='9'>No records found</td></tr>";
+    }
+    ?>
+</tbody>
+
       </table>
     </div>
 

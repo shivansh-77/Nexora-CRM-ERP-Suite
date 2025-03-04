@@ -222,6 +222,16 @@ html, body {
         #downloadExcel {
             background-color: green;
         }
+
+
+        .highlight-red {
+           background-color: #ffcccc; /* Light red background */
+       }
+
+       /* Ensure the highlight remains on hover */
+       .highlight-red:hover {
+           background-color: #ffcccc !important; /* Force the same color on hover */
+       }
     </style>
   </head>
   <body>
@@ -243,66 +253,97 @@ html, body {
         </button>
       </div>
     </div>
-
     <div class="user-table-wrapper">
-      <table class="user-table" id="attendanceTable">
-        <thead>
-          <!-- Filter Row -->
-          <tr>
-            <th><input type="text" id="idFilter" class="filter-input" placeholder="Search ID"></th>
-            <th><input type="text" id="userIdFilter" class="filter-input" placeholder="Search User ID"></th>
-            <th><input type="text" id="userNameFilter" class="filter-input" placeholder="Search User Name"></th>
-            <th><input type="text" id="loginTimeFilter" class="filter-input" placeholder="Search Checkin Time"></th>
-            <th><input type="text" id="logoutTimeFilter" class="filter-input" placeholder="Search Checkout Time"></th>
-            <th><input type="text" id="sessionDurationFilter" class="filter-input" placeholder="Search Duration"></th>
-            <th>
-              <select id="sessionStatusFilter" class="filter-select">
-                <option value="all">All</option>
-                <option value="active">Active</option>
-                <option value="ended">Ended</option>
-              </select>
-            </th>
-            <th><input type="text" id="locationFilter" class="filter-input" placeholder="Search Location"></th>
-          </tr>
+        <table class="user-table" id="attendanceTable">
+            <thead>
+                <!-- Filter Row -->
+                <tr>
+                    <th><input type="text" id="idFilter" class="filter-input" placeholder="Search ID"></th>
+                    <th><input type="text" id="userIdFilter" class="filter-input" placeholder="Search User ID"></th>
+                    <th><input type="text" id="userNameFilter" class="filter-input" placeholder="Search User Name"></th>
+                    <th><input type="text" id="loginTimeFilter" class="filter-input" placeholder="Search Checkin Time"></th>
+                    <th><input type="text" id="logoutTimeFilter" class="filter-input" placeholder="Search Checkout Time"></th>
+                    <th><input type="text" id="sessionDurationFilter" class="filter-input" placeholder="Search Duration"></th>
+                    <th>
+                        <select id="sessionStatusFilter" class="filter-select">
+                            <option value="all">All</option>
+                            <option value="active">Active</option>
+                            <option value="ended">Ended</option>
+                            <option value="Auto Checkout">Auto Checkout</option>
+                        </select>
+                    </th>
+                    <th><input type="text" id="locationFilter" class="filter-input" placeholder="Search Location"></th>
+                    <th></th>
+                </tr>
 
-          <!-- Table Headings Row -->
-          <tr>
-            <th>ID</th>
-            <th>User ID</th>
-            <th>User Name</th>
-            <th>Checkin Time</th>
-            <th>Checkout Time</th>
-            <th>Session Duration</th>
-            <th>Session Status</th>
-            <th>Location</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php
-          include('connection.php');
-          $query = "SELECT * FROM attendance";
-          $result = mysqli_query($connection, $query);
+                <!-- Table Headings Row -->
+                <tr>
+                    <th>ID</th>
+                    <th>User ID</th>
+                    <th>User Name</th>
+                    <th>Checkin Time</th>
+                    <th>Checkout Time</th>
+                    <th>Working Hours</th>
+                    <th>Session Status</th>
+                    <th>Location</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                include('connection.php');
+                $query = "SELECT * FROM attendance";
+                $result = mysqli_query($connection, $query);
 
-          if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-              echo "<tr>
-                      <td>{$row['id']}</td>
-                      <td>{$row['user_id']}</td>
-                      <td>{$row['user_name']}</td>
-                      <td>{$row['checkin_time']}</td>
-                      <td>{$row['checkout_time']}</td>
-                      <td>{$row['session_duration']}</td>
-                      <td>{$row['session_status']}</td>
-                      <td>{$row['checkin_location']}</td>
-                    </tr>";
-            }
-          } else {
-            echo "<tr><td colspan='9'>No records found</td></tr>";
-          }
-          ?>
-        </tbody>
-      </table>
+                if (mysqli_num_rows($result) > 0) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        // Initialize variables for highlighting
+                        $highlightClass = '';
+                        $sessionStatusStyle = '';
+                        $sessionDurationStyle = '';
+
+                        // Check if session_status is "Auto Checkout"
+                        if ($row['session_status'] === 'Auto Checkout') {
+                            $highlightClass = 'highlight-red'; // Highlight entire row
+                            $sessionStatusStyle = 'color: red; font-weight:bold;'; // Make "Auto Checkout" red
+                        }
+                        // Check if session_status is "ended" and session_duration is less than 8 hours
+                        elseif ($row['session_status'] === 'ended') {
+                            // Convert session_duration (time) to total hours
+                            $sessionDuration = $row['session_duration'];
+                            if (!empty($sessionDuration)) {
+                                list($hours, $minutes, $seconds) = explode(':', $sessionDuration);
+                                $totalHours = (float) $hours + ((float) $minutes / 60) + ((float) $seconds / 3600);
+
+                                if ($totalHours < 8) {
+                                    $sessionDurationStyle = 'color: red; font-weight: bold;'; // Make session_duration dark bold red
+                                }
+                            }
+                        }
+
+                        echo "<tr class='$highlightClass'>
+                                <td>{$row['id']}</td>
+                                <td>{$row['user_id']}</td>
+                                <td>{$row['user_name']}</td>
+                                <td>{$row['checkin_time']}</td>
+                                <td>{$row['checkout_time']}</td>
+                                <td style='$sessionDurationStyle'>{$row['session_duration']}</td>
+                                <td style='$sessionStatusStyle'>{$row['session_status']}</td>
+                                <td>{$row['checkin_location']}</td>
+                                <td>
+                                    <a href='attendance_update.php?id={$row['id']}' class='btn-warning edit-btn' style='text-decoration:None;'>✏️</a>
+                                </td>
+                              </tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='9'>No records found</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
     </div>
+
+
 
     <!-- Include SheetJS library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -325,7 +366,7 @@ html, body {
     </script>
 
     <script>
-    
+
     document.addEventListener('DOMContentLoaded', function () {
         // Helper function to format date as YYYY-MM-DD
         function formatDate(date) {

@@ -11,18 +11,21 @@ include("connection.php"); // Include the database connection file
 // Get user ID from session
 $user_id = $_SESSION['user_id'];
 
+// Determine the session status based on the request
+$session_status = isset($_POST['auto']) && $_POST['auto'] === 'true' ? 'Auto Checkout' : 'ended';
+
 // Update the database to set checkout time, session status, and session duration
 $stmt = $connection->prepare("
     UPDATE attendance
     SET checkout_time = NOW(),
-        session_status = 'ended',
+        session_status = ?,
         session_duration = TIMEDIFF(NOW(), checkin_time)
     WHERE user_id = ? AND session_status = 'active'
 ");
 if (!$stmt) {
     die(json_encode(["status" => "error", "message" => "Database error: " . $connection->error]));
 }
-$stmt->bind_param("i", $user_id);
+$stmt->bind_param("si", $session_status, $user_id);
 
 // Execute the statement
 if ($stmt->execute()) {
