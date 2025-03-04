@@ -1,99 +1,39 @@
 <?php
-session_start(); // Start the session
-
-// Include your database connection file
+session_start();
 include('connection.php');
-
-// Check if the user is logged in (optional, depending on your use case)
-if (!isset($_SESSION['user_id'])) {
-    echo "<script>alert('User not logged in.'); window.location.href='login.php';</script>";
-    exit;
-}
-
-// Get today's date
-$today = new DateTime();
-$todayFormatted = $today->format('Y-m-d');
-
-// Fetch all users from the user_leave_balance table
-$leaveBalanceQuery = "SELECT * FROM user_leave_balance";
-$stmt = $connection->prepare($leaveBalanceQuery);
-$stmt->execute();
-$leaveBalanceResult = $stmt->get_result();
-
-if ($leaveBalanceResult && mysqli_num_rows($leaveBalanceResult) > 0) {
-    while ($leaveBalance = $leaveBalanceResult->fetch_assoc()) {
-        $user_id = $leaveBalance['user_id'];
-        $next_update = $leaveBalance['next_update'];
-
-        // Check if today's date matches or exceeds the next_update date
-        if ($today >= new DateTime($next_update)) {
-            // Add 1.5 earned leaves
-            $earnedLeavesToAdd = 1.5;
-            $newTotalEarnedLeaves = $leaveBalance['total_earned_leaves'] + $earnedLeavesToAdd;
-
-            // Calculate the next_update date (next month's same date)
-            $nextUpdateDate = new DateTime($next_update);
-            $nextUpdateDate->modify('+1 month');
-            $nextUpdateDateFormatted = $nextUpdateDate->format('Y-m-d');
-
-            // Update the user_leave_balance table for this user
-            $updateQuery = "UPDATE user_leave_balance
-                            SET total_earned_leaves = ?, last_updated = ?, next_update = ?
-                            WHERE user_id = ?";
-            $stmt = $connection->prepare($updateQuery);
-            $stmt->bind_param("dssi", $newTotalEarnedLeaves, $todayFormatted, $nextUpdateDateFormatted, $user_id);
-            $stmt->execute();
-        }
-    }
-} else {
-    echo "<script>alert('No users found in leave balance table.'); window.location.href='user_leave_display.php';</script>";
-    exit;
-}
-
-// Optionally, you can redirect or display a success message
-echo "<script>alert('Leave balances updated for all users.'); window.location.href='user_leave_display.php';</script>";
+include('topbar.php');
 ?>
-
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
-    <title>Leave Balance Display</title>
+    <title>Leave Balances</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
+    html, body {
+        overflow: hidden;
+        height: 100%;
+        margin: 0;
+    }
+
         /* Table Styles */
-        /* Prevent the body from scrolling */
-        html, body {
-            overflow: hidden;
-            height: 100%;
-            margin: 0;
-        }
-
-        /* Table Wrapper with Scroll */
         .user-table-wrapper {
-            width: calc(100% - 260px);
-            margin-left: 260px;
-            margin-top: 140px;
-            max-height: 525px; /* Fixed height for the table wrapper */
-            overflow-y: auto; /* Enable vertical scrolling only inside the table */
-            border: 1px solid #ddd;
-            background-color: white;
-        }
-
-        /* Ensure the main content fits within the viewport */
-        .main-content {
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            width: calc(100% - 260px); /* Adjust width to account for sidebar */
+            margin-left: 260px; /* Align with sidebar */
+            margin-top: 140px; /* Adjust for topbar */
+            overflow: auto; /* Enable scrolling for the table */
+            max-height: 475px; /* Set max height for vertical scrolling */
         }
 
         .user-table {
-            width: 100%;
+            width: 100%; /* Full width */
             border-collapse: collapse;
-            table-layout: auto;
+            background-color: white;
+            table-layout: auto; /* Allow columns to adjust based on content */
         }
 
         .user-table th, .user-table td {
+            padding: 10px; /* Increased padding for wider columns */
             border: 1px solid #ddd;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -101,29 +41,16 @@ echo "<script>alert('Leave balances updated for all users.'); window.location.hr
         }
 
         .user-table th {
-            padding: 12px;
-            background-color: #2c3e50;
+            background-color: #2c3e50; /* Header color */
             color: white;
             text-align: left;
-            position: sticky; /* Make header sticky */
-            z-index: 1; /* Ensure header stays above table rows */
-        }
-
-        /* Make the filter row sticky */
-        .user-table thead tr:first-child th {
-            top: 0; /* Stick to the top of the table wrapper */
-            background-color: #2c3e50; /* Match the header background */
-        }
-
-        /* Make the table headings row sticky */
-        .user-table thead tr:nth-child(2) th {
-            top: 50px; /* Stick below the filter row */
-            background-color: #2c3e50; /* Match the header background */
+            position: sticky; /* Make headers sticky */
+            top: 0; /* Stick to the top */
+            z-index: 1; /* Ensure headers are above the body */
         }
 
         .user-table td {
             text-align: left;
-            padding: 12px;
         }
 
         .user-table tr:nth-child(even) {
@@ -135,36 +62,24 @@ echo "<script>alert('Leave balances updated for all users.'); window.location.hr
         }
 
         .user-table td:last-child {
-            text-align: center;
-            width: auto;
-            white-space: nowrap;
+            text-align: right; /* Align buttons to the right */
+            width: auto; /* Further reduce the width of the action column */
+            padding: 5px 8px; /* Reduce padding further for action column */
         }
 
-        .user-table td:hover {
-            white-space: normal;
-            overflow: visible;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Button Styles */
-        .btn-primary, .btn-secondary, .btn-danger, .btn-warning, .btn-info {
+        .btn-primary, .btn-secondary, .btn-danger, .btn-warning {
             padding: 5px 10px;
             border: none;
             border-radius: 4px;
             color: white;
             cursor: pointer;
-            margin-right: 5px;
-            display: inline-block;
         }
 
-        .btn-primary { background-color: green; }
+        .btn-primary { background-color: #a5f3fc; }
         .btn-secondary { background-color: #6c757d; }
         .btn-danger { background-color: #dc3545; }
         .btn-warning { background-color: #3498db; color: black; }
-        .btn-info { background-color: #17a2b8; }
 
-        /* Header Styles */
         .leadforhead {
             position: fixed;
             width: 79%;
@@ -177,7 +92,7 @@ echo "<script>alert('Leave balances updated for all users.'); window.location.hr
             padding: 0 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             z-index: 1000;
-            overflow: visible;
+            overflow: visible; /* Ensure child elements are visible */
             margin-left: 260px;
             margin-top: 80px;
         }
@@ -208,7 +123,6 @@ echo "<script>alert('Leave balances updated for all users.'); window.location.hr
             font-size: 14px;
         }
 
-        /* Search Bar Styles */
         .search-bar {
             display: flex;
             align-items: center;
@@ -231,96 +145,31 @@ echo "<script>alert('Leave balances updated for all users.'); window.location.hr
             border: none;
             outline: none;
         }
-
-        /* Filter Styles */
-        .filter-select {
-            padding: 8px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            margin-right: 10px;
-        }
-
-        .date-filter {
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            margin-right: 10px;
-        }
-
-        .glow-red {
-            color: red;
-            font-weight: bold;
-            text-shadow: 0px 0px 0px red;
-        }
-
-        .date-filter {
-            width: 120px; /* Adjust width */
-            padding: 7px; /* Smaller padding */
-            font-size: 14px; /* Reduce font size */
-        }
-
-        .filter-input, .filter-select {
-            width: 100%;
-            padding: 6px;
-            box-sizing: border-box;
-            border-radius: 6px;
-        }
-
-        #downloadExcel {
-            background-color: green;
-        }
-
-
-        .highlight-red {
-          background-color: #ffcccc; /* Light red background */
-          }
-
-               /* Ensure the highlight remains on hover */
-          .highlight-red:hover {
-          background-color: #ffcccc !important; /* Force the same color on hover */
+        #downloadExcel{
+          background-color: green;
         }
     </style>
 </head>
 <body>
+    <!-- Header and Actions -->
     <div class="leadforhead">
-        <h2 class="leadfor">Leave Balance Display</h2>
+        <h2>Leave Balances</h2>
         <div class="lead-actions">
-            <input type="text" id="globalSearch" class="filter-input" placeholder="Search all records...">
-            <select id="timePeriodFilter" class="filter-select">
-                <option value="all">All</option>
-                <option value="today" selected>Today</option>
-                <option value="thisMonth">This Month</option>
-                <option value="lastMonth">Last Month</option>
-                <option value="last3Months">Last 3 Months</option>
-            </select>
-            <input type="date" id="startDateFilter" class="date-filter">
-            <input type="date" id="endDateFilter" class="date-filter">
+            <div class="search-bar">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+                <button class="btn-search" id="searchButton">🔍</button>
+            </div>
+            <button id="updateLeaveBalance" class="btn-primary">Update</button>
             <button id="downloadExcel" class="btn-primary">
-                <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+                <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px;">
             </button>
         </div>
     </div>
 
+    <!-- Leave Balance Table -->
     <div class="user-table-wrapper">
-        <table class="user-table" id="leaveTable">
+        <table class="user-table">
             <thead>
-                <!-- Filter Row -->
-                <tr>
-                    <th><input type="text" id="idFilter" class="filter-input" placeholder="Search ID"></th>
-                    <th><input type="text" id="userNameFilter" class="filter-input" placeholder="Search User Name"></th>
-                    <th><input type="text" id="dojFilter" class="filter-input" placeholder="Search D.O.J"></th>
-                    <th><input type="text" id="totalSickLeavesFilter" class="filter-input" placeholder="Search Total Sick Leaves"></th>
-                    <th><input type="text" id="totalEarnedLeavesFilter" class="filter-input" placeholder="Search Total Earned Leaves"></th>
-                    <th><input type="text" id="sickLeavesTakenFilter" class="filter-input" placeholder="Search Sick Leaves Taken"></th>
-                    <th><input type="text" id="earnedLeavesTakenFilter" class="filter-input" placeholder="Search Earned Leaves Taken"></th>
-                    <th><input type="text" id="halfDayLeavesTakenFilter" class="filter-input" placeholder="Search Half Day Leaves Taken"></th>
-                    <th><input type="text" id="lastUpdatedFilter" class="filter-input" placeholder="Search Last Updated"></th>
-                    <th><input type="text" id="nextUpdateFilter" class="filter-input" placeholder="Search Next Update"></th>
-                </tr>
-
-                <!-- Table Headings Row -->
                 <tr>
                     <th>ID</th>
                     <th>User Name</th>
@@ -336,182 +185,87 @@ echo "<script>alert('Leave balances updated for all users.'); window.location.hr
             </thead>
             <tbody>
                 <?php
-                // Fetch all entries from the user_leave_balance table
-                $query = "SELECT * FROM user_leave_balance";
-                $result = mysqli_query($connection, $query);
+                // Fetch data from the user_leave_balance table
+                $leaveQuery = "SELECT * FROM user_leave_balance";
+                $leaveResult = mysqli_query($connection, $leaveQuery);
 
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
+                if (mysqli_num_rows($leaveResult) > 0) {
+                    while ($leaveRow = mysqli_fetch_assoc($leaveResult)) {
                         echo "<tr>
-                                <td>{$row['id']}</td>
-                                <td>{$row['name']}</td>
-                                <td>{$row['D.O.J']}</td>
-                                <td>{$row['total_sick_leaves']}</td>
-                                <td>{$row['total_earned_leaves']}</td>
-                                <td>{$row['sick_leaves_taken']}</td>
-                                <td>{$row['earned_leaves_taken']}</td>
-                                <td>{$row['half_day_leaves_taken']}</td>
-                                <td>{$row['last_updated']}</td>
-                                <td>{$row['next_update']}</td>
+                                <td>{$leaveRow['id']}</td>
+                                <td>{$leaveRow['name']}</td>
+                                <td>{$leaveRow['D.O.J']}</td>
+                                <td>{$leaveRow['total_sick_leaves']}</td>
+                                <td>{$leaveRow['total_earned_leaves']}</td>
+                                <td>{$leaveRow['sick_leaves_taken']}</td>
+                                <td>{$leaveRow['earned_leaves_taken']}</td>
+                                <td>{$leaveRow['half_day_leaves_taken']}</td>
+                                <td>{$leaveRow['last_updated']}</td>
+                                <td>{$leaveRow['next_update']}</td>
                               </tr>";
                     }
                 } else {
                     echo "<tr><td colspan='10'>No leave balance records found</td></tr>";
                 }
-                mysqli_free_result($result);
                 ?>
             </tbody>
         </table>
     </div>
 
-    <!-- Include SheetJS library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- JavaScript for Functionality -->
     <script>
-        document.getElementById("downloadExcel").addEventListener("click", function() {
-            let table = document.getElementById("leaveTable");
+        document.addEventListener('DOMContentLoaded', function () {
+            // Search Functionality
+            const searchInput = document.getElementById('searchInput');
+            const tableRows = document.querySelectorAll('.user-table tbody tr');
 
-            // Clone the table to avoid modifying the original
-            let clonedTable = table.cloneNode(true);
+            searchInput.addEventListener('keyup', function () {
+                const searchTerm = searchInput.value.toLowerCase();
 
-            // Remove the first row (filter row)
-            clonedTable.deleteRow(0);
+                tableRows.forEach(function (row) {
+                    const cells = row.querySelectorAll('td');
+                    let rowText = '';
 
-            let wb = XLSX.utils.book_new();
-            let ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
+                    cells.forEach(function (cell) {
+                        rowText += cell.textContent.toLowerCase() + ' ';
+                    });
 
-            XLSX.utils.book_append_sheet(wb, ws, "Leave Balance Records");
-            XLSX.writeFile(wb, "Leave_Balance_Records.xlsx");
-        });
-    </script>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Helper function to parse dates in DD-MM-YYYY or DD/MM/YYYY format
-        function parseDate(dateString) {
-            if (!dateString) return null;
-            const parts = dateString.split(/[-\/]/); // Split by '-' or '/'
-            if (parts.length === 3) {
-                const day = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1; // Months are 0-based in JavaScript
-                const year = parseInt(parts[2], 10);
-                return new Date(year, month, day);
-            }
-            return null;
-        }
-
-        // Set default date filters to the first and last day of the current month
-        const today = new Date();
-        const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-        const formattedFirstDay = `${firstDayOfThisMonth.getFullYear()}-${String(firstDayOfThisMonth.getMonth() + 1).padStart(2, '0')}-${String(firstDayOfThisMonth.getDate()).padStart(2, '0')}`;
-        const formattedLastDay = `${lastDayOfThisMonth.getFullYear()}-${String(lastDayOfThisMonth.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfThisMonth.getDate()).padStart(2, '0')}`;
-
-        document.getElementById('startDateFilter').value = formattedFirstDay;
-        document.getElementById('endDateFilter').value = formattedLastDay;
-
-        // Set default option for timePeriodFilter to "This Month"
-        document.getElementById('timePeriodFilter').value = 'thisMonth';
-
-        // Call filterTable to apply the default filters
-        filterTable();
-
-        // Add event listeners for all filter inputs
-        document.getElementById('globalSearch').addEventListener('input', filterTable);
-        document.getElementById('idFilter').addEventListener('input', filterTable);
-        document.getElementById('userNameFilter').addEventListener('input', filterTable);
-        document.getElementById('dojFilter').addEventListener('input', filterTable);
-        document.getElementById('totalSickLeavesFilter').addEventListener('input', filterTable);
-        document.getElementById('totalEarnedLeavesFilter').addEventListener('input', filterTable);
-        document.getElementById('sickLeavesTakenFilter').addEventListener('input', filterTable);
-        document.getElementById('earnedLeavesTakenFilter').addEventListener('input', filterTable);
-        document.getElementById('halfDayLeavesTakenFilter').addEventListener('input', filterTable);
-        document.getElementById('lastUpdatedFilter').addEventListener('input', filterTable);
-        document.getElementById('nextUpdateFilter').addEventListener('input', filterTable);
-        document.getElementById('timePeriodFilter').addEventListener('change', function () {
-            const selectedOption = this.value;
-            const today = new Date();
-            const startDateFilter = document.getElementById('startDateFilter');
-            const endDateFilter = document.getElementById('endDateFilter');
-
-            switch (selectedOption) {
-                case 'today':
-                    const formattedToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                    startDateFilter.value = formattedToday;
-                    endDateFilter.value = formattedToday;
-                    break;
-                case 'lastMonth':
-                    const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                    const lastDayOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-                    startDateFilter.value = `${firstDayOfLastMonth.getFullYear()}-${String(firstDayOfLastMonth.getMonth() + 1).padStart(2, '0')}-${String(firstDayOfLastMonth.getDate()).padStart(2, '0')}`;
-                    endDateFilter.value = `${lastDayOfLastMonth.getFullYear()}-${String(lastDayOfLastMonth.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfLastMonth.getDate()).padStart(2, '0')}`;
-                    break;
-                case 'last3Months':
-                    const firstDayOfLast3Months = new Date(today.getFullYear(), today.getMonth() - 3, 1);
-                    const lastDayOfLast3Months = new Date(today.getFullYear(), today.getMonth(), 0);
-                    startDateFilter.value = `${firstDayOfLast3Months.getFullYear()}-${String(firstDayOfLast3Months.getMonth() + 1).padStart(2, '0')}-${String(firstDayOfLast3Months.getDate()).padStart(2, '0')}`;
-                    endDateFilter.value = `${lastDayOfLast3Months.getFullYear()}-${String(lastDayOfLast3Months.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfLast3Months.getDate()).padStart(2, '0')}`;
-                    break;
-                case 'thisMonth':
-                    const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                    const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                    startDateFilter.value = `${firstDayOfThisMonth.getFullYear()}-${String(firstDayOfThisMonth.getMonth() + 1).padStart(2, '0')}-${String(firstDayOfThisMonth.getDate()).padStart(2, '0')}`;
-                    endDateFilter.value = `${lastDayOfThisMonth.getFullYear()}-${String(lastDayOfThisMonth.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfThisMonth.getDate()).padStart(2, '0')}`;
-                    break;
-                case 'all':
-                    startDateFilter.value = '';
-                    endDateFilter.value = '';
-                    break;
-            }
-
-            // Apply filters after updating the date range
-            filterTable();
-        });
-
-        function filterTable() {
-            const searchQuery = document.getElementById('globalSearch').value.toLowerCase();
-            const idFilter = document.getElementById('idFilter').value.toLowerCase();
-            const userNameFilter = document.getElementById('userNameFilter').value.toLowerCase();
-            const dojFilter = document.getElementById('dojFilter').value.toLowerCase();
-            const totalSickLeavesFilter = document.getElementById('totalSickLeavesFilter').value.toLowerCase();
-            const totalEarnedLeavesFilter = document.getElementById('totalEarnedLeavesFilter').value.toLowerCase();
-            const sickLeavesTakenFilter = document.getElementById('sickLeavesTakenFilter').value.toLowerCase();
-            const earnedLeavesTakenFilter = document.getElementById('earnedLeavesTakenFilter').value.toLowerCase();
-            const halfDayLeavesTakenFilter = document.getElementById('halfDayLeavesTakenFilter').value.toLowerCase();
-            const lastUpdatedFilter = document.getElementById('lastUpdatedFilter').value.toLowerCase();
-            const nextUpdateFilter = document.getElementById('nextUpdateFilter').value.toLowerCase();
-
-            document.querySelectorAll('.user-table tbody tr').forEach(row => {
-                const rowText = row.innerText.toLowerCase();
-                const idText = row.children[0].textContent.trim().toLowerCase();
-                const userNameText = row.children[1].textContent.trim().toLowerCase();
-                const dojText = row.children[2].textContent.trim().toLowerCase();
-                const totalSickLeavesText = row.children[3].textContent.trim().toLowerCase();
-                const totalEarnedLeavesText = row.children[4].textContent.trim().toLowerCase();
-                const sickLeavesTakenText = row.children[5].textContent.trim().toLowerCase();
-                const earnedLeavesTakenText = row.children[6].textContent.trim().toLowerCase();
-                const halfDayLeavesTakenText = row.children[7].textContent.trim().toLowerCase();
-                const lastUpdatedText = row.children[8].textContent.trim().toLowerCase();
-                const nextUpdateText = row.children[9].textContent.trim().toLowerCase();
-
-                // Check if the row matches all filters
-                let showRow = (idFilter === '' || idText.includes(idFilter)) &&
-                              (userNameFilter === '' || userNameText.includes(userNameFilter)) &&
-                              (dojFilter === '' || dojText.includes(dojFilter)) &&
-                              (totalSickLeavesFilter === '' || totalSickLeavesText.includes(totalSickLeavesFilter)) &&
-                              (totalEarnedLeavesFilter === '' || totalEarnedLeavesText.includes(totalEarnedLeavesFilter)) &&
-                              (sickLeavesTakenFilter === '' || sickLeavesTakenText.includes(sickLeavesTakenFilter)) &&
-                              (earnedLeavesTakenFilter === '' || earnedLeavesTakenText.includes(earnedLeavesTakenFilter)) &&
-                              (halfDayLeavesTakenFilter === '' || halfDayLeavesTakenText.includes(halfDayLeavesTakenFilter)) &&
-                              (lastUpdatedFilter === '' || lastUpdatedText.includes(lastUpdatedFilter)) &&
-                              (nextUpdateFilter === '' || nextUpdateText.includes(nextUpdateFilter)) &&
-                              (searchQuery === '' || rowText.includes(searchQuery));
-
-                // Show or hide the row based on the filters
-                row.style.display = showRow ? '' : 'none';
+                    // Toggle row visibility based on search term
+                    row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+                });
             });
-        }
-    });
+
+            // Update Leave Balance Button
+            document.getElementById('updateLeaveBalance').addEventListener('click', function () {
+                const confirmUpdate = confirm('Do you want to update the leave balance of all users?');
+                if (confirmUpdate) {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'update_leave_balances.php', true);
+                    xhr.onload = function () {
+                        if (xhr.status === 200) {
+                            alert('Leave balances updated successfully!');
+                            window.location.reload();
+                        } else {
+                            alert('Failed to update leave balances. Please try again.');
+                        }
+                    };
+                    xhr.onerror = function () {
+                        alert('An error occurred while updating leave balances.');
+                    };
+                    xhr.send();
+                }
+            });
+
+            // Download Excel Button
+            document.getElementById('downloadExcel').addEventListener('click', function () {
+                const table = document.querySelector('.user-table');
+                const clonedTable = table.cloneNode(true);
+                const ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Leave Balances');
+                XLSX.writeFile(wb, 'leave_balances.xlsx');
+            });
+        });
     </script>
 </body>
 </html>

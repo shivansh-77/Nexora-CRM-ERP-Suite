@@ -21,28 +21,30 @@ $leaveBalanceResult = $stmt->get_result();
 if ($leaveBalanceResult && mysqli_num_rows($leaveBalanceResult) > 0) {
     $leaveBalance = $leaveBalanceResult->fetch_assoc();
 
-    // Fetch the user's D.O.J, last_updated, and next_update date
-    $doj = $leaveBalance['D.O.J'];
-    $last_updated = $leaveBalance['last_updated'];
+    // Fetch the relevant dates
     $next_update = $leaveBalance['next_update'];
+    $today = new DateTime(); // Current date
 
-    // Get today's date
-    $today = new DateTime();
+    // Convert next_update to DateTime object
+    $nextUpdateDate = new DateTime($next_update);
 
-    // Check if today's date matches or exceeds the next_update date
-    if ($today >= new DateTime($next_update)) {
-        // Add 1.5 earned leaves
-        $earnedLeavesToAdd = 1.5;
+    // Check if next_update is today or in the past
+    if ($today >= $nextUpdateDate) {
+        // Calculate the number of months passed
+        $interval = $today->diff($nextUpdateDate);
+        $months_passed = $interval->y * 12 + $interval->m;
 
-        // Update the total_earned_leaves
+        // If the day of the month has passed, count it as an additional month
+        if ($today->format('d') >= $nextUpdateDate->format('d')) {
+            $months_passed++;
+        }
+
+        // Calculate earned leaves to add
+        $earnedLeavesToAdd = 1.5 * $months_passed;
         $newTotalEarnedLeaves = $leaveBalance['total_earned_leaves'] + $earnedLeavesToAdd;
 
-        // Calculate the next_update date (next month's same date)
-        $nextUpdateDate = new DateTime($next_update);
-        $nextUpdateDate->modify('+1 month');
-
-        // Format dates as strings
-        $todayFormatted = $today->format('Y-m-d');
+        // Update next_update to the next month
+        $nextUpdateDate->modify("+$months_passed months");
         $nextUpdateDateFormatted = $nextUpdateDate->format('Y-m-d');
 
         // Update the user_leave_balance table
@@ -50,18 +52,20 @@ if ($leaveBalanceResult && mysqli_num_rows($leaveBalanceResult) > 0) {
                         SET total_earned_leaves = ?, last_updated = ?, next_update = ?
                         WHERE user_id = ?";
         $stmt = $connection->prepare($updateQuery);
-        $stmt->bind_param("dssi", $newTotalEarnedLeaves, $todayFormatted, $nextUpdateDateFormatted, $user_id);
+        $stmt->bind_param("dssi", $newTotalEarnedLeaves, $today->format('Y-m-d'), $nextUpdateDateFormatted, $user_id);
         $stmt->execute();
 
-        // Fetch the updated leave balance
-        $leaveBalanceQuery = "SELECT * FROM user_leave_balance WHERE user_id = ?";
-        $stmt = $connection->prepare($leaveBalanceQuery);
-        $stmt->bind_param("i", $user_id);
-        $stmt->execute();
-        $leaveBalanceResult = $stmt->get_result();
-        $leaveBalance = $leaveBalanceResult->fetch_assoc();
+        // Check if the update was successful
+        if ($stmt->affected_rows > 0) {
+            echo "Leave balance updated successfully.";
+        } else {
+            echo "Failed to update leave balance.";
+        }
+    } else {
+        echo "No update needed. Next update is in the future.";
     }
 } else {
+    // Handle case where leave balance is not found
     echo "<script>alert('Leave balance not found.'); window.location.href='user_leave_display.php?id=" . $_SESSION['user_id'] . "';</script>";
     exit;
 }
