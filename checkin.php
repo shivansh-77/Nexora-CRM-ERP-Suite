@@ -1,6 +1,9 @@
 <?php
 session_start(); // Start the session to access session variables
 
+// Set the default timezone to Asia/Kolkata
+date_default_timezone_set('Asia/Kolkata');
+
 // Check if the user is logged in
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
     die(json_encode(["status" => "error", "message" => "User not logged in or user name not set."]));
@@ -36,14 +39,17 @@ if (!is_numeric($checkin_latitude) || !is_numeric($checkin_longitude)) {
     die(json_encode(["status" => "error", "message" => "Invalid latitude or longitude."]));
 }
 
-// Check if the user is already checked in
-$check_stmt = $connection->prepare("SELECT * FROM attendance WHERE user_id = ? AND session_status = 'active'");
-$check_stmt->bind_param("i", $user_id);
+// Get today's date in Asia/Kolkata timezone
+$today = date("Y-m-d");
+
+// Check if the user has already checked in today
+$check_stmt = $connection->prepare("SELECT * FROM attendance WHERE user_id = ? AND DATE(checkin_time) = ?");
+$check_stmt->bind_param("is", $user_id, $today);
 $check_stmt->execute();
 $result = $check_stmt->get_result();
 
 if ($result->num_rows > 0) {
-    die(json_encode(["status" => "error", "message" => "You are already checked in. Kindly Refresh the Page!"]));
+    die(json_encode(["status" => "error", "message" => "You have already checked in today."]));
 }
 
 // Get location name from coordinates

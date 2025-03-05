@@ -791,7 +791,6 @@ if (!empty($fy_codes)) {
       xhr.send(data);
   }
 
-  // Function to check the user's session status on page load
   function checkSessionStatus() {
       const xhr = new XMLHttpRequest();
       xhr.open("GET", "check_session_status.php", true);
@@ -799,6 +798,7 @@ if (!empty($fy_codes)) {
       xhr.onreadystatechange = function () {
           if (xhr.readyState === 4 && xhr.status === 200) {
               const response = JSON.parse(xhr.responseText);
+              console.log("Session Status Response:", response); // Debugging line
               if (response.status === "success") {
                   const button = document.getElementById("checkInOutButton");
                   const currentTime = new Date();
@@ -825,6 +825,7 @@ if (!empty($fy_codes)) {
       };
       xhr.send();
   }
+
 
   // Function to automatically check out the user
 function checkOutSession() {

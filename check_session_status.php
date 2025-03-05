@@ -16,21 +16,28 @@ $stmt = $connection->prepare("
     ORDER BY checkin_time DESC
     LIMIT 1
 ");
+
 if (!$stmt) {
     die(json_encode(["status" => "error", "message" => "Database error: " . $connection->error]));
 }
+
 $stmt->bind_param("i", $user_id);
-$stmt->execute();
+if (!$stmt->execute()) {
+    die(json_encode(["status" => "error", "message" => "Execution error: " . $stmt->error]));
+}
+
 $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
+    error_log("User ID: " . $user_id . ", Session Status: " . $row['session_status'] . ", Check-in Time: " . $row['checkin_time']); // Debugging line
     echo json_encode([
         "status" => "success",
         "session_status" => $row['session_status'],
         "start_time" => $row['checkin_time']
     ]);
 } else {
+    error_log("No session found for User ID: " . $user_id); // Debugging line
     echo json_encode(["status" => "error", "message" => "No session found."]);
 }
 
