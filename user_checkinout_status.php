@@ -246,7 +246,7 @@ html, body {
   </head>
   <body>
     <div class="leadforhead">
-      <h2 class="leadfor">Checkin-out Status:<?php echo htmlspecialchars($user_name); ?></h2>
+      <h3 class="leadfor">Checkin-out Status:<?php echo htmlspecialchars($user_name); ?></h3>
       <div class="lead-actions">
         <input type="text" id="globalSearch" class="filter-input" placeholder="Search all records...">
         <select id="timePeriodFilter" class="filter-select">

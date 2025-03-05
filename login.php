@@ -88,14 +88,19 @@ if (isset($_POST['login'])) {
         print_r($_SESSION);
         echo '</pre>';
 
-        // Redirect to index.php
-        header('Location: index.php');
+        // Redirect based on user role
+        if ($row['role'] == "Admin") {
+            header('Location: index.php');
+        } else {
+            header('Location: user_dashboard.php');
+        }
         exit();
     } else {
         echo "<script>alert('Login Failed! Please check your credentials.');</script>";
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
