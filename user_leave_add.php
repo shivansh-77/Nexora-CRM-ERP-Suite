@@ -47,12 +47,28 @@ if ($leaveBalanceResult && mysqli_num_rows($leaveBalanceResult) > 0) {
         $nextUpdateDate->modify("+$months_passed months");
         $nextUpdateDateFormatted = $nextUpdateDate->format('Y-m-d');
 
-        // Update the user_leave_balance table
-        $updateQuery = "UPDATE user_leave_balance
-                        SET total_earned_leaves = ?, last_updated = ?, next_update = ?
-                        WHERE user_id = ?";
-        $stmt = $connection->prepare($updateQuery);
-        $stmt->bind_param("dssi", $newTotalEarnedLeaves, $today->format('Y-m-d'), $nextUpdateDateFormatted, $user_id);
+        // Check if the current date is April 1st or within the month of April
+        if ($today->format('m-d') == '04-01' || $today->format('m') == '04') {
+            // Reset sick leaves
+            $total_sick_leaves = 6;
+            $sick_leaves_taken = 0;
+
+            // Update the user_leave_balance table with reset sick leaves
+            $updateQuery = "UPDATE user_leave_balance
+                            SET total_earned_leaves = ?, last_updated = ?, next_update = ?,
+                                total_sick_leaves = ?, sick_leaves_taken = ?
+                            WHERE user_id = ?";
+            $stmt = $connection->prepare($updateQuery);
+            $stmt->bind_param("dssiid", $newTotalEarnedLeaves, $today->format('Y-m-d'), $nextUpdateDateFormatted, $total_sick_leaves, $sick_leaves_taken, $user_id);
+        } else {
+            // Update the user_leave_balance table without resetting sick leaves
+            $updateQuery = "UPDATE user_leave_balance
+                            SET total_earned_leaves = ?, last_updated = ?, next_update = ?
+                            WHERE user_id = ?";
+            $stmt = $connection->prepare($updateQuery);
+            $stmt->bind_param("dssi", $newTotalEarnedLeaves, $today->format('Y-m-d'), $nextUpdateDateFormatted, $user_id);
+        }
+
         $stmt->execute();
 
         // Check if the update was successful
@@ -69,6 +85,7 @@ if ($leaveBalanceResult && mysqli_num_rows($leaveBalanceResult) > 0) {
     echo "<script>alert('Leave balance not found.'); window.location.href='user_leave_display.php?id=" . $_SESSION['user_id'] . "';</script>";
     exit;
 }
+
 
 // Process form submission only when POST request is made
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -145,6 +162,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

@@ -137,8 +137,25 @@ if (!empty($fy_codes)) {
           return isset($allowed_submenus[$menu]) && !empty($allowed_submenus[$menu]);
       }
       ?>
+      <?php
+// session_start(); // Ensure the session is started
 
-      <li><a href="index.php" class="active"><i class="icon">🏠</i>Dashboard</a></li>
+// Check if the user is logged in and has a role set
+if (isset($_SESSION['user_role'])) {
+    $userRole = $_SESSION['user_role'];
+
+    // Determine the dashboard URL based on the user's role
+    if ($userRole == "Admin") {
+        $dashboardUrl = "index.php";
+    } else {
+        $dashboardUrl = "user_dashboard.php";
+    }
+} else {
+    // If the user is not logged in, you might want to redirect them to the login page
+    $dashboardUrl = "login.php";
+}
+?>
+      <li><a href="<?php echo $dashboardUrl; ?>" class="active"><i class="icon">🏠</i>Dashboard</a></li>
 
       <?php if (has_allowed_submenus('CRM')): ?>
         <li>

@@ -3,70 +3,32 @@ session_start();
 include('connection.php');
 include('topbar.php');
 
-// Function to fetch data for all categories with fy_code filtering
+// Function to fetch data for the dashboard
 function fetchData($connection) {
-    // Get allowed fy_codes from session
-    $allowed_fy_codes = $_SESSION['allowed_fy_codes'] ?? [];
-    $fy_codes_str = implode("','", $allowed_fy_codes); // Convert array to comma-separated string for SQL
+    // Get user_id from session
+    $user_id = $_SESSION['user_id'] ?? 0;
 
+    // Current month and year
+    $current_month = date('m');
+    $current_year = date('Y');
+
+    // Queries for the required data
     $queries = [
-        'followups' => [
-            'total' => "SELECT COUNT(*) AS total FROM followup WHERE lead_status = 'Open' AND fy_code IN ('$fy_codes_str')",
-            'yearly' => "SELECT COUNT(*) AS yearly FROM followup WHERE lead_status = 'Open' AND YEAR(followup_date_nxt) = YEAR(CURDATE()) AND fy_code IN ('$fy_codes_str')",
-            'monthly' => "SELECT COUNT(*) AS monthly FROM followup WHERE lead_status = 'Open' AND YEAR(followup_date_nxt) = YEAR(CURDATE()) AND MONTH(followup_date_nxt) = MONTH(CURDATE()) AND fy_code IN ('$fy_codes_str')",
-            'yearly_data' => "SELECT MONTH(followup_date_nxt) AS month, COUNT(*) AS count FROM followup WHERE lead_status = 'Open' AND YEAR(followup_date_nxt) = YEAR(CURDATE()) AND fy_code IN ('$fy_codes_str') GROUP BY MONTH(followup_date_nxt)",
-            'monthly_data' => "SELECT DAY(followup_date_nxt) AS day, COUNT(*) AS count FROM followup WHERE lead_status = 'Open' AND YEAR(followup_date_nxt) = YEAR(CURDATE()) AND MONTH(followup_date_nxt) = MONTH(CURDATE()) AND fy_code IN ('$fy_codes_str') GROUP BY DAY(followup_date_nxt)"
-        ],
-        'sales' => [
-            'total' => "SELECT SUM(net_amount) AS total FROM invoices WHERE status = 'Finalized' AND fy_code IN ('$fy_codes_str')",
-            'yearly' => "SELECT SUM(net_amount) AS yearly FROM invoices WHERE status = 'Finalized' AND YEAR(invoice_date) = YEAR(CURDATE()) AND fy_code IN ('$fy_codes_str')",
-            'monthly' => "SELECT SUM(net_amount) AS monthly FROM invoices WHERE status = 'Finalized' AND YEAR(invoice_date) = YEAR(CURDATE()) AND MONTH(invoice_date) = MONTH(CURDATE()) AND fy_code IN ('$fy_codes_str')",
-            'yearly_data' => "SELECT MONTH(invoice_date) AS month, SUM(net_amount) AS total FROM invoices WHERE status = 'Finalized' AND YEAR(invoice_date) = YEAR(CURDATE()) AND fy_code IN ('$fy_codes_str') GROUP BY MONTH(invoice_date)",
-            'monthly_data' => "SELECT DAY(invoice_date) AS day, SUM(net_amount) AS total FROM invoices WHERE status = 'Finalized' AND YEAR(invoice_date) = YEAR(CURDATE()) AND MONTH(invoice_date) = MONTH(CURDATE()) AND fy_code IN ('$fy_codes_str') GROUP BY DAY(invoice_date)"
-        ],
-        'invoices' => [
-            'total' => "SELECT COUNT(*) AS total FROM invoices WHERE status = 'Finalized' AND fy_code IN ('$fy_codes_str')",
-            'yearly' => "SELECT COUNT(*) AS yearly FROM invoices WHERE status = 'Finalized' AND YEAR(invoice_date) = YEAR(CURDATE()) AND fy_code IN ('$fy_codes_str')",
-            'monthly' => "SELECT COUNT(*) AS monthly FROM invoices WHERE status = 'Finalized' AND YEAR(invoice_date) = YEAR(CURDATE()) AND MONTH(invoice_date) = MONTH(CURDATE()) AND fy_code IN ('$fy_codes_str')",
-            'yearly_data' => "SELECT MONTH(invoice_date) AS month, COUNT(*) AS count FROM invoices WHERE status = 'Finalized' AND YEAR(invoice_date) = YEAR(CURDATE()) AND fy_code IN ('$fy_codes_str') GROUP BY MONTH(invoice_date)",
-            'monthly_data' => "SELECT DAY(invoice_date) AS day, COUNT(*) AS count FROM invoices WHERE status = 'Finalized' AND YEAR(invoice_date) = YEAR(CURDATE()) AND MONTH(invoice_date) = MONTH(CURDATE()) AND fy_code IN ('$fy_codes_str') GROUP BY DAY(invoice_date)"
-        ],
-        'quotations' => [
-            'total' => "SELECT COUNT(*) AS total FROM quotations WHERE fy_code IN ('$fy_codes_str')",
-            'yearly' => "SELECT COUNT(*) AS yearly FROM quotations WHERE YEAR(quotation_date) = YEAR(CURDATE()) AND fy_code IN ('$fy_codes_str')",
-            'monthly' => "SELECT COUNT(*) AS monthly FROM quotations WHERE YEAR(quotation_date) = YEAR(CURDATE()) AND MONTH(quotation_date) = MONTH(CURDATE()) AND fy_code IN ('$fy_codes_str')",
-            'yearly_data' => "SELECT MONTH(quotation_date) AS month, COUNT(*) AS count FROM quotations WHERE YEAR(quotation_date) = YEAR(CURDATE()) AND fy_code IN ('$fy_codes_str') GROUP BY MONTH(quotation_date)",
-            'monthly_data' => "SELECT DAY(quotation_date) AS day, COUNT(*) AS count FROM quotations WHERE YEAR(quotation_date) = YEAR(CURDATE()) AND MONTH(quotation_date) = MONTH(CURDATE()) AND fy_code IN ('$fy_codes_str') GROUP BY DAY(quotation_date)"
-        ],
-        'today_followups' => "SELECT COUNT(*) AS count FROM followup WHERE lead_status = 'Open' AND followup_date_nxt = CURDATE() AND fy_code IN ('$fy_codes_str')",
-        'sales_today' => "SELECT SUM(net_amount) AS sales_today FROM invoices WHERE status = 'Finalized' AND DATE(invoice_date) = CURDATE() AND fy_code IN ('$fy_codes_str')",
-        'pending_amount' => "SELECT SUM(pending_amount) AS pending_amount FROM invoices WHERE status = 'Finalized' AND fy_code IN ('$fy_codes_str')"
+        'attendance_entries' => "SELECT COUNT(*) AS total FROM attendance WHERE user_id = $user_id AND MONTH(checkin_time) = $current_month AND YEAR(checkin_time) = $current_year",
+        'autocheck_entries' => "SELECT COUNT(*) AS total FROM attendance WHERE user_id = $user_id AND session_status = 'Autocheck' AND MONTH(checkin_time) = $current_month AND YEAR(checkin_time) = $current_year",
+        'leave_entries' => "SELECT COUNT(*) AS total FROM user_leave WHERE user_id = $user_id AND MONTH(start_date) = $current_month AND YEAR(start_date) = $current_year",
+        'short_duration_entries' => "SELECT COUNT(*) AS total FROM attendance WHERE user_id = $user_id AND session_duration < 8 AND MONTH(checkin_time) = $current_month AND YEAR(checkin_time) = $current_year"
     ];
 
     $data = [];
-    foreach ($queries as $category => $query) {
-        if (is_array($query)) {
-            foreach ($query as $type => $sql) {
-                $result = mysqli_query($connection, $sql);
-                if ($type === 'yearly_data' || $type === 'monthly_data') {
-                    $data[$category][$type] = [];
-                    while ($row = mysqli_fetch_assoc($result)) {
-                        $data[$category][$type][$row['month'] ?? $row['day']] = $row['count'] ?? $row['total'];
-                    }
-                } else {
-                    $data[$category][$type] = mysqli_fetch_assoc($result)[$type] ?? 0;
-                }
-            }
-        } else {
-            $result = mysqli_query($connection, $query);
+    foreach ($queries as $key => $query) {
+        $result = mysqli_query($connection, $query);
+        if ($result) {
             $row = mysqli_fetch_assoc($result);
-            if ($category === 'pending_amount') {
-                $data[$category] = $row['pending_amount'] ?? 0;
-            } elseif ($category === 'sales_today') {
-                $data[$category] = $row['sales_today'] ?? 0;
-            } else {
-                $data[$category] = $row['count'] ?? 0;
-            }
+            $data[$key] = $row['total'] ?? 0;
+        } else {
+            // Handle query error if needed
+            $data[$key] = 0;
         }
     }
 
@@ -246,76 +208,40 @@ $data = fetchData($connection);
     </div>
 
     <!-- Main Content -->
-    <div class="content">
-        <div  class="card-container hidden">
-            <a href="today_followup.php" class="card-link" style="text-decoration: none; color: inherit;">
-                <div class="card">
-                    <h3>Today's Followups</h3>
-                    <p><span>Total:</span> <?php echo $data['today_followups']; ?></p>
-                </div>
-            </a>
+  <div class="content">
+      <div class="card-container hidden">
+          <!-- Attendance Entries -->
+          <div class="card">
+              <h3>Attendance Entries</h3>
+              <p><span>Total:</span> <?php echo $data['attendance_entries']; ?></p>
+          </div>
 
-            <!-- <a href="amc_due_display.php" class="card-link" style="text-decoration: none; color: inherit;">
-                <div class="card">
-                    <h3>AMC Dues Today</h3>
-                    <p><span>Total:</span> <?php echo $data['amc_dues_today']; ?></p>
-                </div>
-            </a> -->
+          <!-- Autocheck Entries -->
+          <div class="card">
+              <h3>Autocheck Entries</h3>
+              <p><span>Total:</span> <?php echo $data['autocheck_entries']; ?></p>
+          </div>
+          <div class="card">
+              <h3>Leave Entries</h3>
+              <p><span>Total:</span> <?php echo $data['leave_entries']; ?></p>
+          </div>
+      </div>
 
-            <a href="invoice_display.php" class="card-link" style="text-decoration: none; color: inherit;">
-                <div class="card">
-                    <h3>Pending Amount</h3>
-                    <p><span>Total:</span> ₹<?php echo number_format($data['pending_amount'], 2); ?></p>
-                </div>
-            </a>
+      <div class="card-container hidden">
+          <!-- Leave Entries -->
 
-            <div class="card" id="followupsCard">
-                <h3>Follow-ups</h3>
-                <p><span id="followupsLabel">Total:</span> <span id="followupsValue" style="color: red;"><?php echo $data['followups']['total']; ?></span></p>
-            </div>
-            <!-- <a href="leave_approval_display.php?id=<?php echo $_SESSION['user_id']; ?>" class="card-link" style="text-decoration: none; color: inherit;">
-                <div class="card">
-                    <h3>Pending Leaves</h3>
-                    <p><span>Total:</span> <?php echo $data['pending_leaves']; ?></p>
-                </div>
-            </a> -->
-        </div>
 
-        <div class="card-container hidden">
-            <!-- <div class="card" id="contactsCard">
-                <h3>Contacts</h3>
-                <p><span id="contactsLabel">Total:</span> <span id="contactsValue" style="color: red;"><?php echo $data['contacts']['total']; ?></span></p>
-            </div> -->
+          <!-- Short Duration Entries -->
+          <!-- Short Duration Entries -->
+<div class="card">
+    <a href="user_checkinout_status.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" style="text-decoration: none; color: inherit;">
+        <h3>Short Duration Entries</h3>
+        <p><span>Total:</span> <?php echo $data['short_duration_entries']; ?></p>
+    </a>
+</div>
 
-            <div class="card" id="salesCard">
-                <h3>Total Sales</h3>
-                <p><span id="salesLabel">Total:₹</span> <span id="salesValue" style="color: red;">₹<?php echo number_format($data['sales']['total'], 2); ?></span></p>
-            </div>
-            <div class="card" id="invoicesCard">
-                <h3>Invoices</h3>
-                <p><span id="invoicesLabel">Total:</span> <span id="invoicesValue" style="color: red;"><?php echo $data['invoices']['total']; ?></span></p>
-            </div>
-            <div class="card" id="quotationsCard">
-                <h3>Quotations</h3>
-                <p><span id="quotationsLabel">Total:</span> <span id="quotationsValue" style="color: red;"><?php echo $data['quotations']['total']; ?></span></p>
-            </div>
-        </div>
-
-        <!-- <div class="card-container">
-            <div class="card" id="invoicesCard">
-                <h3>Invoices</h3>
-                <p><span id="invoicesLabel">Total:</span> <span id="invoicesValue" style="color: red;"><?php echo $data['invoices']['total']; ?></span></p>
-            </div>
-            <div class="card" id="quotationsCard">
-                <h3>Quotations</h3>
-                <p><span id="quotationsLabel">Total:</span> <span id="quotationsValue" style="color: red;"><?php echo $data['quotations']['total']; ?></span></p>
-            </div>
-            <!-- <div class="card" id="transactionsCard">
-                <h3>Transactions</h3>
-                <p><span id="transactionsLabel">Total:</span> <span id="transactionsValue" style="color: red;"><?php echo $data['transactions']['total']; ?></span></p>
-            </div> -->
-        </div> -->
-    </div>
+      </div>
+  </div>
 
 
 <!-- Modal for Line Chart -->
@@ -333,6 +259,9 @@ $data = fetchData($connection);
 </div>
 
 <script>
+
+
+
     let currentState = 'total';
     let cardData = <?php echo json_encode($data); ?>;
     let chartModal = document.getElementById('chartModal');
