@@ -2,30 +2,27 @@
 session_start();
 include('connection.php');
 
+if (!$connection) {
+    echo "<script>alert('Database connection failed!'); window.location.href='expense_display.php';</script>";
+    exit();
+}
+
 // Check if the ID is passed via the URL
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
-    $id = $_GET['id'];
+    $id = intval($_GET['id']); // Ensure ID is an integer
 
-    // Query to delete the record
-    $deleteQuery = "DELETE FROM expense WHERE id = ?";
-    $stmt = $connection->prepare($deleteQuery);
+    // Prepare the delete query
+    $stmt = $connection->prepare("DELETE FROM expense WHERE id = ?");
     $stmt->bind_param("i", $id);
 
     if ($stmt->execute()) {
-        // Check if the deleted ID is the highest ID in the table
-        $maxIdQuery = "SELECT MAX(id) AS max_id FROM expense";
-        $maxIdResult = mysqli_query($connection, $maxIdQuery);
-        $maxIdRow = mysqli_fetch_assoc($maxIdResult);
-
-        // Reset AUTO_INCREMENT if the deleted ID was the last ID
-        if ($maxIdRow['max_id'] < $id) {
-            $resetAutoIncrement = "ALTER TABLE expense_tracker AUTO_INCREMENT = " . ($id);
-            mysqli_query($connection, $resetAutoIncrement);
+        if ($stmt->affected_rows > 0) {
+            echo "<script>alert('Record deleted successfully!'); window.location.href='expense_display.php';</script>";
+        } else {
+            echo "<script>alert('No record found with this ID!'); window.location.href='expense_display.php';</script>";
         }
-
-        echo "<script>alert('Record deleted successfully!'); window.location.href='expense_display.php';</script>";
     } else {
-        echo "<script>alert('Error deleting record: " . mysqli_error($connection) . "'); window.location.href='expense_display.php';</script>";
+        echo "<script>alert('Error deleting record. It may be referenced elsewhere.'); window.location.href='expense_display.php';</script>";
     }
 
     $stmt->close();

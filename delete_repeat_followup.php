@@ -7,35 +7,35 @@ ini_set('display_errors', 1);
 if (isset($_GET['id'])) {
     $id = intval($_GET['id']); // Sanitize the ID
 
-    // Prepare the SQL query to delete the follow-up entry
-    $sql = "DELETE FROM followup WHERE id = ?";
-    $stmt = $connection->prepare($sql);
+    // Check if the ID exists in the table before attempting to delete
+    $check_query = "SELECT id FROM followup WHERE id = ?";
+    $check_stmt = $connection->prepare($check_query);
+    $check_stmt->bind_param("i", $id);
+    $check_stmt->execute();
+    $check_stmt->store_result();
 
-    if (!$stmt) {
-        die("Preparation failed: " . $connection->error);
-    }
+    if ($check_stmt->num_rows > 0) {
+        // ID exists, proceed with deletion
+        $delete_query = "DELETE FROM followup WHERE id = ?";
+        $delete_stmt = $connection->prepare($delete_query);
+        $delete_stmt->bind_param("i", $id);
 
-    // Bind the ID parameter
-    $stmt->bind_param("i", $id);
+        if ($delete_stmt->execute()) {
+            echo "<script>alert('Follow-up deleted successfully.'); window.location.href='repeat_followups.php';</script>";
+        } else {
+            echo "<script>alert('Error deleting follow-up entry: " . addslashes($delete_stmt->error) . "'); window.location.href='repeat_followups.php';</script>";
+        }
 
-    // Execute the delete query
-    if ($stmt->execute()) {
-        // Reorder IDs after deletion
-        $connection->query("SET @count = 0");
-        $connection->query("UPDATE followup SET id = @count := @count + 1");
-        $connection->query("ALTER TABLE followup AUTO_INCREMENT = 1");
-
-        // Redirect to follow-up page with a success message
-        echo "<script>alert('Follow-up deleted successfully.'); window.location.href='repeat_followups.php';</script>";
+        $delete_stmt->close(); // Close the prepared statement
     } else {
-        echo "Error deleting follow-up entry: " . $stmt->error;
+        // ID does not exist
+        echo "<script>alert('Follow-up entry not found!'); window.location.href='repeat_followups.php';</script>";
     }
-} else {
-    die("ID not provided.");
-}
 
-// Close the prepared statement
-$stmt->close();
+    $check_stmt->close(); // Close the check statement
+} else {
+    echo "<script>alert('ID not provided.'); window.location.href='repeat_followups.php';</script>";
+}
 
 // Close the connection
 $connection->close();

@@ -13,11 +13,11 @@ if (isset($_GET['id'])) {
         if (mysqli_stmt_execute($stmt)) {
             $_SESSION['message'] = "Designation deleted successfully!";
         } else {
-            $_SESSION['error'] = "Error deleting designation.";
+            $_SESSION['error'] = "Error deleting designation: " . mysqli_stmt_error($stmt);
         }
         mysqli_stmt_close($stmt);
     } else {
-        $_SESSION['error'] = "Database error.";
+        $_SESSION['error'] = "Database error: " . mysqli_error($connection);
     }
 } else {
     $_SESSION['error'] = "Invalid request.";
@@ -25,3 +25,4 @@ if (isset($_GET['id'])) {
 
 header("Location: designation_display.php"); // Redirect to designation display page
 exit();
+?>

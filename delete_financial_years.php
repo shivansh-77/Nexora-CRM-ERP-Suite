@@ -6,7 +6,7 @@ include('connection.php');
 if (isset($_GET['id']) && ctype_digit($_GET['id'])) {
     $id = $_GET['id'];
 
-    // Start a transaction to handle deletion and resetting
+    // Start a transaction to handle deletion
     $connection->begin_transaction();
 
     try {
@@ -15,11 +15,6 @@ if (isset($_GET['id']) && ctype_digit($_GET['id'])) {
         $stmt->bind_param("i", $id);
 
         if ($stmt->execute()) {
-            // Reset AUTO_INCREMENT to ensure continuous IDs
-            $connection->query("SET @new_id = 0;");
-            $connection->query("UPDATE financial_years SET id = (@new_id := @new_id + 1);");
-            $connection->query("ALTER TABLE financial_years AUTO_INCREMENT = 1;");
-
             // Commit the transaction
             $connection->commit();
 
@@ -27,17 +22,17 @@ if (isset($_GET['id']) && ctype_digit($_GET['id'])) {
             header("Location: financial_years_display.php?message=deleted");
             exit;
         } else {
-            throw new Exception("Error: " . $stmt->error);
+            throw new Exception("Error deleting record: " . $stmt->error);
         }
 
         $stmt->close();
     } catch (Exception $e) {
         // Rollback the transaction in case of errors
         $connection->rollback();
-        echo $e->getMessage();
+        echo "<script>alert('" . $e->getMessage() . "'); window.location.href='financial_years_display.php';</script>";
     }
 } else {
-    echo "Invalid request.";
+    echo "<script>alert('Invalid request.'); window.location.href='financial_years_display.php';</script>";
 }
 
 $connection->close();

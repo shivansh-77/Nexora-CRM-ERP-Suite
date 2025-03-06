@@ -23,7 +23,7 @@ html, body {
     width: calc(100% - 260px);
     margin-left: 260px;
     margin-top: 140px;
-    max-height: 575px; /* Fixed height for the table wrapper */
+    max-height: 545px; /* Fixed height for the table wrapper */
     overflow-y: auto; /* Enable vertical scrolling only inside the table */
     border: 1px solid #ddd;
     background-color: white;
@@ -44,7 +44,7 @@ html, body {
         }
 
         .user-table th, .user-table td {
-            padding: 10px;
+            /* padding: 10px; */
             border: 1px solid #ddd;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -52,6 +52,7 @@ html, body {
         }
 
         .user-table th {
+          padding: 7px;
             background-color: #2c3e50;
             color: white;
             text-align: left;
@@ -73,7 +74,7 @@ html, body {
 
         .user-table td {
             text-align: left;
-            padding: 12px;
+            padding: 7px;
         }
 
         .user-table tr:nth-child(even) {

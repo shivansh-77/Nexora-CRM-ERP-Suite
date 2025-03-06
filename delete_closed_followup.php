@@ -12,7 +12,7 @@ if (isset($_GET['id'])) {
     $stmt = $connection->prepare($sql);
 
     if (!$stmt) {
-        die("Preparation failed: " . $connection->error);
+        die("<script>alert('Preparation failed: " . $connection->error . "'); window.location.href='closed_followup.php';</script>");
     }
 
     // Bind the ID parameter
@@ -20,18 +20,13 @@ if (isset($_GET['id'])) {
 
     // Execute the delete query
     if ($stmt->execute()) {
-        // Reorder IDs after deletion
-        $connection->query("SET @count = 0");
-        $connection->query("UPDATE followup SET id = @count := @count + 1");
-        $connection->query("ALTER TABLE followup AUTO_INCREMENT = 1");
-
         // Redirect to follow-up page with a success message
         echo "<script>alert('Follow-up deleted successfully.'); window.location.href='closed_followup.php';</script>";
     } else {
-        echo "Error deleting follow-up entry: " . $stmt->error;
+        echo "<script>alert('Error deleting follow-up entry: " . $stmt->error . "'); window.location.href='closed_followup.php';</script>";
     }
 } else {
-    die("ID not provided.");
+    die("<script>alert('ID not provided.'); window.location.href='closed_followup.php';</script>");
 }
 
 // Close the prepared statement

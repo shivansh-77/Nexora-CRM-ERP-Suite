@@ -16,7 +16,7 @@ if (isset($_GET['id'])) {
         if ($result) {
             $_SESSION['message'] = "Department deleted successfully.";
         } else {
-            $_SESSION['message'] = "Error deleting department.";
+            $_SESSION['message'] = "Error deleting department: " . mysqli_error($connection);
         }
     } else {
         $_SESSION['message'] = "Department not found.";
@@ -27,3 +27,4 @@ if (isset($_GET['id'])) {
 
 header("Location: department_display.php"); // Redirect back to the display page
 exit();
+?>

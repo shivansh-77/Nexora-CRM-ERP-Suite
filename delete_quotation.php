@@ -16,13 +16,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
             $delete_items_query = "DELETE FROM quotation_items WHERE quotation_id = ?";
             $stmt_items = $connection->prepare($delete_items_query);
             $stmt_items->bind_param("i", $id); // Bind the quotation ID
-            $stmt_items->execute();
+
+            if (!$stmt_items->execute()) {
+                throw new Exception("Error deleting quotation items: " . $stmt_items->error);
+            }
 
             // Then, delete the entry in the quotations table
             $delete_quotation_query = "DELETE FROM quotations WHERE id = ?";
             $stmt_quotation = $connection->prepare($delete_quotation_query);
             $stmt_quotation->bind_param("i", $id);
-            $stmt_quotation->execute();
+
+            if (!$stmt_quotation->execute()) {
+                throw new Exception("Error deleting quotation: " . $stmt_quotation->error);
+            }
 
             // Commit the transaction
             $connection->commit();
@@ -34,17 +40,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
             $connection->rollback();
 
             // Error message
-            echo "Error: " . $e->getMessage();
+            echo "<script>alert('Error: " . addslashes($e->getMessage()) . "'); window.location.href='quotation_display.php';</script>";
         }
 
         // Close prepared statements
         $stmt_items->close();
         $stmt_quotation->close();
     } else {
-        echo "Error: Quotation ID is required.";
+        echo "<script>alert('Error: Quotation ID is required.'); window.location.href='quotation_display.php';</script>";
     }
 } else {
-    echo "Error: Invalid request method.";
+    echo "<script>alert('Error: Invalid request method.'); window.location.href='quotation_display.php';</script>";
 }
 
 // Close the database connection

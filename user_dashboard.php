@@ -208,40 +208,44 @@ $data = fetchData($connection);
     </div>
 
     <!-- Main Content -->
-  <div class="content">
-      <div class="card-container hidden">
-          <!-- Attendance Entries -->
-          <div class="card">
-              <h3>Attendance Entries</h3>
-              <p><span>Total:</span> <?php echo $data['attendance_entries']; ?></p>
-          </div>
+    <div class="content">
+        <div class="card-container hidden">
+            <!-- Attendance Entries -->
+            <div class="card">
+                <a href="user_checkinout_status.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" style="text-decoration: none; color: inherit;">
+                    <h3>Attendance Entries</h3>
+                    <p><span>Total:</span> <?php echo $data['attendance_entries']; ?></p>
+                </a>
+            </div>
 
-          <!-- Autocheck Entries -->
-          <div class="card">
-              <h3>Autocheck Entries</h3>
-              <p><span>Total:</span> <?php echo $data['autocheck_entries']; ?></p>
-          </div>
-          <div class="card">
-              <h3>Leave Entries</h3>
-              <p><span>Total:</span> <?php echo $data['leave_entries']; ?></p>
-          </div>
-      </div>
+            <!-- Autocheck Entries -->
+            <div class="card">
+                <a href="user_checkinout_status.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" style="text-decoration: none; color: inherit;">
+                    <h3>Autocheck Entries</h3>
+                    <p><span>Total:</span> <?php echo $data['autocheck_entries']; ?></p>
+                </a>
+            </div>
 
-      <div class="card-container hidden">
-          <!-- Leave Entries -->
+            <!-- Leave Entries -->
+            <div class="card">
+                <a href="user_leave_display.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" style="text-decoration: none; color: inherit;">
+                    <h3>Leave Entries</h3>
+                    <p><span>Total:</span> <?php echo $data['leave_entries']; ?></p>
+                </a>
+            </div>
+        </div>
 
+        <div class="card-container hidden">
+            <!-- Short Duration Entries -->
+            <div class="card">
+                <a href="user_checkinout_status.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" style="text-decoration: none; color: inherit;">
+                    <h3>Short Duration Entries</h3>
+                    <p><span>Total:</span> <?php echo $data['short_duration_entries']; ?></p>
+                </a>
+            </div>
+        </div>
+    </div>
 
-          <!-- Short Duration Entries -->
-          <!-- Short Duration Entries -->
-<div class="card">
-    <a href="user_checkinout_status.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" style="text-decoration: none; color: inherit;">
-        <h3>Short Duration Entries</h3>
-        <p><span>Total:</span> <?php echo $data['short_duration_entries']; ?></p>
-    </a>
-</div>
-
-      </div>
-  </div>
 
 
 <!-- Modal for Line Chart -->

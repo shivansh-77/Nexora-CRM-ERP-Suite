@@ -2,23 +2,30 @@
 // Include database connection
 include('connection.php');
 
-// Check if an ID is provided in the URL
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-
-    // Delete the record from the database
-    $query = "DELETE FROM lead_for WHERE id = $id";
-    if (mysqli_query($connection, $query)) {
-        // Redirect to the lead for display page after successful deletion
-        header("Location: lead_for_display.php");
-        exit();
-    } else {
-        echo "<p style='color:red;'>Error: " . mysqli_error($connection) . "</p>";
-    }
-} else {
-    echo "<p style='color:red;'>Error: No ID provided.</p>";
+if (!$connection) {
+    die("<p style='color:red;'>Database connection failed: " . mysqli_connect_error() . "</p>");
 }
 
-// Close the database connection
-mysqli_close($connection);
+// Check if an ID is provided in the URL
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("<p style='color:red;'>Error: Invalid or missing ID.</p>");
+}
+
+$id = intval($_GET['id']); // Convert to integer for security
+
+// Use a prepared statement to delete the record
+$stmt = $connection->prepare("DELETE FROM lead_for WHERE id = ?");
+$stmt->bind_param("i", $id);
+
+if ($stmt->execute()) {
+    // Redirect to the lead_for_display.php page after successful deletion
+    header("Location: lead_for_display.php");
+    exit();
+} else {
+    echo "<p style='color:red;'>Error deleting record: " . $stmt->error . "</p>";
+}
+
+// Close the statement and connection
+$stmt->close();
+$connection->close();
 ?>

@@ -25,7 +25,7 @@ include('topbar.php');
             margin-left: 260px; /* Align with sidebar */
             margin-top: 142px; /* Adjust for topbar */
             overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
+            max-height: 545px; /* Set max height for vertical scrolling */
         }
 
         .user-table {
@@ -85,7 +85,7 @@ include('topbar.php');
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;

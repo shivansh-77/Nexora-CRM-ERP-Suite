@@ -1,33 +1,30 @@
 <?php
-// Database connection
-$host = 'localhost';
-$user = 'root';
-$password = '';
-$database = 'lead_management';
-$conn = new mysqli($host, $user, $password, $database);
+session_start();
+include('connection.php'); // Include the database connection
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (!$connection) {
+    die("Database connection failed: " . mysqli_connect_error());
 }
 
-// Check if an ID is passed in the URL
-if (isset($_GET['id'])) {
-    $id = intval($_GET['id']);
+// Check if a valid ID is passed via GET
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("Invalid request.");
+}
 
-    // Delete query
-    $delete_query = "DELETE FROM item_add WHERE id = $id";
+$id = intval($_GET['id']);
 
-    if ($conn->query($delete_query) === TRUE) {
-        echo "<script>
-            alert('Record deleted successfully!');
-            window.location.href = document.referrer; // Redirect to the previous page
-        </script>";
-    } else {
-        echo "Error deleting record: " . $conn->error;
-    }
+// Delete query using prepared statements
+$delete_query = "DELETE FROM item_add WHERE id = ?";
+$stmt = $connection->prepare($delete_query);
+$stmt->bind_param("i", $id);
+
+if ($stmt->execute()) {
+    header("Location: " . $_SERVER['HTTP_REFERER']); // Redirect to the previous page
+    exit();
 } else {
-    echo "Invalid request.";
+    die("Error deleting record: " . $stmt->error);
 }
 
-$conn->close();
+$stmt->close();
+mysqli_close($connection);
 ?>
