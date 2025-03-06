@@ -18,16 +18,18 @@ html, body {
     margin: 0;
 }
 
-/* Table Wrapper with Scroll */
+/* Table Wrapper with Responsive Scroll */
 .user-table-wrapper {
     width: calc(100% - 260px);
     margin-left: 260px;
     margin-top: 140px;
-    max-height: 545px; /* Fixed height for the table wrapper */
-    overflow-y: auto; /* Enable vertical scrolling only inside the table */
+    max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+    min-height: 15px; /* Ensures it doesn't shrink too much */
+    overflow-y: auto; /* Enables vertical scrolling */
     border: 1px solid #ddd;
     background-color: white;
 }
+
 
 /* Ensure the main content fits within the viewport */
 .main-content {
@@ -52,7 +54,7 @@ html, body {
         }
 
         .user-table th {
-          padding: 7px;
+          padding: 10px;
             background-color: #2c3e50;
             color: white;
             text-align: left;
@@ -118,7 +120,7 @@ html, body {
         /* Header Styles */
         .leadforhead {
             position: fixed;
-            width: 79%;
+              width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -237,7 +239,7 @@ html, body {
             <input type="text" id="globalSearch" class="filter-input" placeholder="Search all records...">
             <input type="date" id="startDateFilter" class="date-filter">
             <input type="date" id="endDateFilter" class="date-filter">
-            <button id="downloadExcel" class="btn-primary">  <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px; "></button>
+            <button id="downloadExcel" title="Download Excel File" class="btn-primary">  <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px; "></button>
         </div>
     </div>
 
@@ -291,7 +293,8 @@ html, body {
         <tbody>
       <?php
       include('connection.php');
-      $query = "SELECT * FROM party_ledger";
+      $query = "SELECT * FROM party_ledger ORDER BY id DESC";
+
       $result = mysqli_query($connection, $query);
 
       if (mysqli_num_rows($result) > 0) {
@@ -314,7 +317,7 @@ html, body {
                       <td>{$row['ref_doc_no']}</td>
                       <td>{$transactionDate}</td>
                       <td>
-                          <button class='btn-secondary' onclick=\"window.location.href='ledger_details.php?document_no=" . urlencode($row['document_no']) . "&party_no=" . urlencode($row['party_no']) . "'\">📜 View</button>
+                          <button class='btn-secondary' title='View all the transaction of this Party' onclick=\"window.location.href='ledger_details.php?document_no=" . urlencode($row['document_no']) . "&party_no=" . urlencode($row['party_no']) . "'\">📜 View</button>
                       </td>
                   </tr>";
           }

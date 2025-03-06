@@ -28,13 +28,14 @@ html, body {
     margin: 0;
 }
 
-/* Table Wrapper with Scroll */
+/* Table Wrapper with Responsive Scroll */
 .user-table-wrapper {
     width: calc(100% - 260px);
     margin-left: 260px;
     margin-top: 140px;
-    max-height: 525px; /* Fixed height for the table wrapper */
-    overflow-y: auto; /* Enable vertical scrolling only inside the table */
+    max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+    min-height: 15px; /* Ensures it doesn't shrink too much */
+    overflow-y: auto; /* Enables vertical scrolling */
     border: 1px solid #ddd;
     background-color: white;
 }
@@ -128,7 +129,7 @@ html, body {
         /* Header Styles */
         .leadforhead {
             position: fixed;
-            width: 79%;
+              width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -258,9 +259,10 @@ html, body {
         </select>
         <input type="date" id="startDateFilter" class="date-filter">
         <input type="date" id="endDateFilter" class="date-filter">
-        <button id="downloadExcel" class="btn-primary">
-          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
-        </button>
+        <button id="downloadExcel" class="btn-primary" title="Download Excel File">
+      <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+  </button>
+
       </div>
     </div>
 
@@ -379,125 +381,157 @@ html, body {
     </script>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        // Set default date filters to today's date
-        const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-        document.getElementById('startDateFilter').value = today;
-        document.getElementById('endDateFilter').value = today;
 
-        // Set default option for timePeriodFilter to "Today"
-        document.getElementById('timePeriodFilter').value = 'today';
+    document.addEventListener('DOMContentLoaded', function () {
+        // Helper function to format date as YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Helper function to parse date strings into Date objects
+        function parseDate(dateString) {
+            if (!dateString) return null;
+
+            // Try parsing as ISO format (YYYY-MM-DD)
+            let date = new Date(dateString);
+            if (!isNaN(date)) return date;
+
+            // Try parsing as DD-MM-YYYY or DD/MM/YYYY
+            const parts = dateString.split(/[-\/]/);
+            if (parts.length === 3) {
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1; // Months are 0-based in JavaScript
+                const year = parseInt(parts[2], 10);
+                return new Date(year, month, day);
+            }
+
+            return null;
+        }
+
+        // Set default date filters to the first and last day of the current month
+        const today = new Date();
+        const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+        document.getElementById('startDateFilter').value = formatDate(firstDayOfThisMonth);
+        document.getElementById('endDateFilter').value = formatDate(lastDayOfThisMonth);
+
+        // Set default option for timePeriodFilter to "This Month"
+        document.getElementById('timePeriodFilter').value = 'thisMonth';
 
         // Call filterTable to apply the default filters
         filterTable();
 
         // Add event listener for timePeriodFilter
         document.getElementById('timePeriodFilter').addEventListener('change', function () {
-          const selectedOption = this.value;
-          const today = new Date();
-          const startDateFilter = document.getElementById('startDateFilter');
-          const endDateFilter = document.getElementById('endDateFilter');
+            const selectedOption = this.value;
+            const today = new Date();
+            const startDateFilter = document.getElementById('startDateFilter');
+            const endDateFilter = document.getElementById('endDateFilter');
 
-          switch (selectedOption) {
-            case 'today':
-              startDateFilter.value = today.toISOString().split('T')[0];
-              endDateFilter.value = today.toISOString().split('T')[0];
-              break;
-            case 'lastMonth':
-              const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-              const lastDayOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-              startDateFilter.value = firstDayOfLastMonth.toISOString().split('T')[0];
-              endDateFilter.value = lastDayOfLastMonth.toISOString().split('T')[0];
-              break;
-            case 'last3Months':
-              const firstDayOfLast3Months = new Date(today.getFullYear(), today.getMonth() - 3, 1);
-              const lastDayOfLast3Months = new Date(today.getFullYear(), today.getMonth(), 0);
-              startDateFilter.value = firstDayOfLast3Months.toISOString().split('T')[0];
-              endDateFilter.value = lastDayOfLast3Months.toISOString().split('T')[0];
-              break;
-            case 'thisMonth':
-              const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-              const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-              startDateFilter.value = firstDayOfThisMonth.toISOString().split('T')[0];
-              endDateFilter.value = lastDayOfThisMonth.toISOString().split('T')[0];
-              break;
-            case 'all':
-              startDateFilter.value = '';
-              endDateFilter.value = '';
-              break;
-          }
+            switch (selectedOption) {
+                case 'today':
+                    startDateFilter.value = formatDate(today);
+                    endDateFilter.value = formatDate(today);
+                    break;
+                case 'lastMonth':
+                    const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                    const lastDayOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                    startDateFilter.value = formatDate(firstDayOfLastMonth);
+                    endDateFilter.value = formatDate(lastDayOfLastMonth);
+                    break;
+                case 'last3Months':
+                    const firstDayOfLast3Months = new Date(today.getFullYear(), today.getMonth() - 3, 1);
+                    const lastDayOfLast3Months = new Date(today.getFullYear(), today.getMonth(), 0);
+                    startDateFilter.value = formatDate(firstDayOfLast3Months);
+                    endDateFilter.value = formatDate(lastDayOfLast3Months);
+                    break;
+                case 'thisMonth':
+                    const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                    const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    startDateFilter.value = formatDate(firstDayOfThisMonth);
+                    endDateFilter.value = formatDate(lastDayOfThisMonth);
+                    break;
+                case 'all':
+                    startDateFilter.value = '';
+                    endDateFilter.value = '';
+                    break;
+            }
 
-          // Apply filters after updating the date range
-          filterTable();
+            // Apply filters after updating the date range
+            filterTable();
         });
 
         // Add event listeners for other filters
         document.querySelectorAll('.filter-input, .filter-select').forEach(input => {
-          input.addEventListener('input', filterTable);
+            input.addEventListener('input', filterTable);
         });
 
         document.getElementById('startDateFilter').addEventListener('change', filterTable);
         document.getElementById('endDateFilter').addEventListener('change', filterTable);
 
         function filterTable() {
-          const searchQuery = document.getElementById('globalSearch').value.toLowerCase();
-          const idFilter = document.getElementById('idFilter').value.toLowerCase();
-          const userIdFilter = document.getElementById('userIdFilter').value.toLowerCase();
-          const userNameFilter = document.getElementById('userNameFilter').value.toLowerCase();
-          const loginTimeFilter = document.getElementById('loginTimeFilter').value.toLowerCase();
-          const logoutTimeFilter = document.getElementById('logoutTimeFilter').value.toLowerCase();
-          const sessionDurationFilter = document.getElementById('sessionDurationFilter').value.toLowerCase();
-          const sessionStatusFilter = document.getElementById('sessionStatusFilter').value;
-          const locationFilter = document.getElementById('locationFilter').value.toLowerCase();
-          const startDate = document.getElementById('startDateFilter').value;
-          const endDate = document.getElementById('endDateFilter').value;
+            const searchQuery = document.getElementById('globalSearch').value.toLowerCase();
+            const idFilter = document.getElementById('idFilter').value.toLowerCase();
+            const userIdFilter = document.getElementById('userIdFilter').value.toLowerCase();
+            const userNameFilter = document.getElementById('userNameFilter').value.toLowerCase();
+            const loginTimeFilter = document.getElementById('loginTimeFilter').value.toLowerCase();
+            const logoutTimeFilter = document.getElementById('logoutTimeFilter').value.toLowerCase();
+            const sessionDurationFilter = document.getElementById('sessionDurationFilter').value.toLowerCase();
+            const sessionStatusFilter = document.getElementById('sessionStatusFilter').value;
+            const locationFilter = document.getElementById('locationFilter').value.toLowerCase();
+            const startDate = document.getElementById('startDateFilter').value;
+            const endDate = document.getElementById('endDateFilter').value;
 
-          document.querySelectorAll('.user-table tbody tr').forEach(row => {
-            const rowText = row.innerText.toLowerCase();
-            const idText = row.children[0].textContent.trim().toLowerCase();
-            const userIdText = row.children[1].textContent.trim().toLowerCase();
-            const userNameText = row.children[2].textContent.trim().toLowerCase();
-            const loginTimeText = row.children[3].textContent.trim();
-            const logoutTimeText = row.children[4].textContent.trim().toLowerCase();
-            const sessionDurationText = row.children[5].textContent.trim().toLowerCase();
-            const sessionStatusText = row.children[6].textContent.trim();
-            const locationText = row.children[7].textContent.trim().toLowerCase();
+            document.querySelectorAll('.user-table tbody tr').forEach(row => {
+                const rowText = row.innerText.toLowerCase();
+                const idText = row.children[0].textContent.trim().toLowerCase();
+                const userIdText = row.children[1].textContent.trim().toLowerCase();
+                const userNameText = row.children[2].textContent.trim().toLowerCase();
+                const loginTimeText = row.children[3].textContent.trim();
+                const logoutTimeText = row.children[4].textContent.trim().toLowerCase();
+                const sessionDurationText = row.children[5].textContent.trim().toLowerCase();
+                const sessionStatusText = row.children[6].textContent.trim();
+                const locationText = row.children[7].textContent.trim().toLowerCase();
 
-            // Parse the loginTimeText into a Date object
-            const rowDate = loginTimeText ? new Date(loginTimeText) : null;
+                // Parse the loginTimeText into a Date object
+                const rowDate = parseDate(loginTimeText);
 
-            // Parse the start and end dates into Date objects
-            const start = startDate ? new Date(startDate) : null;
-            const end = endDate ? new Date(endDate) : null;
-            if (end) end.setHours(23, 59, 59, 999); // Include the full end date
+                // Parse the start and end dates into Date objects
+                const start = startDate ? new Date(startDate) : null;
+                const end = endDate ? new Date(endDate) : null;
+                if (end) end.setHours(23, 59, 59, 999); // Include the full end date
 
-            // Check if the row date falls within the selected range
-            let dateMatch = true;
-            if (start && end) {
-              dateMatch = rowDate && rowDate >= start && rowDate <= end;
-            } else if (start) {
-              dateMatch = rowDate && rowDate >= start;
-            } else if (end) {
-              dateMatch = rowDate && rowDate <= end;
-            }
+                // Check if the row date falls within the selected range
+                let dateMatch = true;
+                if (start && end) {
+                    dateMatch = rowDate && rowDate >= start && rowDate <= end;
+                } else if (start) {
+                    dateMatch = rowDate && rowDate >= start;
+                } else if (end) {
+                    dateMatch = rowDate && rowDate <= end;
+                }
 
-            // Check if the row matches all filters
-            let showRow = (idFilter === '' || idText.includes(idFilter)) &&
-                          (userIdFilter === '' || userIdText.includes(userIdFilter)) &&
-                          (userNameFilter === '' || userNameText.includes(userNameFilter)) &&
-                          (loginTimeFilter === '' || loginTimeText.toLowerCase().includes(loginTimeFilter)) &&
-                          (logoutTimeFilter === '' || logoutTimeText.includes(logoutTimeFilter)) &&
-                          (sessionDurationFilter === '' || sessionDurationText.includes(sessionDurationFilter)) &&
-                          (sessionStatusFilter === 'all' || sessionStatusText === sessionStatusFilter) &&
-                          (locationFilter === '' || locationText.includes(locationFilter)) &&
-                          dateMatch &&
-                          (searchQuery === '' || rowText.includes(searchQuery));
+                // Check if the row matches all filters
+                let showRow = (idFilter === '' || idText.includes(idFilter)) &&
+                              (userIdFilter === '' || userIdText.includes(userIdFilter)) &&
+                              (userNameFilter === '' || userNameText.includes(userNameFilter)) &&
+                              (loginTimeFilter === '' || loginTimeText.toLowerCase().includes(loginTimeFilter)) &&
+                              (logoutTimeFilter === '' || logoutTimeText.includes(logoutTimeFilter)) &&
+                              (sessionDurationFilter === '' || sessionDurationText.includes(sessionDurationFilter)) &&
+                              (sessionStatusFilter === 'all' || sessionStatusText === sessionStatusFilter) &&
+                              (locationFilter === '' || locationText.includes(locationFilter)) &&
+                              dateMatch &&
+                              (searchQuery === '' || rowText.includes(searchQuery));
 
-            // Show or hide the row based on the filters
-            row.style.display = showRow ? '' : 'none';
-          });
+                // Show or hide the row based on the filters
+                row.style.display = showRow ? '' : 'none';
+            });
         }
-      });
+    });
     </script>
   </body>
 </html>

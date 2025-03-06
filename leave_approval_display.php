@@ -101,14 +101,17 @@ $result = $stmt->get_result();
         margin: 0;
     }
 
-        /* Table Styles */
-        .user-table-wrapper {
-            width: calc(100% - 260px); /* Adjust width to account for sidebar */
-            margin-left: 260px; /* Align with sidebar */
-            margin-top: 140px; /* Adjust for topbar */
-            overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
-        }
+    /* Table Wrapper with Responsive Scroll */
+    .user-table-wrapper {
+        width: calc(100% - 260px);
+        margin-left: 260px;
+        margin-top: 140px;
+        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+        min-height: 15px; /* Ensures it doesn't shrink too much */
+        overflow-y: auto; /* Enables vertical scrolling */
+        border: 1px solid #ddd;
+        background-color: white;
+    }
 
         .user-table {
             width: 100%; /* Full width */
@@ -167,7 +170,7 @@ $result = $stmt->get_result();
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -273,9 +276,11 @@ $result = $stmt->get_result();
                 <option value="Approved" <?php echo ($filter === 'Approved') ? 'selected' : ''; ?>>Approved</option>
                 <option value="Rejected" <?php echo ($filter === 'Rejected') ? 'selected' : ''; ?>>Rejected</option>
             </select>
-            <button id="downloadExcel" class="btn-primary">
-                <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
-            </button>
+            <button id="downloadExcel" class="btn-primary" title="Export to Excel">
+      <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+  </button>
+
+
         </div>
     </div>
     <div class="user-table-wrapper">
@@ -306,8 +311,8 @@ $result = $stmt->get_result();
                         <td><?php echo $row['total_days']; ?></td>
                         <td>
                             <?php if ($row['status'] === 'Pending'): ?>
-                                <button class="approve-btn" onclick="updateLeaveStatus(<?php echo $row['id']; ?>, 'Approved')">Approve</button>
-                                <button class="reject-btn" onclick="updateLeaveStatus(<?php echo $row['id']; ?>, 'Rejected')">Reject</button>
+                                <button class="approve-btn" title="Approve this leave" onclick="updateLeaveStatus(<?php echo $row['id']; ?>, 'Approved')">Approve</button>
+                                <button class="reject-btn" title="Reject this leave" onclick="updateLeaveStatus(<?php echo $row['id']; ?>, 'Rejected')">Reject</button>
                             <?php else: ?>
                                 <?php echo $row['approved_on']; ?>
                             <?php endif; ?>

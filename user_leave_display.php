@@ -29,13 +29,14 @@ if (!$user_id || !$user_name) {
             margin: 0;
         }
 
-        /* Table Wrapper with Scroll */
+        /* Table Wrapper with Responsive Scroll */
         .user-table-wrapper {
             width: calc(100% - 260px);
             margin-left: 260px;
             margin-top: 140px;
-            max-height: 525px; /* Fixed height for the table wrapper */
-            overflow-y: auto; /* Enable vertical scrolling only inside the table */
+            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+            min-height: 15px; /* Ensures it doesn't shrink too much */
+            overflow-y: auto; /* Enables vertical scrolling */
             border: 1px solid #ddd;
             background-color: white;
         }
@@ -128,7 +129,7 @@ if (!$user_id || !$user_name) {
         /* Header Styles */
         .leadforhead {
             position: fixed;
-            width: 79%;
+              width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -248,10 +249,10 @@ if (!$user_id || !$user_name) {
             </select>
             <input type="date" id="startDateFilter" class="date-filter">
             <input type="date" id="endDateFilter" class="date-filter">
-            <button id="downloadExcel" class="btn-primary">
+            <button id="downloadExcel" class="btn-primary" title="Download Excel File">
                 <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
             </button>
-            <a style="text-decoration:None;" href="user_leave_add.php?id=<?php echo $user_id; ?>" class="btn-primary">➕</a>
+            <a style="text-decoration:None;" href="user_leave_add.php?id=<?php echo $user_id; ?>" class="btn-primary" title="Apply for New Leave">➕</a>
         </div>
     </div>
 

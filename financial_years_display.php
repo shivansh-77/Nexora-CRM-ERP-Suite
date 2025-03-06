@@ -15,14 +15,17 @@ include('topbar.php');
         margin: 0;
     }
 
-        /* Table Styles */
-        .user-table-wrapper {
-            width: calc(100% - 260px); /* Adjust width to account for sidebar */
-            margin-left: 260px; /* Align with sidebar */
-            margin-top: 142px; /* Adjust for topbar */
-            overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
-        }
+    /* Table Wrapper with Responsive Scroll */
+    .user-table-wrapper {
+        width: calc(100% - 260px);
+        margin-left: 260px;
+        margin-top: 140px;
+        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+        min-height: 15px; /* Ensures it doesn't shrink too much */
+        overflow-y: auto; /* Enables vertical scrolling */
+        border: 1px solid #ddd;
+        background-color: white;
+    }
 
         .user-table {
             width: 100%; /* Full width */
@@ -81,7 +84,7 @@ include('topbar.php');
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -169,8 +172,8 @@ include('topbar.php');
           <button class="btn-search" id="searchButton">🔍</button>
         </div>
         <a href="add_financial_years.php">
-          <button class="btn-primary" id="openModal" data-mode="add">➕</button>
-        </a>
+      <button class="btn-primary" id="openModal" title="Add New Financial Year" data-mode="add">➕</button>
+  </a>
       </div>
     </div>
     <div class="user-table-wrapper">
@@ -202,14 +205,13 @@ include('topbar.php');
                                 data-id='{$row['id']}' $isChecked />
                         </td>
                         <td>
-                            <button class='btn-warning edit-btn'
-                                onclick=\"window.location.href='user_fy_permission.php?fy_code={$row['fy_code']}';\">🔒</button>
-
-                            <button class='btn-danger'
-                                onclick=\"if(confirm('Are you sure you want to delete this record?')) {
-                                    window.location.href='delete_financial_years.php?id={$row['id']}';
-                                }\">🗑️</button>
-                        </td>
+      <button class='btn-warning edit-btn' title='Manage FY Permissions'
+          onclick=\"window.location.href='user_fy_permission.php?fy_code={$row['fy_code']}';\">🔒</button>
+      <button class='btn-danger' title='Delete this Financial Year'
+          onclick=\"if(confirm('Are you sure you want to delete this record?')) {
+              window.location.href='delete_financial_years.php?id={$row['id']}';
+          }\">🗑️</button>
+  </td>
                       </tr>";
             }
         } else {

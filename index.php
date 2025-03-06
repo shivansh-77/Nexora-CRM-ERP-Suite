@@ -116,7 +116,7 @@ $data = fetchData($connection);
 
         .leadforhead {
             position: fixed;
-            width: 1100px;
+              width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;

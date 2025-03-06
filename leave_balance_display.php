@@ -16,14 +16,17 @@ include('topbar.php');
         margin: 0;
     }
 
-        /* Table Styles */
-        .user-table-wrapper {
-            width: calc(100% - 260px); /* Adjust width to account for sidebar */
-            margin-left: 260px; /* Align with sidebar */
-            margin-top: 140px; /* Adjust for topbar */
-            overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
-        }
+    /* Table Wrapper with Responsive Scroll */
+    .user-table-wrapper {
+        width: calc(100% - 260px);
+        margin-left: 260px;
+        margin-top: 140px;
+        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+        min-height: 15px; /* Ensures it doesn't shrink too much */
+        overflow-y: auto; /* Enables vertical scrolling */
+        border: 1px solid #ddd;
+        background-color: white;
+    }
 
         .user-table {
             width: 100%; /* Full width */
@@ -82,7 +85,7 @@ include('topbar.php');
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -159,8 +162,8 @@ include('topbar.php');
                 <input type="text" id="searchInput" class="search-input" placeholder="Search...">
                 <button class="btn-search" id="searchButton">🔍</button>
             </div>
-            <button id="updateLeaveBalance" class="btn-primary">Update</button>
-            <button id="downloadExcel" class="btn-primary">
+            <button id="updateLeaveBalance" class="btn-primary" title="Update all the User's leave balance up to date">Update</button>
+            <button id="downloadExcel" class="btn-primary" title="Download Excel File">
                 <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px;">
             </button>
         </div>

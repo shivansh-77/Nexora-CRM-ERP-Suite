@@ -18,13 +18,14 @@ include('topbar.php');
             margin: 0;
         }
 
-        /* Table Wrapper with Scroll */
+        /* Table Wrapper with Responsive Scroll */
         .user-table-wrapper {
             width: calc(100% - 260px);
             margin-left: 260px;
             margin-top: 140px;
-            max-height: 525px; /* Fixed height for the table wrapper */
-            overflow-y: auto; /* Enable vertical scrolling only inside the table */
+            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+            min-height: 15px; /* Ensures it doesn't shrink too much */
+            overflow-y: auto; /* Enables vertical scrolling */
             border: 1px solid #ddd;
             background-color: white;
         }
@@ -117,7 +118,7 @@ include('topbar.php');
         /* Header Styles */
         .leadforhead {
             position: fixed;
-            width: 79%;
+                width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -225,7 +226,7 @@ include('topbar.php');
 </head>
 <body>
     <div class="leadforhead">
-        <h2 class="leadfor">Leave Display</h2>
+        <h2 class="leadfor">Leave Requests</h2>
         <div class="lead-actions">
             <input type="text" id="globalSearch" class="filter-input" placeholder="Search all records...">
             <select id="timePeriodFilter" class="filter-select">
@@ -237,7 +238,7 @@ include('topbar.php');
             </select>
             <input type="date" id="startDateFilter" class="date-filter">
             <input type="date" id="endDateFilter" class="date-filter">
-            <button id="downloadExcel" class="btn-primary">
+            <button id="downloadExcel" class="btn-primary" title="Download Excel File">
                 <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
             </button>
             <!-- <a style="text-decoration:None;" href="user_leave_add.php" class="btn-primary">➕</a> -->
@@ -281,7 +282,7 @@ include('topbar.php');
             <tbody>
                 <?php
                 // Fetch all entries from the user_leave table
-                $query = "SELECT * FROM user_leave";
+                $query = "SELECT * FROM user_leave ORDER BY id DESC";
                 $result = mysqli_query($connection, $query);
 
                 if ($result->num_rows > 0) {

@@ -12,7 +12,7 @@ if (!$user_id) {
 }
 
 // Define menu options
-$menus = ["Dashboard", "CRM", "CMS", "Sales", "Settings"];
+$menus = ["Dashboard", "CRM", "CMS", "Sales", "Human Resource", "Settings"];
 
 // Fetch existing permissions for the user (example query)
 $permissions = []; // Replace with actual query to fetch permissions

@@ -16,12 +16,16 @@ include('topbar.php');
     }
 
         /* Table Styles */
+        /* Table Wrapper with Responsive Scroll */
         .user-table-wrapper {
-            width: calc(100% - 260px); /* Adjust width to account for sidebar */
-            margin-left: 260px; /* Align with sidebar */
-            margin-top: 140px; /* Adjust for topbar */
-            overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
+            width: calc(100% - 260px);
+            margin-left: 260px;
+            margin-top: 140px;
+            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+            min-height: 15px; /* Ensures it doesn't shrink too much */
+            overflow-y: auto; /* Enables vertical scrolling */
+            border: 1px solid #ddd;
+            background-color: white;
         }
 
         .user-table {
@@ -81,7 +85,7 @@ include('topbar.php');
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -154,9 +158,7 @@ include('topbar.php');
             <input type="text" id="searchInput" class="search-input" placeholder="Search...">
             <button class="btn-search" id="searchButton">🔍</button>
         </div>
-        <a href="followup.php">
-            <button class="btn-primary" id="openModal" data-mode="add">➕</button>
-        </a>
+
     </div>
 </div>
 <div class="user-table-wrapper">
@@ -259,9 +261,9 @@ include('topbar.php');
                           <td>{$row['employee']}</td>
                           <td>{$row['reporting_details']}</td>
                           <td>
-                              <button class='btn-warning edit-btn'
+                              <button class='btn-warning edit-btn' title='Update Followup'
                                   onclick=\"window.location.href='update_today_followup.php?id={$row['followup_id']}'\">✏️</button>
-                              <button class='btn-danger'
+                              <button class='btn-danger' title='Delete this Followup'
                                   onclick=\"if(confirm('Are you sure you want to delete this record?')) {
                                       window.location.href='delete_followup.php?id={$row['followup_id']}';
                                   }\">🗑️</button>

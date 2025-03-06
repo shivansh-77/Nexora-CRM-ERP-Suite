@@ -11,15 +11,17 @@ include('topbar.php');
     <style>
     /* Table Styles */
     /* Center the table horizontally */
+    /* Table Wrapper with Responsive Scroll */
     .user-table-wrapper {
-        display: flex;
-        justify-content: center; /* Center horizontally */
-        align-items: center; /* Center vertically if needed */
-        margin-top: 145px;
-        overflow-x: auto; /* Allow horizontal scrolling if needed */
-
+        width: calc(100% - 260px);
+        margin-left: 260px;
+        margin-top: 140px;
+        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+        min-height: 15px; /* Ensures it doesn't shrink too much */
+        overflow-y: auto; /* Enables vertical scrolling */
+        border: 1px solid #ddd;
+        background-color: white;
     }
-
     /* Adjust table width and column width */
     .user-table {
         width: 78%; /* Adjust width as needed */
@@ -98,7 +100,7 @@ include('topbar.php');
 
     .leadforhead {
       position: fixed;
-      width: 79%;
+      width: calc(100% - 290px); /* Adjust width to account for sidebar */
       height: 50px;
       display: flex;
       justify-content: space-between;
@@ -182,8 +184,8 @@ include('topbar.php');
           <button class="btn-search" id="searchButton">🔍</button>
         </div>
         <a href="item_unit_add.php">
-          <button class="btn-primary" id="openModal" data-mode="add">➕</button>
-        </a>
+      <button class="btn-primary" id="openModal" data-mode="add" title="Add New Item Unit">➕</button>
+  </a>
       </div>
     </div>
     <div class="user-table-wrapper">
@@ -208,10 +210,10 @@ include('topbar.php');
                               <td>" . ($row['unit'] ?? 'N/A') . "</td>
                               <td>" . ($row['value'] ?? 'N/A') . "</td>
                               <td>
-                                  <button class='btn-warning edit-btn'
+                                  <button class='btn-warning edit-btn' title='Update Item unit'
                                       onclick=\"window.location.href='item_unit_edit.php?id={$row['id']}';\">✏️</button>
 
-                                  <button class='btn-danger'
+                                  <button class='btn-danger' title='Delete Item Unit'
                                       onclick=\"if(confirm('Are you sure you want to delete this record?')) {
                                           window.location.href='item_unit_delete.php?id={$row['id']}';
                                       }\">🗑️</button>

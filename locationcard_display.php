@@ -15,14 +15,17 @@ include('topbar.php');
         margin: 0;
     }
 
-        /* Table Styles */
-        .user-table-wrapper {
-            width: calc(100% - 260px); /* Adjust width to account for sidebar */
-            margin-left: 260px; /* Align with sidebar */
-            margin-top: 142px; /* Adjust for topbar */
-            overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
-        }
+    /* Table Wrapper with Responsive Scroll */
+    .user-table-wrapper {
+        width: calc(100% - 260px);
+        margin-left: 260px;
+        margin-top: 140px;
+        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+        min-height: 15px; /* Ensures it doesn't shrink too much */
+        overflow-y: auto; /* Enables vertical scrolling */
+        border: 1px solid #ddd;
+        background-color: white;
+    }
 
         .user-table {
             width: 100%; /* Full width */
@@ -81,7 +84,7 @@ include('topbar.php');
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -156,7 +159,7 @@ include('topbar.php');
             <button class="btn-search" id="searchButton">🔍</button>
         </div>
         <a href="locationcard_add.php">
-            <button class="btn-primary" id="openModal" data-mode="add">➕</button>
+            <button class="btn-primary" id="openModal" data-mode="add" title="Add new Location">➕</button>
         </a>
     </div>
 </div>
@@ -202,9 +205,9 @@ include('topbar.php');
                         <td>" . ($row['gstno'] ?? 'N/A') . "</td>
                         <td>" . ($row['registration_no'] ?? 'N/A') . "</td>
                         <td>
-                            <button class='btn-warning edit-btn'
+                            <button class='btn-warning edit-btn' title='Update the Location Details'
                                 onclick=\"window.location.href='locationcard_edit.php?id={$row['id']}'\">✏️</button>
-                            <button class='btn-danger'
+                            <button class='btn-danger' title='Delete the Location'
                                 onclick=\"if(confirm('Are you sure you want to delete this record?')) {
                                     window.location.href='locationcard_edit.php?id={$row['id']}';
                                 }\">🗑️</button>

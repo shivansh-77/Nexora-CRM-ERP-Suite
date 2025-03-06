@@ -34,14 +34,17 @@ if (isset($_GET['fy_code'])) {
         margin: 0;
     }
 
-        /* Table Styles */
-        .user-table-wrapper {
-            width: calc(100% - 260px); /* Adjust width to account for sidebar */
-            margin-left: 260px; /* Align with sidebar */
-            margin-top: 142px; /* Adjust for topbar */
-            overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
-        }
+    /* Table Wrapper with Responsive Scroll */
+    .user-table-wrapper {
+        width: calc(100% - 260px);
+        margin-left: 260px;
+        margin-top: 140px;
+        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+        min-height: 15px; /* Ensures it doesn't shrink too much */
+        overflow-y: auto; /* Enables vertical scrolling */
+        border: 1px solid #ddd;
+        background-color: white;
+    }
 
         .user-table {
             width: 100%; /* Full width */
@@ -100,7 +103,7 @@ if (isset($_GET['fy_code'])) {
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+              width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -192,9 +195,9 @@ text-align: center;
           <button class="btn-search" id="searchButton">🔍</button>
         </div>
         <div>
-    <button style="background-color:#50C878;" class="btn-primary" onclick="updatePermissions('allowed')">🔓</button>
-    <button style="background-color:#DC143C;" class="btn-primary" onclick="updatePermissions('not_allowed')">🔏</button>
-    <a style="text-decoration:None; margin-left:20px;" href="add_emp_fy_permission.php?fy_code=<?php echo $fy_code; ?>" class="btn btn-primary">➕</a>
+    <button style="background-color:#50C878;" title="Allow all users for this Financial Year" class="btn-primary" onclick="updatePermissions('allowed')">🔓</button>
+    <button style="background-color:#DC143C;" title="Block all users for this Financial Year" class="btn-primary" onclick="updatePermissions('not_allowed')">🔏</button>
+    <a style="text-decoration:None; margin-left:20px;" title="Add New User for this Financial Year Permission" href="add_emp_fy_permission.php?fy_code=<?php echo $fy_code; ?>" class="btn btn-primary">➕</a>
 
     <script>
     function updatePermissions(action) {
@@ -258,7 +261,7 @@ text-align: center;
                         <td>{$row['emp_name']}</td>
                         <td>{$row['fy_code']}</td>
                         <td>
-                            <input type='checkbox' class='permission-checkbox' data-id='{$row['id']}' {$checked}>
+                            <input type='checkbox' title='Give Permission to this User' class='permission-checkbox' data-id='{$row['id']}' {$checked}>
                         </td>
 
                     </tr>";

@@ -47,12 +47,16 @@ $result = mysqli_query($connection, $query);
             margin: 0;
         }
 
+        /* Table Wrapper with Responsive Scroll */
         .user-table-wrapper {
-            width: calc(100% - 260px); /* Adjust width to account for sidebar */
-            margin-left: 260px; /* Align with sidebar */
-            margin-top: 140px; /* Adjust for topbar */
-            overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
+            width: calc(100% - 260px);
+            margin-left: 260px;
+            margin-top: 140px;
+            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+            min-height: 15px; /* Ensures it doesn't shrink too much */
+            overflow-y: auto; /* Enables vertical scrolling */
+            border: 1px solid #ddd;
+            background-color: white;
         }
 
         .user-table {
@@ -113,7 +117,7 @@ $result = mysqli_query($connection, $query);
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -258,9 +262,9 @@ $result = mysqli_query($connection, $query);
                 <button class="btn-search" id="searchButton">🔍</button>
             </div>
             <a href="quotation.php">
-                <button class="btn-primary" id="openModal" data-mode="add">➕</button>
+                <button class="btn-primary" id="openModal" data-mode="add" title="Add new Quotation">➕</button>
             </a>
-            <button id="downloadExcel" class="btn-primary">
+            <button id="downloadExcel" class="btn-primary" title="Download Excel File">
                 <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
             </button>
         </div>
@@ -295,10 +299,10 @@ $result = mysqli_query($connection, $query);
                                 <td>{$row['net_amount']}</td>
                                 <td>{$row['quotation_date']}</td>
                                 <td>
-                                    <button class='btn-warning edit-btn info' onclick=\"window.location.href='quotation_form_display.php?id={$row['id']}'\">📋</button>
-                                    <button class='btn-warning edit-btn' onclick=\"window.location.href='quotation_edit2.php?id={$row['id']}'\">✏️</button>
-                                    <button class='btn-warning edit-btn' onclick=\"if(confirm('Do you want to make an invoice for this quotation?')) window.location.href='register_invoice.php?id={$row['id']}'\">📄</button>
-                                    <button class='btn-danger' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_quotation.php?id={$row['id']}'; }\">🗑️</button>
+                                    <button class='btn-warning edit-btn info' title='View this Quotation' onclick=\"window.location.href='quotation_form_display.php?id={$row['id']}'\">📋</button>
+                                    <button class='btn-warning edit-btn' title='Update this Quotation' onclick=\"window.location.href='quotation_edit2.php?id={$row['id']}'\">✏️</button>
+                                    <button class='btn-warning edit-btn' title='Send this Quotation for making Invoice' onclick=\"if(confirm('Do you want to make an invoice for this quotation?')) window.location.href='register_invoice.php?id={$row['id']}'\">📄</button>
+                                    <button class='btn-danger' title='Delete this Quotation' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_quotation.php?id={$row['id']}'; }\">🗑️</button>
                                 </td>
                             </tr>";
                     }

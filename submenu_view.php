@@ -47,26 +47,30 @@ switch ($menu) {
             "Expenses" => "expense_display.php" // Added Expenses
         ];
         break;
-        case 'Settings':
-      $submenus = [
-          "Company Card" => "companycard.php",
-          "Location Card" => "locationcard_display.php",
-          "Financial Year" => "financial_years_display.php",
-          "GST" => "gst_display.php",
-          "HSN/SAC" => "hsn_sac_display.php",
-          "Units" => "unit_measurement_display.php",
-          "Items" => "item_category_display.php",
-          "AMC" => "amc_display.php",
-          "Departments" => "department_display.php",
-          "Designations" => "designation_display.php",
-          "Attendance" => "attendance_display.php", // Added Attendance before User
-          "Leave Applications" => "leave_display.php",
-            "Leave Balance" => "leave_balance_display.php",
-          "User" => "display.php", // Corrected the missing comma
-          "Expense Tracker" => "expense_tracker_display.php"
-      ];
-      break;
+    case 'Settings':
+        $submenus = [
+            "Company Card" => "companycard.php",
+            "Location Card" => "locationcard_display.php",
+            "Financial Year" => "financial_years_display.php",
+            "GST" => "gst_display.php",
+            "HSN/SAC" => "hsn_sac_display.php",
+            "Units" => "unit_measurement_display.php",
+            "Items" => "item_category_display.php",
+            "AMC" => "amc_display.php",
+            "Departments" => "department_display.php",
+            "Designations" => "designation_display.php",
+            "Expense Tracker" => "expense_tracker_display.php",
+              "User" => "display.php"
+        ];
+        break;
+    case 'Human Resource':
+        $submenus = [
+            "Attendance" => "attendance_display.php",
+            "Leave Applications" => "leave_display.php",
+            "Leave Balance" => "leave_balance_display.php"
 
+        ];
+        break;
     default:
         $submenus = [];
 }
@@ -98,12 +102,16 @@ $stmt->close();
             height: 100%;
             margin: 0;
         }
+        /* Table Wrapper with Responsive Scroll */
         .user-table-wrapper {
             width: calc(100% - 260px);
             margin-left: 260px;
-            margin-top: 142px;
-            overflow: auto;
-            max-height: 515px;
+            margin-top: 140px;
+            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+            min-height: 15px; /* Ensures it doesn't shrink too much */
+            overflow-y: auto; /* Enables vertical scrolling */
+            border: 1px solid #ddd;
+            background-color: white;
         }
         .user-table {
             width: 100%;
@@ -150,7 +158,7 @@ $stmt->close();
         .btn-warning { background-color: #3498db; color: black; }
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -225,8 +233,8 @@ $stmt->close();
     <div class="leadforhead">
         <h2 class="leadfor">Submenu Permissions of <?= htmlspecialchars($menu) ?> For User: <?= htmlspecialchars($user_name)?></h2>
         <div class="lead-actions">
-          <button style="background-color:#50C878;" class="btn btn-primary" id="checkAll">🔓</button>
-          <button style="background-color:#DC143C;" class="btn btn-primary" id="uncheckAll">🔏</button>
+          <button style="background-color:#50C878;" title="Give all the Submenu Permissions to this user" class="btn btn-primary" id="checkAll">🔓</button>
+          <button style="background-color:#DC143C;" title="Block all the Submenu Permissions for this user" class="btn btn-primary" id="uncheckAll">🔏</button>
         </div>
     </div>
     <div class="user-table-wrapper">
@@ -249,7 +257,7 @@ $stmt->close();
                     <?php else: ?>
                         <tr>
                             <td><?= htmlspecialchars($key) ?></td>
-                            <td><input type="checkbox" name="submenu_access[]" value="<?= htmlspecialchars($key) ?>" <?= in_array($key, $permissions) ? 'checked' : '' ?>></td>
+                            <td><input type="checkbox" title="click this checkbox to give the permission for this submenu" name="submenu_access[]" value="<?= htmlspecialchars($key) ?>" <?= in_array($key, $permissions) ? 'checked' : '' ?>></td>
                         </tr>
                     <?php endif; ?>
                 <?php endforeach; ?>

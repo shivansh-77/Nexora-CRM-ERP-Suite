@@ -49,10 +49,10 @@ if (isset($_GET['id'])) {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f0f0;
+            background-color: #2c3e50;
         }
         .invoice-container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 20px auto;
             background: #fff;
             padding: 20px;

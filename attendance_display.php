@@ -18,13 +18,14 @@ html, body {
     margin: 0;
 }
 
-/* Table Wrapper with Scroll */
+/* Table Wrapper with Responsive Scroll */
 .user-table-wrapper {
     width: calc(100% - 260px);
     margin-left: 260px;
     margin-top: 140px;
-    max-height: 525px; /* Fixed height for the table wrapper */
-    overflow-y: auto; /* Enable vertical scrolling only inside the table */
+    max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+    min-height: 15px; /* Ensures it doesn't shrink too much */
+    overflow-y: auto; /* Enables vertical scrolling */
     border: 1px solid #ddd;
     background-color: white;
 }
@@ -118,7 +119,7 @@ html, body {
         /* Header Styles */
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -249,7 +250,7 @@ html, body {
         <input type="date" id="startDateFilter" class="date-filter">
         <input type="date" id="endDateFilter" class="date-filter">
         <button id="downloadExcel" class="btn-primary">
-          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+          <img src="Excel-icon.png" alt="Export to Excel" title='Download Excel File' style="width: 20px; height: 20px; margin-right: 0px;">
         </button>
       </div>
     </div>
@@ -331,7 +332,7 @@ html, body {
                                 <td style='$sessionStatusStyle'>{$row['session_status']}</td>
                                 <td>{$row['checkin_location']}</td>
                                 <td>
-                                    <a href='attendance_update.php?id={$row['id']}' class='btn-warning edit-btn' style='text-decoration:None;'>✏️</a>
+                                    <a href='attendance_update.php?id={$row['id']}' class='btn-warning edit-btn' style='text-decoration:None;' title='Update this Attendance Record'>✏️</a>
                                 </td>
                               </tr>";
                     }
@@ -366,7 +367,6 @@ html, body {
     </script>
 
     <script>
-
     document.addEventListener('DOMContentLoaded', function () {
         // Helper function to format date as YYYY-MM-DD
         function formatDate(date) {
@@ -396,16 +396,13 @@ html, body {
             return null;
         }
 
-        // Set default date filters to the first and last day of the current month
+        // Set default date filters to today
         const today = new Date();
-        const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        document.getElementById('startDateFilter').value = formatDate(today);
+        document.getElementById('endDateFilter').value = formatDate(today);
 
-        document.getElementById('startDateFilter').value = formatDate(firstDayOfThisMonth);
-        document.getElementById('endDateFilter').value = formatDate(lastDayOfThisMonth);
-
-        // Set default option for timePeriodFilter to "This Month"
-        document.getElementById('timePeriodFilter').value = 'thisMonth';
+        // Set default option for timePeriodFilter to "Today"
+        document.getElementById('timePeriodFilter').value = 'today';
 
         // Call filterTable to apply the default filters
         filterTable();
@@ -422,6 +419,12 @@ html, body {
                     startDateFilter.value = formatDate(today);
                     endDateFilter.value = formatDate(today);
                     break;
+                case 'thisMonth':
+                    const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                    const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    startDateFilter.value = formatDate(firstDayOfThisMonth);
+                    endDateFilter.value = formatDate(lastDayOfThisMonth);
+                    break;
                 case 'lastMonth':
                     const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
                     const lastDayOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
@@ -433,12 +436,6 @@ html, body {
                     const lastDayOfLast3Months = new Date(today.getFullYear(), today.getMonth(), 0);
                     startDateFilter.value = formatDate(firstDayOfLast3Months);
                     endDateFilter.value = formatDate(lastDayOfLast3Months);
-                    break;
-                case 'thisMonth':
-                    const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                    const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                    startDateFilter.value = formatDate(firstDayOfThisMonth);
-                    endDateFilter.value = formatDate(lastDayOfThisMonth);
                     break;
                 case 'all':
                     startDateFilter.value = '';

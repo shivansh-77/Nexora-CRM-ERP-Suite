@@ -117,185 +117,192 @@ if (!empty($fy_codes)) {
 </div>
 
 
-  <!-- Sidebar -->
-  <nav class="sidebar">
+<!-- Sidebar -->
+<nav class="sidebar">
     <h2 href="index.php" class="logo">My Dashboard</h2>
     <ul class="nav-menu">
-      <?php
-      // Check if allowed_submenus is set in the session
-      $allowed_submenus = $_SESSION['allowed_submenus'] ?? [];
+        <?php
+        // Check if allowed_submenus is set in the session
+        $allowed_submenus = $_SESSION['allowed_submenus'] ?? [];
 
-      // Function to check if a submenu is allowed
-      function is_submenu_allowed($menu, $submenu) {
-          global $allowed_submenus;
-          return isset($allowed_submenus[$menu]) && in_array($submenu, $allowed_submenus[$menu]);
-      }
+        // Function to check if a submenu is allowed
+        function is_submenu_allowed($menu, $submenu) {
+            global $allowed_submenus;
+            return isset($allowed_submenus[$menu]) && in_array($submenu, $allowed_submenus[$menu]);
+        }
 
-      // Function to check if a menu has any allowed submenus
-      function has_allowed_submenus($menu) {
-          global $allowed_submenus;
-          return isset($allowed_submenus[$menu]) && !empty($allowed_submenus[$menu]);
-      }
-      ?>
-      <?php
-// session_start(); // Ensure the session is started
+        // Function to check if a menu has any allowed submenus
+        function has_allowed_submenus($menu) {
+            global $allowed_submenus;
+            return isset($allowed_submenus[$menu]) && !empty($allowed_submenus[$menu]);
+        }
+        ?>
+        <?php
+        // session_start(); // Ensure the session is started
 
-// Check if the user is logged in and has a role set
-if (isset($_SESSION['user_role'])) {
-    $userRole = $_SESSION['user_role'];
+        // Check if the user is logged in and has a role set
+        if (isset($_SESSION['user_role'])) {
+            $userRole = $_SESSION['user_role'];
 
-    // Determine the dashboard URL based on the user's role
-    if ($userRole == "Admin") {
-        $dashboardUrl = "index.php";
-    } else {
-        $dashboardUrl = "user_dashboard.php";
-    }
-} else {
-    // If the user is not logged in, you might want to redirect them to the login page
-    $dashboardUrl = "login.php";
-}
-?>
-      <li><a href="<?php echo $dashboardUrl; ?>" class="active"><i class="icon">🏠</i>Dashboard</a></li>
+            // Determine the dashboard URL based on the user's role
+            if ($userRole == "Admin") {
+                $dashboardUrl = "index.php";
+            } else {
+                $dashboardUrl = "user_dashboard.php";
+            }
+        } else {
+            // If the user is not logged in, you might want to redirect them to the login page
+            $dashboardUrl = "login.php";
+        }
+        ?>
+        <li><a href="<?php echo $dashboardUrl; ?>" class="active"><i class="icon">🏠</i>Dashboard</a></li>
 
-      <?php if (has_allowed_submenus('CRM')): ?>
-        <li>
-          <a href="#"><i class="icon">👥</i>CRM</a>
-          <ul class="submenu">
-            <?php if (is_submenu_allowed('CRM', 'Contacts')): ?>
-              <li><a href="contact_display.php">🧑‍🤝‍🧑 Contacts</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('CRM', 'Fresh Followups')): ?>
-              <li><a href="followup_display.php">🌱 Fresh Followups <span class="circle"><?php echo $totalFreshEntries; ?></span></a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('CRM', 'Repeat Followups')): ?>
-              <li><a href="repeat_followups.php">🔂 Repeat Followups <span class="circle"><?php echo $totalRepeatEntries; ?></span></a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('CRM', 'Today Followups')): ?>
-              <li><a href="today_followup.php">⏰ Today Followups <span class="circle"><?php echo $totalTodayEntries; ?></span></a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('CRM', 'Missed Followups')): ?>
-              <li><a href="missed_followup.php">⚠️ Missed Followups <span class="circle"><?php echo $totalMissedEntries; ?></span></a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('CRM', 'Closed Followups')): ?>
-              <li><a href="closed_followup.php">🔒 Closed Followups</a></li>
-            <?php endif; ?>
-          </ul>
-        </li>
-      <?php endif; ?>
+        <?php if (has_allowed_submenus('CRM')): ?>
+            <li>
+                <a href="#"><i class="icon">👥</i>CRM</a>
+                <ul class="submenu">
+                    <?php if (is_submenu_allowed('CRM', 'Contacts')): ?>
+                        <li><a href="contact_display.php">🧑‍🤝‍🧑 Contacts</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('CRM', 'Fresh Followups')): ?>
+                        <li><a href="followup_display.php">🌱 Fresh Followups <span class="circle"><?php echo $totalFreshEntries; ?></span></a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('CRM', 'Repeat Followups')): ?>
+                        <li><a href="repeat_followups.php">🔂 Repeat Followups <span class="circle"><?php echo $totalRepeatEntries; ?></span></a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('CRM', 'Today Followups')): ?>
+                        <li><a href="today_followup.php">⏰ Today Followups <span class="circle"><?php echo $totalTodayEntries; ?></span></a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('CRM', 'Missed Followups')): ?>
+                        <li><a href="missed_followup.php">⚠️ Missed Followups <span class="circle"><?php echo $totalMissedEntries; ?></span></a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('CRM', 'Closed Followups')): ?>
+                        <li><a href="closed_followup.php">🔒 Closed Followups</a></li>
+                    <?php endif; ?>
+                </ul>
+            </li>
+        <?php endif; ?>
 
-      <?php if (has_allowed_submenus('CMS')): ?>
-        <li>
-          <a href="#"><i class="icon">⚙️</i>CMS</a>
-          <ul class="submenu">
-            <?php if (is_submenu_allowed('CMS', 'Lead For')): ?>
-              <li><a href="lead_for_display.php">📝 Lead For</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('CMS', 'Lead Source')): ?>
-              <li><a href="lead_source_display.php">🔍 Lead Source</a></li>
-            <?php endif; ?>
-          </ul>
-        </li>
-      <?php endif; ?>
+        <?php if (has_allowed_submenus('CMS')): ?>
+            <li>
+                <a href="#"><i class="icon">⚙️</i>CMS</a>
+                <ul class="submenu">
+                    <?php if (is_submenu_allowed('CMS', 'Lead For')): ?>
+                        <li><a href="lead_for_display.php">📝 Lead For</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('CMS', 'Lead Source')): ?>
+                        <li><a href="lead_source_display.php">🔍 Lead Source</a></li>
+                    <?php endif; ?>
+                </ul>
+            </li>
+        <?php endif; ?>
 
-      <?php if (has_allowed_submenus('Sales')): ?>
-    <li>
-      <a href="#"><i class="icon">📊</i>Sales</a>
-      <ul class="submenu">
-        <?php if (is_submenu_allowed('Sales', 'Contacts')): ?>
-          <li><a href="contact_display.php">🧑‍🤝‍🧑 Contacts</a></li>
+        <?php if (has_allowed_submenus('Sales')): ?>
+            <li>
+                <a href="#"><i class="icon">📊</i>Sales</a>
+                <ul class="submenu">
+                    <?php if (is_submenu_allowed('Sales', 'Contacts')): ?>
+                        <li><a href="contact_display.php">🧑‍🤝‍🧑 Contacts</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Sales', 'Items')): ?>
+                        <li><a href="item_display.php">📦 Items</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Sales', 'Quotation')): ?>
+                        <li><a href="quotation_display.php">📋 Quotation</a></li>
+                    <?php endif; ?>
+                    <li>
+                        <a href="#">📃 Invoice</a>
+                        <ul class="submenu nested">
+                            <?php if (is_submenu_allowed('Sales', 'Draft Invoices')): ?>
+                                <li><a href="invoice_draft.php">📋📦 Draft Invoices</a></li>
+                            <?php endif; ?>
+                            <?php if (is_submenu_allowed('Sales', 'Finalized Invoice')): ?>
+                                <li><a href="invoice_display.php">📋✅ Finalized Invoice</a></li>
+                            <?php endif; ?>
+                            <?php if (is_submenu_allowed('Sales', 'Returned Invoice')): ?>
+                                <li><a href="invoice_closed.php">📃⛔ Returned Invoice</a></li>
+                            <?php endif; ?>
+                        </ul>
+                    </li>
+                    <?php if (is_submenu_allowed('Sales', 'AMC Dues')): ?>
+                        <li><a href="amc_due_display.php">📦 AMC Dues</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Sales', 'Item Ledger Display')): ?>
+                        <li><a href="item_ledger_display.php">🚚 Item Ledger Display</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Sales', 'Party Ledger')): ?>
+                        <li><a href="party_ledger.php">📜 Party Ledger</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Sales', 'Expenses')): ?>
+                        <li><a href="expense_display.php">💸 Expenses</a></li>
+                    <?php endif; ?>
+                </ul>
+            </li>
         <?php endif; ?>
-        <?php if (is_submenu_allowed('Sales', 'Items')): ?>
-          <li><a href="item_display.php">📦 Items</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Sales', 'Quotation')): ?>
-          <li><a href="quotation_display.php">📋 Quotation</a></li>
-        <?php endif; ?>
-        <li>
-          <a href="#">📃 Invoice</a>
-          <ul class="submenu nested">
-            <?php if (is_submenu_allowed('Sales', 'Draft Invoices')): ?>
-              <li><a href="invoice_draft.php">📋📦 Draft Invoices</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Sales', 'Finalized Invoice')): ?>
-              <li><a href="invoice_display.php">📋✅ Finalized Invoice</a></li>
-            <?php endif; ?>
-            <?php if (is_submenu_allowed('Sales', 'Returned Invoice')): ?>
-              <li><a href="invoice_closed.php">📃⛔ Returned Invoice</a></li>
-            <?php endif; ?>
-          </ul>
-        </li>
-        <?php if (is_submenu_allowed('Sales', 'AMC Dues')): ?>
-          <li><a href="amc_due_display.php">📦 AMC Dues</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Sales', 'Item Ledger Display')): ?>
-          <li><a href="item_ledger_display.php">🚚 Item Ledger Display</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Sales', 'Party Ledger')): ?>
-          <li><a href="party_ledger.php">📜 Party Ledger</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Sales', 'Expenses')): ?>
-          <li><a href="expense_display.php">💸 Expenses</a></li>
-        <?php endif; ?>
-      </ul>
-    </li>
-  <?php endif; ?>
 
+        <?php if (has_allowed_submenus('Human Resource')): ?>
+            <li>
+                <a href="#"><i class="icon">👩‍💼</i>Human Resource</a>
+                <ul class="submenu">
+                    <?php if (is_submenu_allowed('Human Resource', 'Attendance')): ?>
+                        <li><a href="attendance_display.php">🕒 Attendance</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Human Resource', 'Leave Applications')): ?>
+                        <li><a href="leave_display.php">📅 Leave Applications</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Human Resource', 'Leave Balance')): ?>
+                        <li><a href="leave_balance_display.php">📅 Leave Balance</a></li>
+                    <?php endif; ?>
 
-  <?php if (has_allowed_submenus('Settings')): ?>
-    <li>
-      <a href="#"><i class="icon">⚙️</i>Settings</a>
-      <ul class="submenu">
-        <?php if (is_submenu_allowed('Settings', 'Company Card')): ?>
-          <li><a href="companycard.php">💼 Company Card</a></li>
+                </ul>
+            </li>
         <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'Location Card')): ?>
-          <li><a href="locationcard_display.php">📌 Location Card</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'Financial Year')): ?>
-          <li><a href="financial_years_display.php">📈 Financial Year</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'GST')): ?>
-          <li><a href="gst_display.php">💰 GST</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'HSN/SAC')): ?>
-          <li><a href="hsn_sac_display.php">💼 HSN/SAC</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'Units')): ?>
-          <li><a href="unit_measurement_display.php">⏳ Units</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'Items')): ?>
-          <li><a href="item_category_display.php">🛒 Items</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'AMC')): ?>
-          <li><a href="amc_display.php">📆 AMC</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'Departments')): ?>
-          <li><a href="department_display.php">🏢 Departments</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'Designations')): ?>
-          <li><a href="designation_display.php">🎓 Designations</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'Attendance')): ?>
-          <li><a href="attendance_display.php">🕒 Attendance</a></li> <!-- Added Attendance before User -->
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'Leave Applications')): ?>
-          <li><a href="leave_display.php">📅 Leave Requests</a></li> <!-- Added Attendance before User -->
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'Leave Balance')): ?>
-          <li><a href="leave_balance_display.php">📅 Leave Balance</a></li> <!-- Added Attendance before User -->
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'User')): ?>
-          <li><a href="display.php">👤 User</a></li>
-        <?php endif; ?>
-        <?php if (is_submenu_allowed('Settings', 'Expense Tracker')): ?>
-          <li><a href="expense_tracker_display.php">💸 Expense Type</a></li>
-        <?php endif; ?>
-      </ul>
-    </li>
-  <?php endif; ?>
 
+        <?php if (has_allowed_submenus('Settings')): ?>
+            <li>
+                <a href="#"><i class="icon">⚙️</i>Settings</a>
+                <ul class="submenu">
+                    <?php if (is_submenu_allowed('Settings', 'Company Card')): ?>
+                        <li><a href="companycard.php">💼 Company Card</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'Location Card')): ?>
+                        <li><a href="locationcard_display.php">📌 Location Card</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'Financial Year')): ?>
+                        <li><a href="financial_years_display.php">📈 Financial Year</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'GST')): ?>
+                        <li><a href="gst_display.php">💰 GST</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'HSN/SAC')): ?>
+                        <li><a href="hsn_sac_display.php">💼 HSN/SAC</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'Units')): ?>
+                        <li><a href="unit_measurement_display.php">⏳ Units</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'Items')): ?>
+                        <li><a href="item_category_display.php">🛒 Items</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'AMC')): ?>
+                        <li><a href="amc_display.php">📆 AMC</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'Departments')): ?>
+                        <li><a href="department_display.php">🏢 Departments</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'Designations')): ?>
+                        <li><a href="designation_display.php">🎓 Designations</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'Expense Tracker')): ?>
+                        <li><a href="expense_tracker_display.php">💸 Expense Type</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Settings', 'User')): ?>
+                        <li><a href="display.php">👤 User</a></li>
+                    <?php endif; ?>
+                </ul>
+            </li>
+        <?php endif; ?>
     </ul>
-  </nav>
+</nav>
 
   <style>
     /* General Styles */

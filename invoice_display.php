@@ -28,7 +28,8 @@ if (!empty($fy_codes)) {
     $fy_codes_string = implode("','", $fy_codes);
     $query = "SELECT id, invoice_no, quotation_no, client_name, invoice_date, gross_amount, discount, net_amount, pending_amount
               FROM invoices
-              WHERE status = 'Finalized' AND fy_code IN ('$fy_codes_string')";
+              WHERE status = 'Finalized' AND fy_code IN ('$fy_codes_string')
+              ORDER BY id DESC"; // Added ORDER BY id DESC to sort results in descending order
 } else {
     // If no fy_codes, set query to an empty result
     $query = "SELECT * FROM invoices WHERE 0"; // Returns no results
@@ -50,12 +51,16 @@ $result = mysqli_query($connection, $query);
             margin: 0;
         }
 
+        /* Table Wrapper with Responsive Scroll */
         .user-table-wrapper {
-            width: calc(100% - 260px); /* Adjust width to account for sidebar */
-            margin-left: 260px; /* Align with sidebar */
-            margin-top: 140px; /* Adjust for topbar */
-            overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
+            width: calc(100% - 260px);
+            margin-left: 260px;
+            margin-top: 140px;
+            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+            min-height: 15px; /* Ensures it doesn't shrink too much */
+            overflow-y: auto; /* Enables vertical scrolling */
+            border: 1px solid #ddd;
+            background-color: white;
         }
 
         .user-table {
@@ -116,7 +121,7 @@ $result = mysqli_query($connection, $query);
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+              width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -254,11 +259,13 @@ $result = mysqli_query($connection, $query);
                 <button class="btn-search" id="searchButton">🔍</button>
             </div>
             <a href="invoice_generate.php">
-                <button class="btn-primary" id="openModal" data-mode="add">➕</button>
-            </a>
-            <button id="downloadExcel" class="btn-primary">
-                <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
-            </button>
+    <button class="btn-primary" id="openModal" data-mode="add" title="Add New Invoice">➕</button>
+</a>
+<button id="downloadExcel" class="btn-primary" title="Export to Excel">
+    <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+</button>
+
+
         </div>
     </div>
 
@@ -297,13 +304,13 @@ $result = mysqli_query($connection, $query);
                                 <td>{$row['discount']}</td>
                                 <td>{$row['net_amount']}</td>
                                 <td>
-                                    <button class='{$buttonClass} pending-button' data-id='{$row['id']}' data-net='{$row['net_amount']}' data-pending='{$row['pending_amount']}' {$disabled}>
+                                    <button title='Pay Amount' class='{$buttonClass} pending-button' data-id='{$row['id']}' data-net='{$row['net_amount']}' data-pending='{$row['pending_amount']}' {$disabled}>
                                         {$buttonText}
                                     </button>
                                 </td>
                                 <td>
-                                    <button class='btn-secondary' onclick=\"window.location.href='invoice1.php?id={$row['id']}'\">🖨️</button>
-                                    <button class='btn-secondary' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button>
+                                    <button class='btn-secondary' title='Print this Invoice' onclick=\"window.location.href='invoice1.php?id={$row['id']}'\">🖨️</button>
+                                    <button class='btn-secondary' title='Return this Invoice' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button>
                                 </td>
                             </tr>";
                     }

@@ -16,14 +16,17 @@ include('topbar.php');
         margin: 0;
     }
 
-        /* Table Styles */
-        .user-table-wrapper {
-            width: calc(100% - 260px); /* Adjust width to account for sidebar */
-            margin-left: 260px; /* Align with sidebar */
-            margin-top: 140px; /* Adjust for topbar */
-            overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
-        }
+    /* Table Wrapper with Responsive Scroll */
+    .user-table-wrapper {
+        width: calc(100% - 260px);
+        margin-left: 260px;
+        margin-top: 140px;
+        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+        min-height: 15px; /* Ensures it doesn't shrink too much */
+        overflow-y: auto; /* Enables vertical scrolling */
+        border: 1px solid #ddd;
+        background-color: white;
+    }
 
         .user-table {
             width: 100%; /* Full width */
@@ -82,7 +85,7 @@ include('topbar.php');
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -159,11 +162,11 @@ include('topbar.php');
           <button class="btn-search" id="searchButton">🔍</button>
         </div>
         <a href="item_add.php">
-          <button class="btn-primary" id="openModal" data-mode="add">➕</button>
-        </a>
-        <button id="downloadExcel" class="btn-primary">
-          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
-        </button>
+      <button class="btn-primary" id="openModal" data-mode="add" title="Add New Item">➕</button>
+  </a>
+  <button id="downloadExcel" class="btn-primary" title="Export to Excel">
+      <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+  </button>
       </div>
     </div>
     <div class="user-table-wrapper">
@@ -220,13 +223,17 @@ if (mysqli_num_rows($result) > 0) {
                 <td>" . ($row['location'] ?? 'N/A') . "</td>
                 <td>" . ($row['item_type'] ?? 'N/A') . "</td>
                 <td>
-                    <button class='btn-warning edit-btn'
-                        onclick=\"window.location.href='item_edit.php?id={$row['id']}';\">✏️</button>
-                    <button class='btn-danger'
-                        onclick=\"if(confirm('Are you sure you want to delete this record?')) {
-                            window.location.href='item_delete.php?id={$row['id']}';
-                        }\">🗑️</button>
-                </td>
+                <button class='btn-warning edit-btn'
+      onclick=\"window.location.href='item_edit.php?id={$row['id']}';\"
+      title='Edit this Item'>✏️</button>
+
+  <button class='btn-danger'
+      onclick=\"if(confirm('Are you sure you want to delete this record?')) {
+          window.location.href='item_delete.php?id={$row['id']}';
+      }\"
+      title='Delete this Item'>🗑️</button>
+  </td>
+
               </tr>";
     }
 } else {

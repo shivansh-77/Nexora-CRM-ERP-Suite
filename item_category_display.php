@@ -15,14 +15,17 @@ include('topbar.php');
         margin: 0;
     }
 
-        /* Table Styles */
-        .user-table-wrapper {
-            width: calc(100% - 260px); /* Adjust width to account for sidebar */
-            margin-left: 260px; /* Align with sidebar */
-            margin-top: 142px; /* Adjust for topbar */
-            overflow: auto; /* Enable scrolling for the table */
-            max-height: 475px; /* Set max height for vertical scrolling */
-        }
+    /* Table Wrapper with Responsive Scroll */
+    .user-table-wrapper {
+        width: calc(100% - 260px);
+        margin-left: 260px;
+        margin-top: 140px;
+        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+        min-height: 15px; /* Ensures it doesn't shrink too much */
+        overflow-y: auto; /* Enables vertical scrolling */
+        border: 1px solid #ddd;
+        background-color: white;
+    }
 
         .user-table {
             width: 100%; /* Full width */
@@ -81,7 +84,7 @@ include('topbar.php');
 
         .leadforhead {
             position: fixed;
-            width: 79%;
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -164,16 +167,16 @@ include('topbar.php');
     <div class="leadforhead">
       <h2 class="leadfor">Item Category</h2>
       <div class="lead-actions">
-        <div class="search-bar">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-          <button class="btn-search" id="searchButton">🔍</button>
-        </div>
-        <a href="item_category_add.php">
-          <button class="btn-primary" id="openModal" data-mode="add">➕</button>
-        </a>
+          <div class="search-bar">
+              <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+              <button class="btn-search" id="searchButton" title="Search">🔍</button>
+          </div>
+          <a href="item_category_add.php">
+              <button class="btn-primary" id="openModal" data-mode="add" title="Add New Item Category">➕</button>
+          </a>
       </div>
-    </div>
-    <div class="user-table-wrapper">
+  </div>
+  <div class="user-table-wrapper">
       <table class="user-table">
           <thead>
               <tr>
@@ -184,36 +187,35 @@ include('topbar.php');
           </thead>
           <tbody>
               <?php
-              // Fetch data from the unit_of_measurement table
+              // Fetch data from the item_category table
               $query = "SELECT * FROM item_category";
               $result = mysqli_query($connection, $query);
 
               if (mysqli_num_rows($result) > 0) {
                   while ($row = mysqli_fetch_assoc($result)) {
                       echo "<tr>
-
                               <td>" . ($row['code'] ?? 'N/A') . "</td>
                               <td>" . ($row['description'] ?? 'N/A') . "</td>
                               <td>
                                   <button class='btn-warning edit-btn'
-                                      onclick=\"window.location.href='item_category_edit.php?id={$row['id']}';\">✏️</button>
+                                      onclick=\"window.location.href='item_category_edit.php?id={$row['id']}';\"
+                                      title='Edit this Item Category'>✏️</button>
 
                                   <button class='btn-danger'
                                       onclick=\"if(confirm('Are you sure you want to delete this record?')) {
                                           window.location.href='item_category_delete.php?id={$row['id']}';
-                                      }\">🗑️</button>
+                                      }\"
+                                      title='Delete this Item Category'>🗑️</button>
                               </td>
                             </tr>";
                   }
               } else {
-                  echo "<tr><td colspan='4'>No Unit of Measurement records found</td></tr>";
+                  echo "<tr><td colspan='4'>No Item Category records found</td></tr>";
               }
               ?>
           </tbody>
       </table>
-
-
-</div>
+  </div>
 
 
 
