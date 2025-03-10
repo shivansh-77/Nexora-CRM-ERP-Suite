@@ -10,229 +10,221 @@ include('topbar.php');
     <meta charset="utf-8">
     <title>Attendance Display</title>
     <style>
-        /* Table Styles */
-        /* Prevent the body from scrolling */
-html, body {
-    overflow: hidden;
-    height: 100%;
-    margin: 0;
-}
+    /* Table Styles */
+    html, body {
+        overflow: hidden;
+        height: 100%;
+        margin: 0;
+    }
 
-/* Table Wrapper with Responsive Scroll */
-.user-table-wrapper {
-    width: calc(100% - 260px);
-    margin-left: 260px;
-    margin-top: 140px;
-    max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-    min-height: 15px; /* Ensures it doesn't shrink too much */
-    overflow-y: auto; /* Enables vertical scrolling */
-    border: 1px solid #ddd;
-    background-color: white;
-}
+    .user-table-wrapper {
+        width: calc(100% - 260px);
+        margin-left: 260px;
+        margin-top: 140px;
+        max-height: calc(100vh - 140px);
+        min-height: 15px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        background-color: white;
+    }
 
-/* Ensure the main content fits within the viewport */
-.main-content {
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
+    .main-content {
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
 
-        .user-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: auto;
-        }
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+    }
 
-        .user-table th, .user-table td {
+    .user-table th, .user-table td {
+        border: 1px solid #ddd;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap; /* Ensure text stays in a single line */
+    }
 
-            border: 1px solid #ddd;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+    .user-table th {
+        padding: 12px;
+        background-color: #2c3e50;
+        color: white;
+        text-align: left;
+        position: sticky;
+        z-index: 1;
+    }
 
-        .user-table th {
-          padding: 12px;
-            background-color: #2c3e50;
-            color: white;
-            text-align: left;
-            position: sticky; /* Make header sticky */
-            z-index: 1; /* Ensure header stays above table rows */
-        }
+    .user-table thead tr:first-child th {
+        top: 0;
+        background-color: #2c3e50;
+    }
 
-        /* Make the filter row sticky */
-        .user-table thead tr:first-child th {
-            top: 0; /* Stick to the top of the table wrapper */
-            background-color: #2c3e50; /* Match the header background */
-        }
+    .user-table thead tr:nth-child(2) th {
+        top: 50px;
+        background-color: #2c3e50;
+    }
 
-        /* Make the table headings row sticky */
-        .user-table thead tr:nth-child(2) th {
-            top: 50px; /* Stick below the filter row */
-            background-color: #2c3e50; /* Match the header background */
-        }
+    .user-table td {
+        text-align: left;
+        padding: 8px;
+    }
 
-        .user-table td {
-            text-align: left;
-            padding: 12px;
-        }
+    .user-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
 
-        .user-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
+    .user-table tr:hover {
+        background-color: #f1f1f1;
+    }
 
-        .user-table tr:hover {
-            background-color: #f1f1f1;
-        }
+    .user-table td:last-child {
+        text-align: center;
+        width: auto;
+        white-space: nowrap;
+    }
 
-        .user-table td:last-child {
-            text-align: center;
-            width: auto;
-            white-space: nowrap;
-        }
+    .user-table td:hover {
+        white-space: nowrap; /* Ensure no wrapping on hover */
+        overflow: hidden; /* Prevent overflow */
+        text-overflow: ellipsis; /* Show ellipsis if text overflows */
+    }
 
-        .user-table td:hover {
-            white-space: normal;
-            overflow: visible;
-            position: relative;
-            z-index: 1;
-        }
+    /* Button Styles */
+    .btn-primary, .btn-secondary, .btn-danger, .btn-warning, .btn-info {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        margin-right: 5px;
+        display: inline-block;
+    }
 
-        /* Button Styles */
-        .btn-primary, .btn-secondary, .btn-danger, .btn-warning, .btn-info {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 4px;
-            color: white;
-            cursor: pointer;
-            margin-right: 5px;
-            display: inline-block;
-        }
+    .btn-primary { background-color: green; }
+    .btn-secondary { background-color: #6c757d; }
+    .btn-danger { background-color: #dc3545; }
+    .btn-warning { background-color: #3498db; color: black; }
+    .btn-info { background-color: #17a2b8; }
 
-        .btn-primary { background-color: green; }
-        .btn-secondary { background-color: #6c757d; }
-        .btn-danger { background-color: #dc3545; }
-        .btn-warning { background-color: #3498db; color: black; }
-        .btn-info { background-color: #17a2b8; }
+    /* Header Styles */
+    .leadforhead {
+        position: fixed;
+        width: calc(100% - 290px);
+        height: 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #2c3e50;
+        color: white;
+        padding: 0 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        overflow: visible;
+        margin-left: 260px;
+        margin-top: 80px;
+    }
 
-        /* Header Styles */
-        .leadforhead {
-            position: fixed;
-            width: calc(100% - 290px); /* Adjust width to account for sidebar */
-            height: 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #2c3e50;
-            color: white;
-            padding: 0 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            overflow: visible;
-            margin-left: 260px;
-            margin-top: 80px;
-        }
+    .lead-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-        .lead-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    .btn-primary {
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+    }
 
-        .btn-primary {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
+    .btn-search {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+    }
 
-        .btn-search {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
+    /* Search Bar Styles */
+    .search-bar {
+        display: flex;
+        align-items: center;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-right: 40px;
+    }
 
-        /* Search Bar Styles */
-        .search-bar {
-            display: flex;
-            align-items: center;
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-right: 40px;
-        }
+    .search-input {
+        border: none;
+        padding: 8px;
+        outline: none;
+        font-size: 14px;
+        width: 273px;
+    }
 
-        .search-input {
-            border: none;
-            padding: 8px;
-            outline: none;
-            font-size: 14px;
-            width: 273px;
-        }
+    .search-input:focus {
+        border: none;
+        outline: none;
+    }
 
-        .search-input:focus {
-            border: none;
-            outline: none;
-        }
+    /* Filter Styles */
+    .filter-select {
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+        margin-right: 10px;
+    }
 
-        /* Filter Styles */
-        .filter-select {
-            padding: 8px;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            margin-right: 10px;
-        }
+    .date-filter {
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+        margin-right: 10px;
+    }
 
-        .date-filter {
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            margin-right: 10px;
-        }
+    .glow-red {
+        color: red;
+        font-weight: bold;
+        text-shadow: 0px 0px 0px red;
+    }
 
-        .glow-red {
-            color: red;
-            font-weight: bold;
-            text-shadow: 0px 0px 0px red;
-        }
+    .date-filter {
+        width: 120px;
+        padding: 7px;
+        font-size: 14px;
+    }
 
-        .date-filter {
-            width: 120px; /* Adjust width */
-            padding: 7px; /* Smaller padding */
-            font-size: 14px; /* Reduce font size */
-        }
+    .filter-input, .filter-select {
+        width: 100%;
+        padding: 6px;
+        box-sizing: border-box;
+        border-radius: 6px;
+    }
 
-        .filter-input, .filter-select {
-            width: 100%;
-            padding: 6px;
-            box-sizing: border-box;
-              border-radius: 6px;
-        }
+    #downloadExcel {
+        background-color: green;
+    }
 
-        #downloadExcel {
-            background-color: green;
-        }
+    .highlight-red {
+        background-color: #ffcccc;
+    }
 
+    .highlight-red:hover {
+        background-color: #ffcccc !important;
+    }
 
-        .highlight-red {
-           background-color: #ffcccc; /* Light red background */
-       }
-
-       /* Ensure the highlight remains on hover */
-       .highlight-red:hover {
-           background-color: #ffcccc !important; /* Force the same color on hover */
-       }
     </style>
   </head>
   <body>

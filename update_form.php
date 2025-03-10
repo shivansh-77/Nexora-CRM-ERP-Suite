@@ -31,8 +31,8 @@ $designations = mysqli_query($connection, "SELECT * FROM designation");
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
     $departmentId = $_POST['department'];
-    $password = $_POST['password'];
-    $cpassword = $_POST['confirm_password'];
+    $password = $_POST['password']; // Raw password input
+    $cpassword = $_POST['confirm_password']; // Raw confirm password input
     $gender = $_POST['gender'];
     $email = $_POST['email'];
     $phone = $_POST['phone'];
@@ -45,12 +45,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Check if passwords match
         if ($password === $cpassword) {
+            // Hash the new password
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
             // Update user data in the database
             $updateQuery = "UPDATE login_db SET
                             name = '$name',
                             department = '$departmentId',
-                            password = '$password',
-                            conpassword = '$cpassword',
+                            password = '$hashed_password',
+                            conpassword = '$hashed_password',
                             gender = '$gender',
                             email = '$email',
                             phone = '$phone',
@@ -161,11 +164,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <!-- Password with Confirm Password -->
         <div class="input_field">
           <label>Password <span class="required">*</span></label>
-          <input type="password" name="password" class="input" value="<?php echo htmlspecialchars($user['password']); ?>" required>
+          <input type="password" name="password" class="input" value="<?php echo str_repeat('•', strlen($user['password'])); ?>" required>
         </div>
         <div class="input_field">
           <label>Confirm Password <span class="required">*</span></label>
-          <input type="password" name="confirm_password" class="input" value="<?php echo htmlspecialchars($user['conpassword']); ?>" required>
+          <input type="password" name="confirm_password" class="input" value="<?php echo str_repeat('•', strlen($user['password'])); ?>" required>
         </div>
 
         <!-- Gender -->

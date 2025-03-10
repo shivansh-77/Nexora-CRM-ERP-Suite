@@ -165,9 +165,7 @@ include('topbar.php');
             <input type="text" id="searchInput" class="search-input" placeholder="Search...">
             <button class="btn-search" id="searchButton">🔍</button>
         </div>
-        <a href="followup.php">
-    <button class="btn-primary" id="openModal" title="Add New Followup" data-mode="add">➕</button>
-</a>
+        
     </div>
 </div>
 <div class="user-table-wrapper">

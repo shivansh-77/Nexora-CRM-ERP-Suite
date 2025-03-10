@@ -49,14 +49,20 @@ if (isset($_GET['id'])) {
             // Validate tracking flags
             if ($lot_tracking == 1 && empty($lot_trackingids[$index])) {
                 $validation_errors[] = "Lot Tracking ID is required for product: " . $product_name;
+            } elseif ($lot_tracking == 0 && !empty($lot_trackingids[$index])) {
+                $validation_errors[] = "Lot Tracking ID is not required for product: " . $product_name . ". Please remove the entry.";
             }
 
             if ($expiration_tracking == 1 && empty($expiration_dates[$index])) {
                 $validation_errors[] = "Expiration Date is required for product: " . $product_name;
+            } elseif ($expiration_tracking == 0 && !empty($expiration_dates[$index])) {
+                $validation_errors[] = "Expiration Date is not required for product: " . $product_name . ". Please remove the entry.";
             }
 
-            if ($amc_tracking == 1 && (empty($amc_codes[$index]) || empty($amc_paid_dates[$index]) || empty($amc_due_dates[$index]))) {
+            if ($amc_tracking == 1 && (empty($amc_codes[$index]) || empty($amc_paid_dates[$index]) || empty($amc_due_dates[$index]) || empty($amc_amounts[$index]))) {
                 $validation_errors[] = "AMC details are required for product: " . $product_name;
+            } elseif ($amc_tracking == 0 && (!empty($amc_codes[$index]) || !empty($amc_paid_dates[$index]) || !empty($amc_due_dates[$index]) || !empty($amc_amounts[$index]))) {
+                $validation_errors[] = "AMC details are not required for product: " . $product_name . ". Please remove the entries.";
             }
         }
 
@@ -247,147 +253,163 @@ if (isset($_GET['id'])) {
     <title>Invoice</title>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+    }
+
+    .invoice-container {
+        width: 95%; /* Changed from 115% to 100% */
+        margin: 20px auto;
+        background: #fff;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        position: relative; /* Ensure the button is positioned correctly */
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .logo {
+        max-width: 150px;
+        height: auto;
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #333;
+    }
+
+    .invoice-info {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+
+    .details {
+        display: flex;
+        justify-content: space-between;
+        margin: 20px 0;
+    }
+
+    .details div {
+        width: 48%;
+    }
+
+    .scrollable-table-container {
+        width: 100%;
+        overflow-x: auto;
+        margin-top: 20px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1200px; /* Adjust based on your table's content */
+    }
+
+    table th, table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    table th {
+        background-color: #f2f2f2;
+    }
+
+    .amount {
+        text-align: right;
+        margin-top: 20px;
+    }
+
+    .footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 14px;
+    }
+
+    .terms-conditions {
+        margin-top: 20px;
+    }
+
+    #editor {
+        height: 200px;
+    }
+
+    @media print {
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
+            background-color: #fff;
         }
         .invoice-container {
-            /* max-width: 800px; */
-            width: 115%;
-            margin: 20px auto;
-            background: #fff;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .logo {
-            max-width: 150px;
-            height: auto;
-        }
-        .header h1 {
+            border: none;
             margin: 0;
-            font-size: 28px;
-            color: #333;
+            padding: 0;
         }
-        .invoice-info {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        .details {
-            display: flex;
-            justify-content: space-between;
-            margin: 20px 0;
-        }
-        .details div {
-            width: 48%;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        table th, table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        table th {
-            background-color: #f2f2f2;
-        }
-        .amount {
-            text-align: right;
-            margin-top: 20px;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-        }
-        .terms-conditions {
-            margin-top: 20px;
+        .no-print, .ql-toolbar {
+            display: none;
         }
         #editor {
-            height: 200px;
+            border: none;
         }
-        @media print {
-            body {
-                background-color: #fff;
-            }
-            .invoice-container {
-                border: none;
-                margin: 0;
-                padding: 0;
-            }
-            .no-print, .ql-toolbar {
-                display: none;
-            }
-            #editor {
-                border: none;
-            }
-        }
-        table input[type="text"], table input[type="date"] {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 4px;
-        }
+    }
 
-        table td {
-            max-width: 150px; /* Adjust this value as needed */
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .update-message {
-            background-color: #dff0d8;
-            border: 1px solid #d6e9c6;
-            color: #3c763d;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-        }
-        .sidebar-logo {
-          width: 18.0%;
-          margin: 10px auto 10px;
-          display: block;
-          margin-left: -20px;
-        }
-        .close-button {
-           position: absolute;
-           top: 2px;
-           right: 1px;
-           background: none;
-           border: none;
-           font-size: 14px;
-           cursor: pointer;
-       }
-       .invoice-container {
-           position: relative; /* Add this to ensure the button is positioned correctly */
-       }
-       .scrollable-table-container {
-       width: 100%;
-       overflow-x: auto;
-       margin-top: 20px;
-   }
-   table {
-       width: 100%;
-       border-collapse: collapse;
-       min-width: 1200px; /* Adjust based on your table's content */
-   }
+    table input[type="text"], table input[type="date"] {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 4px;
+    }
+
+    table td {
+        max-width: 150px; /* Adjust this value as needed */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .update-message {
+        background-color: #dff0d8;
+        border: 1px solid #d6e9c6;
+        color: #3c763d;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+
+    .sidebar-logo {
+        width: 18.0%;
+        margin: 10px auto 10px;
+        display: block;
+        margin-left: -20px;
+    }
+
+    .close-button {
+        position: absolute;
+        top: 1px;
+        right: 2px;
+        background: none;
+        border: none;
+        font-size: 11px;
+        cursor: pointer;
+        text-decoration: None;
+    }
+
+
    </style>
    </head>
    <body>
        <form method="post" action="">
-       <div class="invoice-container">
-           <button type="button" class="close-button" onclick="closeForm()">✖</button>
+         <div class="invoice-container">
+       <a href="invoice_draft.php" class="close-button" onclick="closeForm()">✖</a>
+
         <?php if (!empty($update_message)): ?>
             <div class="update-message"><?php echo $update_message; ?></div>
         <?php endif; ?>
@@ -436,6 +458,7 @@ if (isset($_GET['id'])) {
                 <p>No details found for the given invoice ID.</p>
             <?php } ?>
         </div>
+        <div class="scrollable-table-container">
         <table>
             <thead>
                         <tr>
@@ -505,6 +528,8 @@ if (isset($_GET['id'])) {
                 <?php } ?>
             </tbody>
         </table>
+
+        </div>
         <div style="display: flex; justify-content: space-between; margin-top: 20px;">
             <div class="terms-conditions" style="width: 48%;">
                 <h4>Terms and Conditions</h4>

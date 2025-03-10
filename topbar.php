@@ -96,6 +96,10 @@ if (!empty($fy_codes)) {
 
 
       <button id="checkInOutButton" class="check-in-out-button">CHECK-IN</button>
+      <div id="loadingSpinner" style="display: none;">
+      <img src="uploads/Iphone-spinner-2.gif" alt="Loading..." /> <!-- Ensure the path is correct -->
+  </div>
+
       <div class="avatar-dropdown">
           <div class="avatar-button">
               <div class="avatar-circle">
@@ -637,141 +641,172 @@ if (!empty($fy_codes)) {
     background-color: red;
 }
 
+#loadingSpinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000; /* Ensure it appears above other elements */
+    width: 100px; /* Adjust the width to make it bigger */
+    height: 100px; /* Adjust the height to make it bigger */
+}
+
+/* If the spinner contains an image or icon, you can scale it as well */
+#loadingSpinner img, #loadingSpinner svg, #loadingSpinner div {
+    width: 100%; /* Make the internal element fill the container */
+    height: 100%;
+}
+
   </style>
   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const sidebar = document.querySelector(".sidebar")
-    const menuItems = document.querySelectorAll(".sidebar .nav-menu li > a")
+    document.addEventListener("DOMContentLoaded", () => {
+      const sidebar = document.querySelector(".sidebar");
+      const menuItems = document.querySelectorAll(".sidebar .nav-menu li > a");
 
-    function saveSidebarScroll() {
-      localStorage.setItem("sidebarScrollPosition", sidebar.scrollTop)
-    }
-
-    function restoreSidebarScroll() {
-      const scrollPosition = localStorage.getItem("sidebarScrollPosition")
-      if (scrollPosition) {
-        sidebar.scrollTop = Number.parseInt(scrollPosition, 10)
+      function saveSidebarScroll() {
+        localStorage.setItem("sidebarScrollPosition", sidebar.scrollTop);
       }
-    }
 
-    function toggleSubmenu(item, isNested = false) {
-      const submenu = item.nextElementSibling
-      if (submenu && submenu.classList.contains("submenu")) {
-        submenu.classList.toggle("visible")
-        const menuId = item.textContent.trim()
-        localStorage.setItem(menuId, submenu.classList.contains("visible"))
-
-        if (!isNested) {
-          // Close other top-level submenus
-          menuItems.forEach((otherItem) => {
-            if (otherItem !== item && !otherItem.closest(".submenu")) {
-              const otherSubmenu = otherItem.nextElementSibling
-              if (
-                otherSubmenu &&
-                otherSubmenu.classList.contains("submenu") &&
-                otherSubmenu.classList.contains("visible")
-              ) {
-                otherSubmenu.classList.remove("visible")
-                localStorage.setItem(otherItem.textContent.trim(), "false")
-              }
-            }
-          })
+      function restoreSidebarScroll() {
+        const scrollPosition = localStorage.getItem("sidebarScrollPosition");
+        if (scrollPosition) {
+          sidebar.scrollTop = Number.parseInt(scrollPosition, 10);
         }
-
-        saveSidebarScroll()
       }
-    }
 
-    menuItems.forEach((item) => {
-      item.addEventListener("click", function (e) {
-        const isNested = this.closest(".submenu") !== null
-        if (this.nextElementSibling && this.nextElementSibling.classList.contains("submenu")) {
-          e.preventDefault()
-          toggleSubmenu(this, isNested)
-        }
-      })
-    })
-
-    // Restore submenu states and scroll position on page load
-    function restoreMenuState() {
-      menuItems.forEach((item) => {
-        const submenu = item.nextElementSibling
+      function toggleSubmenu(item, isNested = false) {
+        const submenu = item.nextElementSibling;
         if (submenu && submenu.classList.contains("submenu")) {
-          const menuId = item.textContent.trim()
-          const isOpen = localStorage.getItem(menuId) === "true"
-          if (isOpen) {
-            submenu.classList.add("visible")
+          submenu.classList.toggle("visible");
+          const menuId = item.textContent.trim();
+          localStorage.setItem(menuId, submenu.classList.contains("visible"));
+
+          if (!isNested) {
+            // Close other top-level submenus
+            menuItems.forEach((otherItem) => {
+              if (otherItem !== item && !otherItem.closest(".submenu")) {
+                const otherSubmenu = otherItem.nextElementSibling;
+                if (
+                  otherSubmenu &&
+                  otherSubmenu.classList.contains("submenu") &&
+                  otherSubmenu.classList.contains("visible")
+                ) {
+                  otherSubmenu.classList.remove("visible");
+                  localStorage.setItem(otherItem.textContent.trim(), "false");
+                }
+              }
+            });
           }
+
+          saveSidebarScroll();
         }
-      })
+      }
+
+      menuItems.forEach((item) => {
+        item.addEventListener("click", function (e) {
+          const isNested = this.closest(".submenu") !== null;
+          if (this.nextElementSibling && this.nextElementSibling.classList.contains("submenu")) {
+            e.preventDefault();
+            toggleSubmenu(this, isNested);
+          }
+        });
+      });
+
+      // Restore submenu states and scroll position on page load
+      function restoreMenuState() {
+        menuItems.forEach((item) => {
+          const submenu = item.nextElementSibling;
+          if (submenu && submenu.classList.contains("submenu")) {
+            const menuId = item.textContent.trim();
+            const isOpen = localStorage.getItem(menuId) === "true";
+            if (isOpen) {
+              submenu.classList.add("visible");
+            }
+          }
+        });
+      }
+
+      restoreMenuState();
+      restoreSidebarScroll();
+
+      // Save scroll position when user scrolls the sidebar
+      sidebar.addEventListener("scroll", saveSidebarScroll);
+
+      // Avatar dropdown logic
+      const avatarButton = document.querySelector(".avatar-button");
+      const dropdownMenu = document.querySelector(".dropdown-menu");
+
+      avatarButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle("active");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!avatarButton.contains(e.target) && !dropdownMenu.contains(e.target)) {
+          dropdownMenu.classList.remove("active");
+        }
+      });
+
+      // Check session status on page load
+      checkSessionStatus();
+
+      // Attach the getLocation function to the button click event
+      const button = document.getElementById("checkInOutButton");
+      button.addEventListener("click", function () {
+        const action = button.classList.contains('checked-out') ? 'check-out' : 'check-in';
+        const confirmationMessage = action === 'check-in' ? 'Do you want to check-in?' : 'Do you want to check-out?';
+        if (confirm(confirmationMessage)) {
+          getLocation(action);
+        }
+      });
+    });
+
+    // Function to get the user's current location with high accuracy
+    function getLocation(action) {
+      if (navigator.geolocation) {
+        const options = {
+          enableHighAccuracy: true, // Request high-precision location
+          timeout: 15000,          // Timeout after 15 seconds (increase if needed)
+          maximumAge: 0            // Force fresh location data
+        };
+        navigator.geolocation.getCurrentPosition(
+          (position) => showPosition(position, action),
+          handleError,
+          options
+        );
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
     }
 
-    restoreMenuState()
-    restoreSidebarScroll()
-
-    // Save scroll position when user scrolls the sidebar
-    sidebar.addEventListener("scroll", saveSidebarScroll)
-
-    // Avatar dropdown logic
-    const avatarButton = document.querySelector(".avatar-button")
-    const dropdownMenu = document.querySelector(".dropdown-menu")
-
-    avatarButton.addEventListener("click", (e) => {
-      e.stopPropagation()
-      dropdownMenu.classList.toggle("active")
-    })
-
-    document.addEventListener("click", (e) => {
-      if (!avatarButton.contains(e.target) && !dropdownMenu.contains(e.target)) {
-        dropdownMenu.classList.remove("active")
-      }
-    })
-  })
-
-
-  // Function to get the user's current location with high accuracy
-  function getLocation(action) {
-      if (navigator.geolocation) {
-          const options = {
-              enableHighAccuracy: true, // Request high-precision location
-              timeout: 15000,          // Timeout after 15 seconds (increase if needed)
-              maximumAge: 0            // Force fresh location data
-          };
-          navigator.geolocation.getCurrentPosition(
-              (position) => showPosition(position, action),
-              handleError,
-              options
-          );
-      } else {
-          alert("Geolocation is not supported by this browser.");
-      }
-  }
-
-  // Function to handle errors from the Geolocation API
-  function handleError(error) {
+    // Function to handle errors from the Geolocation API
+    function handleError(error) {
       switch (error.code) {
-          case error.PERMISSION_DENIED:
-              alert("User denied the request for Geolocation.");
-              break;
-          case error.POSITION_UNAVAILABLE:
-              alert("Location information is unavailable.");
-              break;
-          case error.TIMEOUT:
-              alert("The request to get user location timed out.");
-              break;
-          default:
-              alert("An unknown error occurred.");
-              break;
+        case error.PERMISSION_DENIED:
+          alert("User denied the request for Geolocation.");
+          break;
+        case error.POSITION_UNAVAILABLE:
+          alert("Location information is unavailable.");
+          break;
+        case error.TIMEOUT:
+          alert("The request to get user location timed out.");
+          break;
+        default:
+          alert("An unknown error occurred.");
+          break;
       }
-  }
+    }
 
-  // Function to update the form with the user's coordinates and submit the form via AJAX
-  function showPosition(position, action) {
+    function showPosition(position, action) {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
 
       console.log("Latitude:", latitude);
       console.log("Longitude:", longitude);
+
+      // Show loading spinner
+      const loadingSpinner = document.getElementById("loadingSpinner");
+      loadingSpinner.style.display = "block";
 
       // Prepare the data to send via AJAX
       const data = new URLSearchParams();
@@ -783,112 +818,98 @@ if (!empty($fy_codes)) {
       xhr.open("POST", action === 'check-in' ? 'checkin.php' : 'checkout.php', true);
       xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
       xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4) {
-              if (xhr.status === 200) {
-                  const response = JSON.parse(xhr.responseText);
-                  if (response.status === "success") {
-                      // Toggle button state
-                      const button = document.getElementById("checkInOutButton");
-                      if (action === 'check-in') {
-                          button.classList.add('checked-out');
-                          button.textContent = 'CHECK-OUT';
-                          startTimer(); // Start the timer
-                      } else {
-                          button.classList.remove('checked-out');
-                          button.textContent = 'CHECK-IN';
-                          stopTimer(); // Stop the timer
-                      }
+        if (xhr.readyState === 4) {
+          // Hide loading spinner
+          loadingSpinner.style.display = "none";
 
-                      // Show success message
-                      alert(response.message);
-
-                      // Refresh the page after both check-in and check-out
-                      location.reload(); // Refresh the page
-                  } else {
-                      alert(response.message); // Show error message
-                  }
+          if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            if (response.status === "success") {
+              // Toggle button state
+              const button = document.getElementById("checkInOutButton");
+              if (action === 'check-in') {
+                button.classList.add('checked-out');
+                button.textContent = 'CHECK-OUT';
+                startTimer(); // Start the timer
               } else {
-                  alert("An error occurred while processing your request.");
+                button.classList.remove('checked-out');
+                button.textContent = 'CHECK-IN';
+                stopTimer(); // Stop the timer
               }
+
+              // Show success message
+              alert(response.message);
+
+              // Refresh the page after both check-in and check-out
+              location.reload(); // Refresh the page
+            } else {
+              alert(response.message); // Show error message
+            }
+          } else {
+            alert("An error occurred while processing your request.");
           }
+        }
       };
       xhr.send(data);
-  }
+    }
 
-  function checkSessionStatus() {
+    function checkSessionStatus() {
       const xhr = new XMLHttpRequest();
       xhr.open("GET", "check_session_status.php", true);
       xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
       xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-              const response = JSON.parse(xhr.responseText);
-              console.log("Session Status Response:", response); // Debugging line
-              if (response.status === "success") {
-                  const button = document.getElementById("checkInOutButton");
-                  const currentTime = new Date();
-                  const startTime = new Date(response.start_time);
-                  const timeDifference = (currentTime - startTime) / (1000 * 60 * 60); // Difference in hours
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          console.log("Session Status Response:", response); // Debugging line
+          if (response.status === "success") {
+            const button = document.getElementById("checkInOutButton");
+            const currentTime = new Date();
+            const startTime = new Date(response.start_time);
+            const timeDifference = (currentTime - startTime) / (1000 * 60 * 60); // Difference in hours
 
-                  if (response.session_status === "active") {
-                      if (timeDifference >= 12) {
-                          // Automatically check out if the session exceeds 12 hours
-                          checkOutSession();
-                      } else {
-                          button.classList.add('checked-out');
-                          button.textContent = 'CHECK-OUT';
-                          startTimer(); // Start the timer if the session is active
-                      }
-                  } else {
-                      button.classList.remove('checked-out');
-                      button.textContent = 'CHECK-IN';
-                  }
+            if (response.session_status === "active") {
+              if (timeDifference >= 12) {
+                // Automatically check out if the session exceeds 12 hours
+                checkOutSession();
               } else {
-                  alert(response.message); // Show error message
+                button.classList.add('checked-out');
+                button.textContent = 'CHECK-OUT';
+                startTimer(); // Start the timer if the session is active
               }
+            } else {
+              button.classList.remove('checked-out');
+              button.textContent = 'CHECK-IN';
+            }
+          } else {
+            alert(response.message); // Show error message
           }
+        }
       };
       xhr.send();
-  }
+    }
 
-
-  // Function to automatically check out the user
-function checkOutSession() {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "checkout.php", true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onreadystatechange = function () {
+    // Function to automatically check out the user
+    function checkOutSession() {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "checkout.php", true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            const response = JSON.parse(xhr.responseText);
-            if (response.status === "success") {
-                const button = document.getElementById("checkInOutButton");
-                button.classList.remove('checked-out');
-                button.textContent = 'CHECK-IN';
-                alert("Automatically checked out due to inactivity.");
-            } else {
-                alert(response.message); // Show error message
-            }
-        }
-    };
-    xhr.send('auto=true'); // Send the auto parameter
-}
-
-
-  // Attach the getLocation function to the button click event
-  document.addEventListener("DOMContentLoaded", function () {
-      // Check session status on page load
-      checkSessionStatus();
-
-      const button = document.getElementById("checkInOutButton");
-      button.addEventListener("click", function () {
-          const action = button.classList.contains('checked-out') ? 'check-out' : 'check-in';
-          const confirmationMessage = action === 'check-in' ? 'Do you want to check-in?' : 'Do you want to check-out?';
-          if (confirm(confirmationMessage)) {
-              getLocation(action);
+          const response = JSON.parse(xhr.responseText);
+          if (response.status === "success") {
+            const button = document.getElementById("checkInOutButton");
+            button.classList.remove('checked-out');
+            button.textContent = 'CHECK-IN';
+            alert("Automatically checked out due to inactivity.");
+            location.reload(); // Refresh the page after automatic check-out
+          } else {
+            alert(response.message); // Show error message
           }
-      });
-  });
-
-</script>
+        }
+      };
+      xhr.send('auto=true'); // Send the auto parameter
+    }
+  </script>
 
 
 </body>

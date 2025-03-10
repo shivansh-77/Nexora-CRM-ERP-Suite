@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail->Port       = 587;
 
         // Recipient
-        $mail->setFrom('anubhavs777779@gmail.com', 'Your Name'); // Update to your Gmail address
+        $mail->setFrom('anubhavs777779@gmail.com', 'Shivansh'); // Update to your Gmail address
         $mail->addAddress($email); // Add the recipient's email address
 
         // Content

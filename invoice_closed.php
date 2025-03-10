@@ -202,9 +202,7 @@ $result = mysqli_query($connection, $query);
                    <input type="text" id="searchInput" class="search-input" placeholder="Search...">
                    <button class="btn-search" id="searchButton">🔍</button>
                </div>
-               <a href="invoice_generate.php">
-     <button class="btn-primary" id="openModal" title="Generate New Invoice" data-mode="add">➕</button>
- </a>
+               
  <button id="downloadExcel" class="btn-primary" title="Export to Excel">
      <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
  </button>

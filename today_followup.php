@@ -152,7 +152,7 @@ include('topbar.php');
   </head>
   <body>
     <div class="leadforhead">
-    <h2 class="leadfor">Fresh Follow Ups</h2>
+    <h2 class="leadfor">Today Follow ups</h2>
     <div class="lead-actions">
         <div class="search-bar">
             <input type="text" id="searchInput" class="search-input" placeholder="Search...">

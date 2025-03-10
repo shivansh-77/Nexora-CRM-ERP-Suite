@@ -348,17 +348,12 @@ if (isset($_GET['id'])) {
                     </select>
                 </div>
                 <div>
-                    <label>Whatsapp Template:</label>
-                    <select class="input-field" name="whatsapp_template">
-                        <option>--- Select Whatsapp Template ---</option>
-                    </select>
-                </div>
-            </div>
-            <div class="row">
-                <div>
                     <label>Estimate Amount:</label>
                     <input type="number" class="input-field" name="estimate_amount" placeholder="Estimate Amount" value="<?php echo htmlspecialchars($followup_data['estimate_amount']); ?>">
                 </div>
+            </div>
+            <div class="row">
+
                 <div>
                     <label>Closed Amount:</label>
                     <input type="number" class="input-field" name="closed_amount" placeholder="Closed Amount" value="<?php echo htmlspecialchars($followup_data['closed_amount']); ?>">

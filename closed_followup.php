@@ -61,7 +61,7 @@ include('topbar.php');
 
     /* Styling table rows */
     .user-table td {
-      padding: 12px;
+      padding: 10px;
       border: 1px solid #ddd;
       text-align: left;
     }
@@ -310,7 +310,7 @@ include('topbar.php');
                           <td>{$row['reporting_details']}</td>
                           <td>
                               <button class='btn-warning edit-btn' title='Update this followup'
-                                  onclick=\"window.location.href='update_followup.php?id={$row['followup_id']}'\">✏️</button>
+                                  onclick=\"window.location.href='update_closed_followup.php?id={$row['followup_id']}'\">✏️</button>
                               <button class='btn-danger' title='Delete this followup'
                                   onclick=\"if(confirm('Are you sure you want to delete this record?')) {
                                       window.location.href='delete_followup.php?id={$row['followup_id']}';

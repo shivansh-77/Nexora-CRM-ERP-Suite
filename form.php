@@ -131,8 +131,8 @@ $designations = mysqli_query($connection, "SELECT * FROM designation");
 if (isset($_POST['register'])) {
     $name = mysqli_real_escape_string($connection, $_POST['name']);
     $department = mysqli_real_escape_string($connection, $_POST['department']);
-    $password = mysqli_real_escape_string($connection, $_POST['password']);
-    $cpassword = mysqli_real_escape_string($connection, $_POST['confirm_password']);
+    $password = $_POST['password']; // Do not escape passwords before hashing
+    $cpassword = $_POST['confirm_password']; // Do not escape passwords before hashing
     $gender = mysqli_real_escape_string($connection, $_POST['gender']);
     $email = mysqli_real_escape_string($connection, $_POST['email']);
     $phone = mysqli_real_escape_string($connection, $_POST['phone']);
@@ -145,6 +145,9 @@ if (isset($_POST['register'])) {
 
         // Check if passwords match
         if ($password === $cpassword) {
+            // Hash the password
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
             // Update deptcount for the selected department
             $updateDeptCountQuery = "UPDATE department SET deptcount = deptcount + 1 WHERE department = '$department'";
             $updateDeptCountResult = mysqli_query($connection, $updateDeptCountQuery);
@@ -153,9 +156,9 @@ if (isset($_POST['register'])) {
                 echo "Failed to update department count! Error: " . mysqli_error($connection);
             }
 
-            // Insert user data into login_db
+            // Insert user data into login_db with hashed password
             $query = "INSERT INTO login_db (name, department, password, conpassword, gender, email, phone, address, designation, role)
-                      VALUES ('$name', '$department', '$password', '$cpassword', '$gender', '$email', '$phone', '$address', '$designation', '$role')";
+                      VALUES ('$name', '$department', '$hashed_password', '$hashed_password', '$gender', '$email', '$phone', '$address', '$designation', '$role')";
 
             $result = mysqli_query($connection, $query);
 

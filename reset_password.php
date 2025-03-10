@@ -15,10 +15,13 @@ if (isset($_POST['reset'])) {
 
     // Check if the passwords match
     if ($new_password === $confirm_password) {
-        // Update the password and confirm_password in the database without hashing
+        // Hash the new password
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+
+        // Update the hashed password in the database
         $user_email = $_SESSION['user_email']; // Assuming you stored this during forgot password
         $stmt = $connection->prepare("UPDATE login_db SET password = ?, conpassword = ? WHERE email = ?");
-        $stmt->bind_param("sss", $new_password, $confirm_password, $user_email);
+        $stmt->bind_param("sss", $hashed_password, $hashed_password, $user_email);
 
         if ($stmt->execute()) {
             echo "<script>alert('Password reset successfully!'); window.location.href = 'login.php';</script>";

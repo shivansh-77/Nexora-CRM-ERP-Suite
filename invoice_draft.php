@@ -295,7 +295,7 @@ $result = mysqli_query($connection, $query);
                                    <td>{$row['discount']}</td>
                                    <td>{$row['net_amount']}</td>
                                    <td>
-                                       <button class='btn-secondary' title='View this Invoice' onclick=\"window.location.href='invoice.php?id={$row['id']}'\">🖨️</button>
+                                    <button class='btn-secondary' title='View this Invoice' onclick=\"window.location.href='invoice.php?id={$row['id']}'\">📄</button>
                                        <button class='btn-secondary' title='Close this Invoice' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button>
                                    </td>
                                </tr>";

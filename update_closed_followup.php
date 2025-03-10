@@ -119,6 +119,7 @@ if (isset($_GET['id'])) {
             padding: 20px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             background-color: white;
+            position: relative; /* For positioning the cross button */
         }
 
         .header {
@@ -129,6 +130,21 @@ if (isset($_GET['id'])) {
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .cross-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #2c3e50;
+        }
+
+        .cross-button:hover {
+            color: #e74c3c; /* Change color on hover */
         }
 
         .row {
@@ -168,7 +184,6 @@ if (isset($_GET['id'])) {
             text-align: center;
             margin-top: 20px;
             color: #2c3e50;
-
         }
 
         .btn {
@@ -178,7 +193,10 @@ if (isset($_GET['id'])) {
             border: none;
             border-radius: 4px;
             cursor: pointer;
-
+            font-size: 14px;
+            margin: 0 5px; /* Add margin between buttons */
+            text-decoration: none; /* Remove underline from Cancel link */
+            display: inline-block; /* Ensure buttons are aligned */
         }
 
         .btn:hover {
@@ -199,10 +217,20 @@ if (isset($_GET['id'])) {
         .row-inline textarea {
             flex: 1;
         }
+        .close-btn {
+            position: absolute;
+            top: 3px;
+            right: 6px;
+            font-size: 18px;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <a style="text-decoration:None;"href="repeat_followups.php" class="close-btn">&times;</a>
       <div class="header">
   <div>
       <span>Lead Source: <?php echo htmlspecialchars($followup_data['lead_source']); ?></span> |
@@ -308,17 +336,12 @@ if (isset($_GET['id'])) {
                     </select>
                 </div>
                 <div>
-                    <label>Whatsapp Template:</label>
-                    <select class="input-field" name="whatsapp_template">
-                        <option>--- Select Whatsapp Template ---</option>
-                    </select>
-                </div>
-            </div>
-            <div class="row">
-                <div>
                     <label>Estimate Amount:</label>
                     <input type="number" class="input-field" name="estimate_amount" placeholder="Estimate Amount" value="<?php echo htmlspecialchars($followup_data['estimate_amount']); ?>">
                 </div>
+            </div>
+            <div class="row">
+
                 <div>
                     <label>Closed Amount:</label>
                     <input type="number" class="input-field" name="closed_amount" placeholder="Closed Amount" value="<?php echo htmlspecialchars($followup_data['closed_amount']); ?>">

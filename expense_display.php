@@ -25,19 +25,35 @@ $filter = $_GET['filter'] ?? null;
 $startDate = $_GET['start_date'] ?? null;
 $endDate = $_GET['end_date'] ?? null;
 
-if ($filter) {
+// If a filter is selected, override the start and end dates
+if ($filter && $filter !== 'all') {
     $dateRange = getDateRange($filter);
     $startDate = $dateRange['start'];
     $endDate = $dateRange['end'];
 }
 
 // Build the query based on filters
+$query = "SELECT * FROM expense";
+$conditions = [];
 
-$query = "SELECT * FROM expense ORDER BY id DESC";
 if ($startDate && $endDate) {
-    $query .= " WHERE date BETWEEN '$startDate' AND '$endDate'";
+    $conditions[] = "date BETWEEN '$startDate' AND '$endDate'";
+} elseif ($startDate) {
+    $conditions[] = "date >= '$startDate'";
+} elseif ($endDate) {
+    $conditions[] = "date <= '$endDate'";
 }
+
+if (!empty($conditions)) {
+    $query .= " WHERE " . implode(" AND ", $conditions);
+}
+
+$query .= " ORDER BY id DESC";
+
+// Fetch data from the database
+$result = mysqli_query($connection, $query);
 ?>
+
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -169,7 +185,7 @@ if ($startDate && $endDate) {
             border: 1px solid #ddd;
             border-radius: 5px;
             overflow: hidden;
-            margin-right: 40px;
+            margin-right: 30px;
         }
 
         .search-input {
@@ -214,20 +230,19 @@ if ($startDate && $endDate) {
                 <button class="btn-search" id="searchButton">🔍</button>
             </div>
             <div class="filter-container">
-      <select id="dateFilter">
-          <option value="all">All</option>
-          <option value="today">Today</option>
-          <option value="this_month">This Month</option>
-          <option value="last_3_months">Last 3 Months</option>
-          <option value="this_year">This Year</option>
-      </select>
-      <input type="date" id="startDate">
-      <input type="date" id="endDate">
-  </div>
-
-  <a href="expense_add.php">
-<button class="btn-primary" id="openModal" title="Add New Expense" data-mode="add">➕</button>
-</a>
+                <select id="dateFilter">
+                    <option value="all">All</option>
+                    <option value="today">Today</option>
+                    <option value="this_month">This Month</option>
+                    <option value="last_3_months">Last 3 Months</option>
+                    <option value="this_year">This Year</option>
+                </select>
+                <input type="date" id="startDate">
+                <input type="date" id="endDate">
+            </div>
+            <a href="expense_add.php">
+                <button class="btn-primary" id="openModal" title="Add New Expense" data-mode="add">➕</button>
+            </a>
             <button id="downloadExcel" class="btn-primary">
                 <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
             </button>
@@ -247,7 +262,6 @@ if ($startDate && $endDate) {
             </thead>
             <tbody>
                 <?php
-                $result = mysqli_query($connection, $query);
                 if (mysqli_num_rows($result) > 0) {
                     while ($row = mysqli_fetch_assoc($result)) {
                         echo "<tr>
@@ -257,13 +271,13 @@ if ($startDate && $endDate) {
                                 <td>{$row['date']}</td>
                                 <td>{$row['remark']}</td>
                                 <td>
-    <button class='btn-warning edit-btn' title='Update Expense'
-        onclick=\"window.location.href='expense_edit.php?id={$row['id']}';\">✏️</button>
-    <button class='btn-danger' title='Delete this Expense'
-        onclick=\"if(confirm('Are you sure you want to delete this record?')) {
-            window.location.href='expense_delete.php?id={$row['id']}';
-        }\">🗑️</button>
-</td>
+                                    <button class='btn-warning edit-btn' title='Update Expense'
+                                        onclick=\"window.location.href='expense_edit.php?id={$row['id']}';\">✏️</button>
+                                    <button class='btn-danger' title='Delete this Expense'
+                                        onclick=\"if(confirm('Are you sure you want to delete this record?')) {
+                                            window.location.href='expense_delete.php?id={$row['id']}';
+                                        }\">🗑️</button>
+                                </td>
                               </tr>";
                     }
                 } else {
@@ -275,72 +289,105 @@ if ($startDate && $endDate) {
     </div>
 
     <script>
-  document.addEventListener('DOMContentLoaded', function() {
-      const searchInput = document.getElementById('searchInput');
-      const tableRows = document.querySelectorAll('.user-table tbody tr');
-      const dateFilter = document.getElementById('dateFilter');
-      const startDateInput = document.getElementById('startDate');
-      const endDateInput = document.getElementById('endDate');
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const tableRows = document.querySelectorAll('.user-table tbody tr');
+        const dateFilter = document.getElementById('dateFilter');
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
 
-      // Search functionality
-      searchInput.addEventListener('keyup', function() {
-          const searchTerm = searchInput.value.toLowerCase();
+        // Search functionality
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = searchInput.value.toLowerCase();
 
-          tableRows.forEach(function(row) {
-              const cells = row.querySelectorAll('td');
-              let rowText = '';
+            tableRows.forEach(function(row) {
+                const cells = row.querySelectorAll('td');
+                let rowText = '';
 
-              cells.forEach(function(cell) {
-                  rowText += cell.textContent.toLowerCase() + ' ';
-              });
+                cells.forEach(function(cell) {
+                    rowText += cell.textContent.toLowerCase() + ' ';
+                });
 
-              if (rowText.includes(searchTerm)) {
-                  row.style.display = '';
-              } else {
-                  row.style.display = 'none';
-              }
-          });
-      });
+                if (rowText.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
 
-      // Apply filter functionality
-      dateFilter.addEventListener('change', applyFilters);
-      startDateInput.addEventListener('change', applyFilters);
-      endDateInput.addEventListener('change', applyFilters);
+        // Apply filter functionality
+        dateFilter.addEventListener('change', applyFilters);
+        startDateInput.addEventListener('change', applyFilters);
+        endDateInput.addEventListener('change', applyFilters);
 
-      function applyFilters() {
-          const filter = dateFilter.value;
-          const start = startDateInput.value;
-          const end = endDateInput.value;
+        function applyFilters() {
+            const filter = dateFilter.value;
+            const start = startDateInput.value;
+            const end = endDateInput.value;
 
-          let url = 'expense_display.php?';
+            let url = 'expense_display.php?';
 
-          if (filter === 'all') {
-              url += 'filter=all';
-          } else if (filter) {
-              url += `filter=${filter}`;
-          } else if (start && end) {
-              url += `start_date=${start}&end_date=${end}`;
-          }
+            if (filter === 'all') {
+                url += 'filter=all';
+            } else if (filter) {
+                url += `filter=${filter}`;
+            } else {
+                if (start) url += `start_date=${start}`;
+                if (end) {
+                    if (start) {
+                        url += `&end_date=${end}`;
+                    } else {
+                        url += `end_date=${end}`;
+                    }
+                }
+            }
 
-          window.location.href = url;
-      }
+            // Update the URL without refreshing the page
+            history.pushState({ filter, start, end }, '', url);
 
-      // Download Excel
-      const downloadExcelButton = document.getElementById('downloadExcel');
-      downloadExcelButton.addEventListener('click', function() {
-          const table = document.querySelector('.user-table');
-          const clonedTable = table.cloneNode(true);
-          const actionColumn = clonedTable.querySelectorAll('th:last-child, td:last-child');
+            // Fetch and display the filtered data
+            fetchFilteredData(filter, start, end);
+        }
 
-          actionColumn.forEach(col => col.remove());
+        function fetchFilteredData(filter, start, end) {
+            // Construct the query parameters
+            const params = new URLSearchParams();
+            if (filter) params.append('filter', filter);
+            if (start) params.append('start_date', start);
+            if (end) params.append('end_date', end);
 
-          const ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, 'Expense Tracker');
-          XLSX.writeFile(wb, 'expense_tracker.xlsx');
-      });
-  });
-  </script>
+            // Fetch the data from the server
+            fetch(`expense_display.php?${params.toString()}`)
+                .then(response => response.text())
+                .then(data => {
+                    // Update the table content with the filtered data
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data, 'text/html');
+                    const newTableRows = doc.querySelectorAll('.user-table tbody tr');
+                    const tableBody = document.querySelector('.user-table tbody');
+                    tableBody.innerHTML = '';
+                    newTableRows.forEach(row => tableBody.appendChild(row));
+                })
+                .catch(error => console.error('Error fetching filtered data:', error));
+        }
 
+        // Download Excel
+        const downloadExcelButton = document.getElementById('downloadExcel');
+        downloadExcelButton.addEventListener('click', function() {
+            const table = document.querySelector('.user-table');
+            const clonedTable = table.cloneNode(true);
+            const actionColumn = clonedTable.querySelectorAll('th:last-child, td:last-child');
+
+            actionColumn.forEach(col => col.remove());
+
+            const ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Expense Tracker');
+            XLSX.writeFile(wb, 'expense_tracker.xlsx');
+        });
+    });
+
+    </script>
 </body>
 </html>
