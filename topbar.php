@@ -285,7 +285,7 @@ if (!empty($fy_codes)) {
                         <li><a href="unit_measurement_display.php">⏳ Units</a></li>
                     <?php endif; ?>
                     <?php if (is_submenu_allowed('Settings', 'Items')): ?>
-                        <li><a href="item_category_display.php">🛒 Items</a></li>
+                        <li><a href="item_category_display.php">🛒 Item Category</a></li>
                     <?php endif; ?>
                     <?php if (is_submenu_allowed('Settings', 'AMC')): ?>
                         <li><a href="amc_display.php">📆 AMC</a></li>
