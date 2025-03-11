@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                   VALUES ('$company_name', '$address', '$pincode', '$city', '$state', '$country', '$contact_no', '$whatsapp_no', '$email_id', '$pancard', '$gstno', '$registration_no', '$company_type', '$target_file')";
 
         if (mysqli_query($connection, $query)) {
-            echo "<script>alert('Company added successfully'); window.location.href='companycard_display.php';</script>";
+            echo "<script>alert('Company added successfully'); window.location.href='companycard.php';</script>";
         } else {
             echo "<script>alert('Error adding company: " . mysqli_error($connection) . "');</script>";
         }

@@ -38,7 +38,7 @@ if ($result->num_rows > 0) {
     ]);
 } else {
     error_log("No session found for User ID: " . $user_id); // Debugging line
-    echo json_encode(["status" => "error", "message" => "No session found."]);
+    // echo json_encode(["status" => "error", "message" => "No session found."]);
 }
 
 $stmt->close();

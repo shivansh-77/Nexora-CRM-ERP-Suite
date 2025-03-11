@@ -1,14 +1,10 @@
 <?php
-// Database connection
-$host = 'localhost';
-$user = 'root';
-$password = '';
-$database = 'u766296854_crm';
-$conn = new mysqli($host, $user, $password, $database);
+// Include the connection file
+include 'connection.php';
 
 // Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if ($connection->connect_error) {
+    die("Connection failed: " . $connection->connect_error);
 }
 
 // Fetch item details based on ID from the URL
@@ -20,7 +16,7 @@ if ($itemId <= 0) {
 }
 
 $item_query = "SELECT item_code, item_name FROM item WHERE id = $itemId";
-$item_result = $conn->query($item_query);
+$item_result = $connection->query($item_query);
 $item_row = $item_result->fetch_assoc();
 
 if (!$item_row) {
@@ -31,7 +27,7 @@ if (!$item_row) {
 // Fetch all units from the unit_of_measurement table
 $units = [];
 $unit_query = "SELECT id, unit FROM unit_of_measurement";
-$unit_result = $conn->query($unit_query);
+$unit_result = $connection->query($unit_query);
 
 while ($row = $unit_result->fetch_assoc()) {
     $units[] = $row;
@@ -39,11 +35,11 @@ while ($row = $unit_result->fetch_assoc()) {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $item_code = $conn->real_escape_string($_POST['item_code'] ?? '');
-    $item_name = $conn->real_escape_string($_POST['item_name'] ?? '');
+    $item_code = $connection->real_escape_string($_POST['item_code'] ?? '');
+    $item_name = $connection->real_escape_string($_POST['item_name'] ?? '');
     $unit_id = intval($_POST['unit_id'] ?? 0);
-    $value = $conn->real_escape_string($_POST['value'] ?? '');
-    $base_value = $conn->real_escape_string($_POST['base_value'] ?? '');
+    $value = $connection->real_escape_string($_POST['value'] ?? '');
+    $base_value = $connection->real_escape_string($_POST['base_value'] ?? '');
 
     // Validate inputs
     if (empty($item_code) || empty($item_name) || $unit_id <= 0 || empty($base_value)) {
@@ -51,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Fetch the unit name based on the selected unit ID
         $unit_name_query = "SELECT unit FROM unit_of_measurement WHERE id = $unit_id";
-        $unit_name_result = $conn->query($unit_name_query);
+        $unit_name_result = $connection->query($unit_name_query);
         $unit_name_row = $unit_name_result->fetch_assoc();
 
         if ($unit_name_row) {
@@ -60,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Check for active base price
             if ($base_value === 'Active') {
                 $check_active_query = "SELECT * FROM item_add WHERE item_code = '$item_code' AND base_value = 'Active'";
-                $check_active_result = $conn->query($check_active_query);
+                $check_active_result = $connection->query($check_active_query);
 
                 if ($check_active_result->num_rows > 0) {
                     echo "<script>alert('An Active Base Price already exists for this item. Please choose Inactive.');</script>";
@@ -68,13 +64,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Insert data with Active base value
                     $insert_query = "INSERT INTO item_add (item_code, item_name, unit, unit_id, value, base_value)
                                      VALUES ('$item_code', '$item_name', '$unit_name', $unit_id, '$value', '$base_value')";
-                    if ($conn->query($insert_query) === TRUE) {
+                    if ($connection->query($insert_query) === TRUE) {
                         echo "<script>
                             alert('Item record added successfully!');
                             window.location.href = 'item_add_display.php?id=$itemId';
                         </script>";
                     } else {
-                        echo "Error: " . $conn->error;
+                        echo "Error: " . $connection->error;
                     }
                 }
             } else {
@@ -84,13 +80,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $insert_query = "INSERT INTO item_add (item_code, item_name, unit, unit_name, value, base_value)
                                      VALUES ('$item_code', '$item_name', '$unit_id' , '$unit_name', '$value', '$base_value')";
-                    if ($conn->query($insert_query) === TRUE) {
+                    if ($connection->query($insert_query) === TRUE) {
                         echo "<script>
                             alert('Item record added successfully!');
                             window.location.href = 'item_add_display.php?id=$itemId';
                         </script>";
                     } else {
-                        echo "Error: " . $conn->error;
+                        echo "Error: " . $connection->error;
                     }
                 }
             }
@@ -102,9 +98,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Fetch entries from item_add table based on item_code
 $item_code_query = "SELECT * FROM item_add WHERE item_code = '{$item_row['item_code']}'";
-$item_code_result = $conn->query($item_code_query);
+$item_code_result = $connection->query($item_code_query);
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -215,7 +210,6 @@ $id = isset($_GET['id']) ? $_GET['id'] : '';
           </select>
           </div>
 
-
                   <div class="form-group">
                       <label for="value">Value:</label>
                       <input type="text" id="value" name="value">
@@ -268,10 +262,9 @@ $id = isset($_GET['id']) ? $_GET['id'] : '';
       </div>
   </div>
 
-
 </body>
 </html>
 
 <?php
-$conn->close();
+$connection->close();
 ?>
