@@ -54,7 +54,7 @@ $result = mysqli_query($connection, $query);
             margin-left: 260px;
             margin-top: 140px;
             max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-            min-height: 15px; /* Ensures it doesn't shrink too much */
+            min-height: 526px; /* Ensures it doesn't shrink too much */
             overflow-y: auto; /* Enables vertical scrolling */
             border: 1px solid #ddd;
             background-color: white;
@@ -202,7 +202,7 @@ $result = mysqli_query($connection, $query);
                    <input type="text" id="searchInput" class="search-input" placeholder="Search...">
                    <button class="btn-search" id="searchButton">🔍</button>
                </div>
-               
+
  <button id="downloadExcel" class="btn-primary" title="Export to Excel">
      <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
  </button>
@@ -244,7 +244,7 @@ $result = mysqli_query($connection, $query);
                                </tr>";
                        }
                    } else {
-                       echo "<tr><td colspan='9'>No records found</td></tr>";
+                       echo "<tr><td colspan='9' style='text-align: center;'>No records found</td></tr>";
                    }
                    ?>
                </tbody>

@@ -22,7 +22,7 @@ include('topbar.php');
         margin-left: 260px;
         margin-top: 140px;
         max-height: calc(100vh - 140px);
-        min-height: 15px;
+        min-height: 526px;
         overflow-y: auto;
         border: 1px solid #ddd;
         background-color: white;
@@ -329,7 +329,7 @@ include('topbar.php');
                               </tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='9'>No records found</td></tr>";
+                   echo "<tr><td colspan='9' style='text-align: center;'>No records found</td></tr>";
                 }
                 ?>
             </tbody>
@@ -340,24 +340,6 @@ include('topbar.php');
 
     <!-- Include SheetJS library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script>
-      document.getElementById("downloadExcel").addEventListener("click", function() {
-        let table = document.getElementById("attendanceTable");
-
-        // Clone the table to avoid modifying the original
-        let clonedTable = table.cloneNode(true);
-
-        // Remove the first row (filter row)
-        clonedTable.deleteRow(0);
-
-        let wb = XLSX.utils.book_new();
-        let ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
-
-        XLSX.utils.book_append_sheet(wb, ws, "Attendance Records");
-        XLSX.writeFile(wb, "Attendance_Records.xlsx");
-      });
-    </script>
-
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Helper function to format date as YYYY-MM-DD
@@ -506,6 +488,7 @@ include('topbar.php');
             });
         }
     });
+
     </script>
   </body>
 

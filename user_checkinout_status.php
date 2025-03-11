@@ -32,7 +32,7 @@ if (!$user_id || !$user_name) {
         margin-left: 260px;
         margin-top: 140px;
         max-height: calc(100vh - 140px);
-        min-height: 15px;
+        min-height: 526px;
         overflow-y: auto;
         border: 1px solid #ddd;
         background-color: white;
@@ -344,7 +344,7 @@ if (!$user_id || !$user_name) {
                   </tr>";
         }
     } else {
-        echo "<tr><td colspan='9'>No records found</td></tr>";
+       echo "<tr><td colspan='8' style='text-align: center;'>No records found</td></tr>";
     }
     ?>
 </tbody>
@@ -355,25 +355,6 @@ if (!$user_id || !$user_name) {
     <!-- Include SheetJS library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-      document.getElementById("downloadExcel").addEventListener("click", function() {
-        let table = document.getElementById("attendanceTable");
-
-        // Clone the table to avoid modifying the original
-        let clonedTable = table.cloneNode(true);
-
-        // Remove the first row (filter row)
-        clonedTable.deleteRow(0);
-
-        let wb = XLSX.utils.book_new();
-        let ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
-
-        XLSX.utils.book_append_sheet(wb, ws, "User Check-in/Check-out Records");
-        XLSX.writeFile(wb, "User_Checkinout_Records.xlsx");
-      });
-    </script>
-
-    <script>
-
     document.addEventListener('DOMContentLoaded', function () {
         // Helper function to format date as YYYY-MM-DD
         function formatDate(date) {
@@ -403,16 +384,13 @@ if (!$user_id || !$user_name) {
             return null;
         }
 
-        // Set default date filters to the first and last day of the current month
+        // Set default date filters to today
         const today = new Date();
-        const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        document.getElementById('startDateFilter').value = formatDate(today);
+        document.getElementById('endDateFilter').value = formatDate(today);
 
-        document.getElementById('startDateFilter').value = formatDate(firstDayOfThisMonth);
-        document.getElementById('endDateFilter').value = formatDate(lastDayOfThisMonth);
-
-        // Set default option for timePeriodFilter to "This Month"
-        document.getElementById('timePeriodFilter').value = 'thisMonth';
+        // Set default option for timePeriodFilter to "Today"
+        document.getElementById('timePeriodFilter').value = 'today';
 
         // Call filterTable to apply the default filters
         filterTable();
@@ -429,6 +407,12 @@ if (!$user_id || !$user_name) {
                     startDateFilter.value = formatDate(today);
                     endDateFilter.value = formatDate(today);
                     break;
+                case 'thisMonth':
+                    const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                    const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    startDateFilter.value = formatDate(firstDayOfThisMonth);
+                    endDateFilter.value = formatDate(lastDayOfThisMonth);
+                    break;
                 case 'lastMonth':
                     const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
                     const lastDayOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
@@ -440,12 +424,6 @@ if (!$user_id || !$user_name) {
                     const lastDayOfLast3Months = new Date(today.getFullYear(), today.getMonth(), 0);
                     startDateFilter.value = formatDate(firstDayOfLast3Months);
                     endDateFilter.value = formatDate(lastDayOfLast3Months);
-                    break;
-                case 'thisMonth':
-                    const firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                    const lastDayOfThisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                    startDateFilter.value = formatDate(firstDayOfThisMonth);
-                    endDateFilter.value = formatDate(lastDayOfThisMonth);
                     break;
                 case 'all':
                     startDateFilter.value = '';
@@ -524,6 +502,7 @@ if (!$user_id || !$user_name) {
             });
         }
     });
+
     </script>
   </body>
 </html>

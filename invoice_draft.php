@@ -55,7 +55,7 @@ $result = mysqli_query($connection, $query);
             margin-left: 260px;
             margin-top: 140px;
             max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-            min-height: 15px; /* Ensures it doesn't shrink too much */
+            min-height: 526px; /* Ensures it doesn't shrink too much */
             overflow-y: auto; /* Enables vertical scrolling */
             border: 1px solid #ddd;
             background-color: white;
@@ -295,13 +295,13 @@ $result = mysqli_query($connection, $query);
                                    <td>{$row['discount']}</td>
                                    <td>{$row['net_amount']}</td>
                                    <td>
-                                    <button class='btn-secondary' title='View this Invoice' onclick=\"window.location.href='invoice.php?id={$row['id']}'\">📄</button>
+                                    <button class='btn-secondary' title='Complete this Invoice Draft' onclick=\"window.location.href='invoice.php?id={$row['id']}'\">📄</button>
                                        <button class='btn-secondary' title='Close this Invoice' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button>
                                    </td>
                                </tr>";
                        }
                    } else {
-                       echo "<tr><td colspan='9'>No records found</td></tr>";
+                     echo "<tr><td colspan='10' style='text-align: center;'>No records found</td></tr>";
                    }
                    ?>
                </tbody>

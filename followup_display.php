@@ -29,7 +29,7 @@ include('topbar.php');
         margin-left: 260px;
         margin-top: 140px;
         max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-        min-height: 15px; /* Ensures it doesn't shrink too much */
+        min-height: 526px; /* Ensures it doesn't shrink too much */
         overflow-y: auto; /* Enables vertical scrolling */
         border: 1px solid #ddd;
         background-color: white;
@@ -165,7 +165,7 @@ include('topbar.php');
             <input type="text" id="searchInput" class="search-input" placeholder="Search...">
             <button class="btn-search" id="searchButton">🔍</button>
         </div>
-        
+
     </div>
 </div>
 <div class="user-table-wrapper">
@@ -279,7 +279,7 @@ include('topbar.php');
                         </tr>";
               }
           } else {
-              echo "<tr><td colspan='19'>No follow-up records found</td></tr>";
+               echo "<tr><td colspan='19' style='text-align: center;'>No records found</td></tr>";
           }
           ?>
 

@@ -74,7 +74,7 @@ $result = mysqli_query($connection, $query);
             margin-left: 260px;
             margin-top: 140px;
             max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-            min-height: 15px; /* Ensures it doesn't shrink too much */
+            min-height: 526px; /* Ensures it doesn't shrink too much */
             overflow-y: auto; /* Enables vertical scrolling */
             border: 1px solid #ddd;
             background-color: white;
@@ -281,7 +281,7 @@ $result = mysqli_query($connection, $query);
                               </tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='6'>No expense records found</td></tr>";
+                   echo "<tr><td colspan='6' style='text-align: center;'>No records found</td></tr>";
                 }
                 ?>
             </tbody>

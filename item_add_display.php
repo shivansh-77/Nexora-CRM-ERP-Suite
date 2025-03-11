@@ -260,7 +260,7 @@ $id = isset($_GET['id']) ? $_GET['id'] : '';
                       <?php endwhile; ?>
                   <?php else: ?>
                       <tr>
-                          <td colspan="7">No entries found.</td>
+                         echo "<tr><td colspan='7' style='text-align: center;'>No records found</td></tr>";
                       </tr>
                   <?php endif; ?>
               </tbody>
