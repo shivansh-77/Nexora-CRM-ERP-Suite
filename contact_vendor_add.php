@@ -4,16 +4,11 @@ session_start(); // Start the session
 
 // Check if the form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Save values to the session
-    $_SESSION['lead_source'] = $_POST['lead-source'];
-    $_SESSION['lead_for'] = $_POST['lead-for'];
-
-    // Prepare the SQL query for inserting into the contact table
-    $sql = "INSERT INTO contact (
-        lead_source, lead_for, lead_priority, contact_person, company_name,
-        mobile_no, whatsapp_no, email_id, address, country, state, city,
-        pincode, reference_pname, reference_pname_no, estimate_amnt, followupdate, employee, gstno, remarks
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // Prepare the SQL query for inserting into the contact_vendor table
+    $sql = "INSERT INTO contact_vendor (
+        contact_person, company_name, mobile_no, whatsapp_no, email_id, address,
+        country, state, city, pincode, reference_pname, reference_pname_no, remarks, gstno
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     // Prepare the statement
     $stmt = $connection->prepare($sql);
@@ -25,10 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Bind the parameters to the prepared statement
     $stmt->bind_param(
-        'ssssssssssssssssssss', // 15 string parameters and 1 double for estimate_amnt
-        $_POST['lead-source'],
-        $_POST['lead-for'],
-        $_POST['lead-priority'],
+        'sssssssssissss', // Adjusted for the new table structure
         $_POST['contact-person'],
         $_POST['company-name'],
         $_POST['mobile-no'],
@@ -41,68 +33,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_POST['pincode'],
         $_POST['reference-person-name'],
         $_POST['reference-person-mobile'],
-        $_POST['estimate-amount'], // Convert to float for estimate_amnt
-        $_POST['next-follow-up-date'],
-        $_POST['employee'],
-        $_POST['gstno'],
-        $_POST['remarks']
+        $_POST['remarks'],
+        $_POST['gstno']
     );
 
-    // Execute the statement
-    if ($stmt->execute()) {
-        // Get the last inserted contact ID
-        $last_contact_id = $connection->insert_id;
 
-        // // Retrieve fy_code with permission = 1
-        // $fy_code_sql = "SELECT fy_code FROM emp_fy_permission WHERE permission = 1 LIMIT 1";
-        // $fy_code_result = $connection->query($fy_code_sql);
-        //
-        // // Check if the query was successful and fetch the fy_code
-        // $fy_code = null;
-        // if ($fy_code_result && $fy_code_result->num_rows > 0) {
-        //     $fy_row = $fy_code_result->fetch_assoc();
-        //     $fy_code = $fy_row['fy_code'];
-        // } else {
-        //     // Handle the case where there is no fy_code found (optional)
-        //     echo "No fy_code found with permission 1.";
-        //     exit(); // Stop further execution if needed
-        // }
-
-        // Prepare the SQL query for inserting into the followup table
-        $followup_sql = "INSERT INTO followup (contact_id, lead_source, lead_for, lead_priority, fy_code) VALUES (?, ?, ?, ?, ?)";
-
-        // Prepare the followup statement
-        $followup_stmt = $connection->prepare($followup_sql);
-        if (!$followup_stmt) {
-            die("Preparation failed: " . $connection->error);
-        }
-
-        // Bind the parameters
-        $followup_stmt->bind_param(
-            'issss',
-            $last_contact_id,
-            $_POST['lead-source'],
-            $_POST['lead-for'],
-            $_POST['lead-priority'],
-            $fy_code // Use the fy_code retrieved
-        );
 
         // Execute the followup statement
-        if ($followup_stmt->execute()) {
+        if ($stmt->execute()) {
             // If both insertions are successful, redirect to contact_display.php
-            echo "<script>alert('Record added successfully!'); window.location.href = 'contact_display.php';</script>";
+            echo "<script>alert('Vendor Record added successfully!'); window.location.href = 'contact_display.php';</script>";
             exit();  // Ensure no further code is executed
         } else {
             // Display error if insertion fails
-            echo "Error inserting into followup: " . $followup_stmt->error;
+            echo "Error inserting into followup: " . $stmt->error;
         }
 
-        // Close the followup statement
-        $followup_stmt->close();
-    } else {
-        // Display error if insertion into contact fails
-        echo "Error: " . $stmt->error;
-    }
+
 
     // Close the statement and connection
     $stmt->close();
@@ -264,114 +211,45 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
   <div class="form-container">
-    <a style="text-decoration:None;"href="contact_display.php" class="close-btn">&times;</a>
+    <a style="text-decoration:None;"href="contact_vendor.php" class="close-btn">&times;</a>
 
     <h2>Add Contact</h2>
     <form method="POST" action="">
       <!-- Row 1 -->
       <div class="form-group">
-    <!-- Lead Source Input -->
-    <?php
-    // Get the leadSource parameter from the URL
-    $leadSource = isset($_GET['leadSource']) ? $_GET['leadSource'] : '';
-
-    // Fetch Lead Source names from the lead_source table
-    $leadSourceOptions = [];
-    $result = $connection->query("SELECT name FROM lead_sourc");
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $leadSourceOptions[] = $row['name'];
-        }
-    }
-    ?>
-    <div style="position: relative;">
-        <label for="lead-source">Lead Source *</label>
-        <select id="lead-source" name="lead-source" placeholder="Lead Sources">
-            <option value="">Select Lead Source</option>
-            <?php foreach ($leadSourceOptions as $option) : ?>
-                <option value="<?php echo htmlspecialchars($option); ?>"
-                    <?php echo $leadSource === $option ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($option); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-    </div>
-
-    <!-- Lead For Input -->
-    <?php
-    // Get the leadFor parameter from the URL
-    $leadFor = isset($_GET['leadFor']) ? $_GET['leadFor'] : '';
-
-    // Fetch Lead For names from the lead_for table
-    $leadForOptions = [];
-    $result = $connection->query("SELECT name FROM lead_for");
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $leadForOptions[] = $row['name'];
-        }
-    }
-    ?>
-    <div style="position: relative;">
-        <label for="lead-for">Lead For *</label>
-        <select id="lead-for" name="lead-for">
-            <option value="">Select Lead For</option>
-            <?php foreach ($leadForOptions as $option) : ?>
-                <option value="<?php echo htmlspecialchars($option); ?>"
-                    <?php echo $leadFor === $option ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($option); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-    </div>
-
-        <!-- Lead Priority Dropdown -->
         <div>
-          <label for="lead-priority">Lead Priority *</label>
-          <select id="lead-priority" name="lead-priority">  <!-- added name attribute for POST -->
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
+          <label for="contact-person">Contact Person *</label>
+          <input type="text" id="contact-person" name="contact-person" placeholder="Enter Contact Person">
+        </div>
+        <div>
+          <label for="company-name">Company Name</label>
+          <input type="text" id="company-name" name="company-name" placeholder="Enter Company Name">
         </div>
       </div>
 
       <!-- Row 2 -->
       <div class="form-group">
         <div>
-          <label for="contact-person">Contact Person *</label>
-          <input type="text" id="contact-person" name="contact-person" placeholder="Enter Contact Person">  <!-- added name attribute -->
+          <label for="mobile-no">Mobile No *</label>
+          <input type="text" id="mobile-no" name="mobile-no" placeholder="Enter Mobile No">
         </div>
         <div>
-          <label for="company-name">Company Name</label>
-          <input type="text" id="company-name" name="company-name" placeholder="Enter Company Name">  <!-- added name attribute -->
+          <label for="whatsapp-no">WhatsApp No</label>
+          <input type="text" id="whatsapp-no" name="whatsapp-no" placeholder="Enter WhatsApp No">
+        </div>
+        <div>
+          <label for="email">Email ID</label>
+          <input type="email" id="email" name="email" placeholder="Enter Email ID">
         </div>
       </div>
 
       <!-- Row 3 -->
-      <div class="form-group">
-        <div>
-          <label for="mobile-no">Mobile No *</label>
-          <input type="text" id="mobile-no" name="mobile-no" placeholder="Enter Mobile No">  <!-- added name attribute -->
-        </div>
-        <div>
-          <label for="whatsapp-no">WhatsApp No</label>
-          <input type="text" id="whatsapp-no" name="whatsapp-no" placeholder="Enter WhatsApp No">  <!-- added name attribute -->
-        </div>
-        <div>
-          <label for="email">Email ID</label>
-          <input type="email" id="email" name="email" placeholder="Enter Email ID">  <!-- added name attribute -->
-        </div>
+      <div class="form-group full">
+        <label for="address">Address</label>
+        <input type="text" id="address" name="address" placeholder="Enter Address">
       </div>
 
       <!-- Row 4 -->
-      <div class="form-group full">
-        <label for="address">Address</label>
-        <input type="text" id="address" name="address" placeholder="Enter Address">  <!-- added name attribute -->
-      </div>
-
-      <!-- Row 5 -->
       <div class="form-group">
         <div>
     <label for="country">Country</label>
@@ -427,86 +305,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   </div>
         <div>
           <label for="city">City</label>
-          <input type="text" id="city" name="city" placeholder="Enter City">  <!-- added name attribute -->
+          <input type="text" id="city" name="city" placeholder="Enter City">
         </div>
         <div>
           <label for="pincode">Pincode</label>
-          <input type="text" id="pincode" name="pincode" placeholder="Enter Pincode">  <!-- added name attribute -->
+          <input type="text" id="pincode" name="pincode" placeholder="Enter Pincode">
+        </div>
+      </div>
+
+      <!-- Row 5 -->
+      <div class="form-group">
+        <div>
+          <label for="reference-person-name">Reference Person Name</label>
+          <input type="text" id="reference-person-name" name="reference-person-name" placeholder="Enter Reference Person Name">
+        </div>
+        <div>
+          <label for="reference-person-mobile">Reference Person Mobile No.</label>
+          <input type="text" id="reference-person-mobile" name="reference-person-mobile" placeholder="Enter Reference Person Mobile No.">
         </div>
       </div>
 
       <!-- Row 6 -->
       <div class="form-group">
         <div>
-          <label for="reference-person-name">Reference Person Name</label>
-          <input type="text" id="reference-person-name" name="reference-person-name" placeholder="Enter Reference Person Name">  <!-- added name attribute -->
+          <label for="remarks">Remarks</label>
+          <textarea id="remarks" name="remarks" placeholder="Enter Remarks" rows="2"></textarea>
         </div>
         <div>
-          <label for="reference-person-mobile">Reference Person Mobile No.</label>
-          <input type="text" id="reference-person-mobile" name="reference-person-mobile" placeholder="Enter Reference Person Mobile No.">  <!-- added name attribute -->
+          <label for="gstno">GST Number</label>
+          <input id="gstno" name="gstno" type="text" placeholder="Enter GST Number">
         </div>
       </div>
 
-      <!-- Row 7 -->
-      <div class="form-group">
-        <div>
-          <label for="estimate-amount">Estimate Amount</label>
-          <input type="text" id="estimate-amount" name="estimate-amount" placeholder="Enter Estimate Amount">  <!-- added name attribute -->
-        </div>
-        <div>
-          <label for="next-follow-up-date">Lead Generation Date</label>
-          <input type="date" id="next-follow-up-date" name="next-follow-up-date">  <!-- added name attribute -->
-        </div>
+      <!-- Row 7 (Actions) -->
+      <div class="form-actions">
+        <button type="submit" name="register" class="button">Submit</button>
+        <a href="contact_vendor.php" class="cancel-btn">Cancel</a>
       </div>
-
-      <!-- Row 8 -->
-      <div class="form-group" >
-          <?php
-          // Fetch employee names from login_db
-          $employeeNames = [];
-          $query = "SELECT name FROM login_db";
-          $result = $connection->query($query);
-
-          if ($result && $result->num_rows > 0) {
-              while ($row = $result->fetch_assoc()) {
-                  $employeeNames[] = $row['name'];
-              }
-          }
-          ?>
-
-    <div>
-        <label for="employee-name">Employee</label>
-        <select id="employee-name" name="employee" class="input-field">
-            <option value="">Select Employee</option>
-            <?php foreach ($employeeNames as $name): ?>
-                <option value="<?php echo htmlspecialchars($name); ?>">
-                    <?php echo htmlspecialchars($name); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-
-    <div>
-      <label for="gstno">GST Number</label>
-      <input id="gstno" name="gstno" type="text" placeholder="Enter GST Number" class="input-field">
-  </div>
-
-   </div> <!--Row 8 ends -->
-
-  <!-- Row 9 (Actions) -->
-  <div class="form-group">
-
-  <div style="grid-column: span 2;">
-    <label for="remarks">Remarks</label>
-    <textarea id="remarks" name="remarks" placeholder="Enter Remarks" rows="2" class="input-field"></textarea>
-</div>
-  </div>
-  <!-- Row 10 (Actions) -->
-<div class="form-actions">
-  <button type="submit" name="register" class="button">Submit</button>
-  <a href="contact_display.php" class="cancel-btn">Cancel</a>
-</div>
-
     </form>
   </div>
 

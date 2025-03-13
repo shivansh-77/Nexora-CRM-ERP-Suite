@@ -22,7 +22,7 @@ include('topbar.php');
         margin-left: 260px;
         margin-top: 140px;
         max-height: calc(100vh - 140px);
-        min-height: 526px;
+        min-height: 100vh;
         overflow-y: auto;
         border: 1px solid #ddd;
         background-color: white;

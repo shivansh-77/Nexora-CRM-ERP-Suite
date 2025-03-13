@@ -22,17 +22,17 @@ while ($row = $result->fetch_assoc()) {
     $fy_codes[] = $row['fy_code'];
 }
 
-// Step 2: Fetch Invoice Records
+// Step 2: Fetch Purchase Invoice Records
 if (!empty($fy_codes)) {
     // Convert the fy_codes array to a comma-separated string for the SQL IN clause
     $fy_codes_string = implode("','", $fy_codes);
-    $query = "SELECT id, invoice_no, quotation_no, client_name, invoice_date, gross_amount, discount, net_amount, pending_amount
-              FROM invoices
+    $query = "SELECT id, invoice_no, purchase_order_no, vendor_name, invoice_date, gross_amount, discount, net_amount, pending_amount
+              FROM purchase_invoice
               WHERE status = 'Finalized' AND fy_code IN ('$fy_codes_string')
               ORDER BY id DESC"; // Added ORDER BY id DESC to sort results in descending order
 } else {
     // If no fy_codes, set query to an empty result
-    $query = "SELECT * FROM invoices WHERE 0"; // Returns no results
+    $query = "SELECT * FROM purchase_invoice_items WHERE 0"; // Returns no results
 }
 
 $result = mysqli_query($connection, $query);
@@ -41,7 +41,7 @@ $result = mysqli_query($connection, $query);
 <html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
-    <title>Invoice Display</title>
+    <title>Purchase Invoice Display</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
         /* Your existing CSS styles */
@@ -252,76 +252,75 @@ $result = mysqli_query($connection, $query);
 </head>
 <body>
     <div class="leadforhead">
-        <h2 class="leadfor">Finalized Invoices</h2>
+        <h2 class="leadfor">Purchase Invoices</h2>
         <div class="lead-actions">
             <div class="search-bar">
                 <input type="text" id="searchInput" class="search-input" placeholder="Search...">
                 <button class="btn-search" id="searchButton">🔍</button>
             </div>
-            <a href="invoice_generate.php">
-    <button class="btn-primary" id="openModal" data-mode="add" title="Add New Invoice">➕</button>
+            <a href="purchase_invoice.php">
+    <button class="btn-primary" id="openModal" data-mode="add" title="Add New Purchase Invoice">➕</button>
 </a>
 <button id="downloadExcel" class="btn-primary" title="Export to Excel">
     <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
 </button>
 
-
         </div>
     </div>
 
     <div class="user-table-wrapper">
-        <table class="user-table">
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Invoice No</th>
-                    <th>Quotation No</th>
-                    <th>Client Name</th>
-                    <th>Invoice Date</th>
-                    <th>Gross Amount</th>
-                    <th>Discount</th>
-                    <th>Net Amount</th>
-                    <th>Pending Amount</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                if (mysqli_num_rows($result) > 0) {
-                    while ($row = mysqli_fetch_assoc($result)) {
-                        $pendingAmount = $row['pending_amount'];
-                        $buttonClass = ($pendingAmount == 0) ? 'paid-button' : 'btn-danger';
-                        $buttonText = ($pendingAmount == 0) ? 'PAID' : $pendingAmount;
-                        $disabled = ($pendingAmount == 0) ? 'disabled' : '';
+      <table class="user-table">
+          <thead>
+              <tr>
+                  <th>Id</th>
+                  <th>Invoice No</th>
+                  <th>Purchase Order</th>
+                  <th>Vendor Name</th>
+                  <th>Invoice Date</th>
+                  <th>Gross Amount</th>
+                  <th>Discount</th>
+                  <th>Net Amount</th>
+                  <th>Pending Amount</th>
+                  <th>Actions</th>
+              </tr>
+          </thead>
+          <tbody>
+              <?php
+              if (mysqli_num_rows($result) > 0) {
+                  while ($row = mysqli_fetch_assoc($result)) {
+                      $pendingAmount = $row['pending_amount'];
+                      $buttonClass = ($pendingAmount == 0) ? 'paid-button' : 'btn-danger';
+                      $buttonText = ($pendingAmount == 0) ? 'PAID' : $pendingAmount;
+                      $disabled = ($pendingAmount == 0) ? 'disabled' : '';
 
-                        echo "<tr>
-                                <td>{$row['id']}</td>
-                                <td>{$row['invoice_no']}</td>
-                                <td>{$row['quotation_no']}</td>
-                                <td>{$row['client_name']}</td>
-                                <td>{$row['invoice_date']}</td>
-                                <td>{$row['gross_amount']}</td>
-                                <td>{$row['discount']}</td>
-                                <td>{$row['net_amount']}</td>
-                                <td>
-                                    <button title='Pay Amount' class='{$buttonClass} pending-button' data-id='{$row['id']}' data-net='{$row['net_amount']}' data-pending='{$row['pending_amount']}' {$disabled}>
-                                        {$buttonText}
-                                    </button>
-                                </td>
-                                <td>
-                                    <button class='btn-secondary' title='Print this Invoice' onclick=\"window.location.href='invoice1.php?id={$row['id']}'\">🖨️</button>
-                                    <button class='btn-secondary' title='Return this Invoice' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button>
-                                </td>
-                            </tr>";
-                    }
-                } else {
-                     echo "<tr><td colspan='10' style='text-align: center;'>No records found</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
+                      echo "<tr>
+                              <td>{$row['id']}</td>
+                              <td>{$row['invoice_no']}</td>
+                              <td>{$row['purchase_order_no']}</td> <!-- Corrected this line -->
+                              <td>{$row['vendor_name']}</td>
+                              <td>{$row['invoice_date']}</td>
+                              <td>{$row['gross_amount']}</td>
+                              <td>{$row['discount']}</td>
+                              <td>{$row['net_amount']}</td>
+                              <td>
+                                  <button title='Pay Amount' class='{$buttonClass} pending-button' data-id='{$row['id']}' data-net='{$row['net_amount']}' data-pending='{$row['pending_amount']}' {$disabled}>
+                                      {$buttonText}
+                                  </button>
+                              </td>
+                              <td>
+                                  <button class='btn-secondary' title='Print this Invoice' onclick=\"window.location.href='purchase_invoice_view.php?id={$row['id']}'\">🖨️</button>
+                                  <button class='btn-secondary' title='Return this Invoice' onclick=\"window.location.href='purchase_invoice_close.php?id={$row['id']}'\">⛔</button>
+                              </td>
+                          </tr>";
+                  }
+              } else {
+                  echo "<tr><td colspan='10' style='text-align: center;'>No records found</td></tr>";
+              }
+              ?>
+          </tbody>
+      </table>
+
     </div>
-
 
     <!-- Popup for Pending Amount -->
     <div class="overlay" id="overlay"></div>
@@ -389,10 +388,10 @@ $result = mysqli_query($connection, $query);
 
         // Convert data to worksheet
         const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Invoices');
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Purchase Invoices');
 
         // Export the workbook as an Excel file
-        XLSX.writeFile(workbook, 'Finalized_Invoices.xlsx');
+        XLSX.writeFile(workbook, 'Finalized_Purchase_Invoices.xlsx');
     });
 
     // Pending Amount Button Click
@@ -433,7 +432,7 @@ $result = mysqli_query($connection, $query);
         const newPendingAmount = pendingAmount - amountPaid;
 
         // Update database via AJAX
-        fetch('update_pending_amount.php', {
+        fetch('update_purchase_pending_amount.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

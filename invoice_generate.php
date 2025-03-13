@@ -480,11 +480,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 .unit-field dropdown {
   cursor: pointer;
 }
-
-
-
-
-
     </style>
 </head>
 <body>

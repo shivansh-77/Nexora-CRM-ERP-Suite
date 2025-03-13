@@ -244,6 +244,23 @@ if (!empty($fy_codes)) {
             </li>
         <?php endif; ?>
 
+        <?php if (has_allowed_submenus('Purchase')): ?>
+            <li>
+                <a href="#"><i class="icon">🛒</i>Purchase</a>
+                <ul class="submenu">
+                    <?php if (is_submenu_allowed('Purchase', 'Purchase Order')): ?>
+                        <li><a href="purchase_order_display.php">📋 Purchase Order</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Purchase', 'Purchase Invoice')): ?>
+                        <li><a href="purchase_invoice_display.php">📃 Purchase Invoice</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Purchase', 'Returned Invoice')): ?>
+                        <li><a href="purchase_invoice_closed_display.php">📃⛔ Returned Invoice</a></li>
+                    <?php endif; ?>
+                </ul>
+            </li>
+        <?php endif; ?>
+
         <?php if (has_allowed_submenus('Human Resource')): ?>
             <li>
                 <a href="#"><i class="icon">👩‍💼</i>Human Resource</a>
@@ -257,7 +274,6 @@ if (!empty($fy_codes)) {
                     <?php if (is_submenu_allowed('Human Resource', 'Leave Balance')): ?>
                         <li><a href="leave_balance_display.php">📅 Leave Balance</a></li>
                     <?php endif; ?>
-
                 </ul>
             </li>
         <?php endif; ?>

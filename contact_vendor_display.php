@@ -7,7 +7,8 @@ include('topbar.php');
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <title>Users</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <title>Vendor Contacts</title>
     <style>
     html, body {
         overflow: hidden;
@@ -147,85 +148,84 @@ include('topbar.php');
             border: none;
             outline: none;
         }
+        #downloadExcel{
+          background-color: green;
+        }
     </style>
   </head>
   <body>
     <div class="leadforhead">
-      <h2 class="leadfor">Users</h2>
+      <h2 class="leadfor">Vendor Contacts</h2>
       <div class="lead-actions">
         <div class="search-bar">
           <input type="text" id="searchInput" class="search-input" placeholder="Search...">
           <button class="btn-search" id="searchButton">🔍</button>
         </div>
-        <a href="form.php">
-    <button class="btn-primary" id="openModal" title="Add New Form" data-mode="add">➕</button>
-</a>
+        <a href="contact_vendor_add.php">
+          <button class="btn-primary" id="openModal" data-mode="add" title="Add Vendor Contact">➕</button>
+        </a>
+        <button id="downloadExcel" class="btn-primary" title="Download Excel File">
+          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+        </button>
       </div>
     </div>
     <div class="user-table-wrapper">
-        <table class="user-table">
-            <thead>
-                <tr>
-                    <th>Id</th>
-                    <th>Name</th>
-                    <th>Role</th>
-                    <th>Department</th>
-                    <th>Designation</th>
-                    <th>Gender</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Address</th>
-
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-        <?php
-        $query = "SELECT * FROM login_db"; // Update the table name as needed
-        $result = mysqli_query($connection, $query);
-
-        if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                echo "<tr>
-                        <td>{$row['id']}</td>
-                        <td>{$row['name']}</td>
-                        <td>{$row['role']}</td>
-                        <td>{$row['department']}</td>
-                        <td>{$row['designation']}</td>
-                        <td>{$row['gender']}</td>
-                        <td>{$row['email']}</td>
-                        <td>{$row['phone']}</td>
-                        <td>{$row['address']}</td>
-                        <td>
-    <button class='btn-warning edit-btn' title='Update Form' onclick=\"window.location.href='update_form.php?id={$row['id']}'\">
-        ✏️
-    </button>
-    <button class='btn-warning edit-btn' title='Manage Permissions' onclick=\"window.location.href='permission.php?id={$row['id']}&name=" . urlencode($row['name']) . "'\">
-        🔑
-    </button>
-    <button class='btn-warning edit-btn' title='Check In/Out Status' onclick=\"window.location.href='user_checkinout_status.php?id={$row['id']}&name=" . urlencode($row['name']) . "'\">
-        🕒
-    </button>
-    <button class='btn-warning edit-btn' title='View Leave Details' onclick=\"window.location.href='user_leave_display.php?id={$row['id']}&name=" . urlencode($row['name']) . "'\">
-        📅
-    </button>
-    <button class='btn-danger' title='Delete this Form' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_form.php?id={$row['id']}'; }\">
-        🗑️
-    </button>
-</td>
-                    </tr>";
-            }
-        } else {
-             echo "<tr><td colspan='9' style='text-align: center;'>No records found</td></tr>";
-        }
-        ?>
-    </tbody>
-
-
-
-        </table>
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Contact Person</th>
+            <th>Company Name</th>
+            <th>Mobile No</th>
+            <th>WhatsApp No</th>
+            <th>Email ID</th>
+            <th>Address</th>
+            <th>Country</th>
+            <th>State</th>
+            <th>City</th>
+            <th>Pincode</th>
+            <th>Reference Name</th>
+            <th>Reference Mobile</th>
+            <th>Remarks</th>
+            <th>GST Number</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php
+          $query = "SELECT * FROM contact_vendor"; // Update the query to match your contact_vendor table
+          $result = mysqli_query($connection, $query);
+          if (mysqli_num_rows($result) > 0) {
+              while ($row = mysqli_fetch_assoc($result)) {
+                  echo "<tr>
+                          <td>{$row['id']}</td>
+                          <td>{$row['contact_person']}</td>
+                          <td>{$row['company_name']}</td>
+                          <td>{$row['mobile_no']}</td>
+                          <td>{$row['whatsapp_no']}</td>
+                          <td>{$row['email_id']}</td>
+                          <td>{$row['address']}</td>
+                          <td>{$row['country']}</td>
+                          <td>{$row['state']}</td>
+                          <td>{$row['city']}</td>
+                          <td>{$row['pincode']}</td>
+                          <td>{$row['reference_pname']}</td>
+                          <td>{$row['reference_pname_no']}</td>
+                          <td>{$row['remarks']}</td>
+                          <td>{$row['gstno']}</td>
+                          <td>
+                              <button class='btn-warning edit-btn' title='Update Vendor Contact' onclick=\"window.location.href='contact_vendor_update.php?id={$row['id']}'\">✏️</button>
+                              <button class='btn-danger' title='Delete this Vendor Contact' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_contact_vendor.php?id={$row['id']}'; }\">🗑️</button>
+                          </td>
+                        </tr>";
+              }
+          } else {
+               echo "<tr><td colspan='15' style='text-align: center;'>No records found</td></tr>";
+          }
+          ?>
+        </tbody>
+      </table>
     </div>
-
 
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -250,6 +250,36 @@ include('topbar.php');
                       row.style.display = 'none'; // Hide row
                   }
               });
+          });
+
+          const downloadExcel = document.getElementById('downloadExcel');
+          downloadExcel.addEventListener('click', function() {
+              const table = document.querySelector('.user-table');
+              const rows = table.querySelectorAll('tr');
+              const data = [];
+
+              // Extract headers
+              const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.textContent);
+              headers.pop(); // Remove the "Actions" header
+              data.push(headers);
+
+              // Extract rows
+              rows.forEach(row => {
+                  const cells = row.querySelectorAll('td');
+                  if (cells.length > 0 && row.style.display !== 'none') {
+                      const rowData = Array.from(cells).map(cell => cell.textContent);
+                      rowData.pop(); // Remove the "Actions" cell
+                      data.push(rowData);
+                  }
+              });
+
+              // Create a worksheet and workbook
+              const ws = XLSX.utils.aoa_to_sheet(data);
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'Vendor Contacts');
+
+              // Generate and download the Excel file
+              XLSX.writeFile(wb, 'vendor_contacts.xlsx');
           });
       });
     </script>

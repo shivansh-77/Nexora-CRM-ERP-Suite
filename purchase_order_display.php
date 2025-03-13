@@ -22,15 +22,14 @@ while ($row = $result->fetch_assoc()) {
     $fy_codes[] = $row['fy_code'];
 }
 
-// Step 2: Fetch Draft Invoice Records
+// Step 2: Fetch Purchase Order Records
 if (!empty($fy_codes)) {
     // Convert the fy_codes array to a comma-separated string for the SQL IN clause
     $fy_codes_string = implode("','", $fy_codes);
-    $query = "SELECT * FROM invoices WHERE status = 'Draft' AND fy_code IN ('$fy_codes_string') ORDER BY id DESC";
-}
- else {
+    $query = "SELECT * FROM purchase_order WHERE fy_code IN ('$fy_codes_string')";
+} else {
     // If no fy_codes, set query to an empty result
-    $query = "SELECT * FROM invoices WHERE 0"; // Returns no results
+    $query = "SELECT * FROM purchase_order WHERE 0"; // Returns no results
 }
 
 $result = mysqli_query($connection, $query);
@@ -39,8 +38,7 @@ $result = mysqli_query($connection, $query);
 <html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
-    <title>Draft Invoices</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <title>Purchase Order Display</title>
     <style>
         /* Your existing CSS styles */
         html, body {
@@ -119,7 +117,7 @@ $result = mysqli_query($connection, $query);
 
         .leadforhead {
             position: fixed;
-              width: calc(100% - 290px); /* Adjust width to account for sidebar */
+            width: calc(100% - 290px); /* Adjust width to account for sidebar */
             height: 50px;
             display: flex;
             justify-content: space-between;
@@ -246,73 +244,82 @@ $result = mysqli_query($connection, $query);
         #downloadExcel {
             background-color: green;
         }
-        </style>
-   </head>
-   <body>
-       <div class="leadforhead">
-           <h2 class="leadfor">Draft Invoices</h2>
-           <div class="lead-actions">
-               <div class="search-bar">
-                   <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-                   <button class="btn-search" id="searchButton">🔍</button>
-               </div>
 
- <button id="downloadExcel" class="btn-primary" title="Export to Excel">
-     <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
- </button>
+        td:last-child {
+            text-align: left;
+            width: 10px;
+        }
+    </style>
+    <!-- Include SheetJS library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="leadforhead">
+        <h2 class="leadfor">Purchase Order Display</h2>
+        <div class="lead-actions">
+            <div class="search-bar">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+                <button class="btn-search" id="searchButton">🔍</button>
+            </div>
+            <a href="purchase_order.php">
+                <button class="btn-primary" id="openModal" data-mode="add" title="Add new Purchase Order">➕</button>
+            </a>
+            <button id="downloadExcel" class="btn-primary" title="Download Excel File">
+                <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+            </button>
+        </div>
+    </div>
 
- </tr>
-
-           </div>
-       </div>
-
-       <div class="user-table-wrapper">
-           <table class="user-table">
-               <thead>
-                   <tr>
-                       <th>Id</th>
-                       <th>Invoice No</th>
-                       <th>Quotation No</th>
-                       <th>Client Name</th>
-                       <th>Invoice Date</th>
-                       <th>Gross Amount</th>
-                       <th>Discount</th>
-                       <th>Net Amount</th>
-                       <th>Actions</th>
-                   </tr>
-               </thead>
-               <tbody>
-                   <?php
-                   if (mysqli_num_rows($result) > 0) {
-                       while ($row = mysqli_fetch_assoc($result)) {
-                           echo "<tr>
-                                   <td>{$row['id']}</td>
-                                   <td>{$row['invoice_no']}</td>
-                                   <td>{$row['quotation_no']}</td>
-                                   <td>{$row['client_name']}</td>
-                                   <td>{$row['invoice_date']}</td>
-                                   <td>{$row['gross_amount']}</td>
-                                   <td>{$row['discount']}</td>
-                                   <td>{$row['net_amount']}</td>
-                                   <td>
-                                    <button class='btn-secondary' title='Complete this Invoice Draft' onclick=\"window.location.href='invoice.php?id={$row['id']}'\">📄</button>
-                                       <button class='btn-secondary' title='Close this Invoice' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button>
-                                   </td>
-                               </tr>";
-                       }
-                   } else {
-                     echo "<tr><td colspan='10' style='text-align: center;'>No records found</td></tr>";
-                   }
-                   ?>
-               </tbody>
-           </table>
-       </div>
+    <div class="user-table-wrapper">
+        <table class="user-table" id="purchaseOrderTable">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Purchase Order No</th>
+                    <th>Vendor Name</th>
+                    <th>Gross Amount</th>
+                    <th>GST Charge</th>
+                    <th>Discount</th>
+                    <th>Net Amount</th>
+                    <th>Purchase Order Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                if (mysqli_num_rows($result) > 0) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        echo "<tr>
+                                <td>{$row['id']}</td>
+                                <td>{$row['purchase_order_no']}</td>
+                                <td>{$row['vendor_name']}</td>
+                                <td>{$row['gross_amount']}</td>
+                                <td>{$row['gst_charge']}</td>
+                                <td>{$row['discount']}</td>
+                                <td>{$row['net_amount']}</td>
+                                <td>{$row['purchase_order_date']}</td>
+                                <td>
+                                    <button class='btn-warning edit-btn info' title='View this Purchase Order' onclick=\"window.location.href='purchase_order_form_display.php?id={$row['id']}'\">📋</button>
+                                    <button class='btn-warning edit-btn' title='Update this Purchase Order' onclick=\"window.location.href='purchase_order_edit.php?id={$row['id']}'\">✏️</button>
+                                    <button class='btn-warning edit-btn' title='Send this Purchase Order for making Invoice' onclick=\"if(confirm('Do you want to make an invoice for this purchase order?')) window.location.href='purchase_invoice_register.php?id={$row['id']}'\">📄</button>
+                                    <button class='btn-danger' title='Delete this Purchase Order' onclick=\"if(confirm('Are you sure you want to delete this record?')) { window.location.href='delete_purchase_order.php?id={$row['id']}'; }\">🗑️</button>
+                                </td>
+                            </tr>";
+                    }
+                } else {
+                   echo "<tr><td colspan='9' style='text-align: center;'>No records found</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
+    </div>
 
     <script>
       document.addEventListener('DOMContentLoaded', function() {
           const searchInput = document.getElementById('searchInput');
           const tableRows = document.querySelectorAll('.user-table tbody tr');
 
+          // Search functionality
           searchInput.addEventListener('keyup', function() {
               const searchTerm = searchInput.value.toLowerCase();
 
@@ -321,31 +328,61 @@ $result = mysqli_query($connection, $query);
                   let rowText = '';
 
                   cells.forEach(function(cell) {
-                      rowText += cell.textContent.toLowerCase() + ' ';
+                      rowText += cell.textContent.toLowerCase() + ' '; // Concatenate all cell texts
                   });
 
+                  // Toggle row visibility based on search term
                   if (rowText.includes(searchTerm)) {
-                      row.style.display = '';
+                      row.style.display = ''; // Show row
                   } else {
-                      row.style.display = 'none';
+                      row.style.display = 'none'; // Hide row
                   }
               });
           });
 
-          // Download Excel
-          const downloadExcelButton = document.getElementById('downloadExcel');
-          downloadExcelButton.addEventListener('click', function() {
-              const table = document.querySelector('.user-table');
-              const clonedTable = table.cloneNode(true);
-              const actionColumn = clonedTable.querySelectorAll('th:last-child, td:last-child');
+          // Download Excel functionality
+          document.getElementById('downloadExcel').addEventListener('click', function() {
+        const table = document.getElementById('purchaseOrderTable');
+        const rows = table.querySelectorAll('tbody tr:not([style*="display: none"])'); // Only visible rows
 
-              actionColumn.forEach(col => col.remove());
+        // Create a new workbook
+        const workbook = XLSX.utils.book_new();
 
-              const ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
-              const wb = XLSX.utils.book_new();
-              XLSX.utils.book_append_sheet(wb, ws, 'Draft Invoices');
-              XLSX.writeFile(wb, 'draft_invoices.xlsx');
-          });
+        // Prepare data for the worksheet
+        const data = [];
+
+        // Get headers excluding the last "Actions" column
+        const headers = [];
+        table.querySelectorAll('thead th').forEach((header, index) => {
+            if (index !== table.querySelectorAll('thead th').length - 1) { // Skip last column (Actions)
+                headers.push(header.textContent.trim());
+            }
+        });
+        data.push(headers); // Add headers as the first row
+
+        rows.forEach(row => {
+            const rowData = [];
+            const cells = row.querySelectorAll('td');
+
+            cells.forEach((cell, index) => {
+                if (index !== cells.length - 1) { // Skip last column (Actions)
+                    rowData.push(cell.textContent.trim());
+                }
+            });
+
+            data.push(rowData); // Add row data
+        });
+
+        // Create a worksheet
+        const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+        // Add the worksheet to the workbook
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Purchase Orders');
+
+        // Export the workbook to an Excel file
+        XLSX.writeFile(workbook, 'purchase_orders.xlsx');
+    });
+
       });
     </script>
   </body>

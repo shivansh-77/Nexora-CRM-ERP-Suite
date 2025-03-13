@@ -47,6 +47,13 @@ switch ($menu) {
             "Expenses" => "expense_display.php" // Added Expenses
         ];
         break;
+    case 'Purchase': // New Purchase Menu
+        $submenus = [
+            "Purchase Order" => "purchase_order_display.php",
+            "Purchase Invoice" => "purchase_invoice_display.php",
+            "Returned Invoice" => "purchase_invoice_closed_display.php"
+        ];
+        break;
     case 'Settings':
         $submenus = [
             "Company Card" => "companycard.php",
@@ -60,7 +67,7 @@ switch ($menu) {
             "Departments" => "department_display.php",
             "Designations" => "designation_display.php",
             "Expense Tracker" => "expense_tracker_display.php",
-              "User" => "display.php"
+            "User" => "display.php"
         ];
         break;
     case 'Human Resource':
@@ -68,7 +75,6 @@ switch ($menu) {
             "Attendance" => "attendance_display.php",
             "Leave Applications" => "leave_display.php",
             "Leave Balance" => "leave_balance_display.php"
-
         ];
         break;
     default:
@@ -108,7 +114,7 @@ $stmt->close();
             margin-left: 260px;
             margin-top: 140px;
             max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-            min-height: 526px; /* Ensures it doesn't shrink too much */
+            min-height: 100vh; /* Ensures it doesn't shrink too much */
             overflow-y: auto; /* Enables vertical scrolling */
             border: 1px solid #ddd;
             background-color: white;
