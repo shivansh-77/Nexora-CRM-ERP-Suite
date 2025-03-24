@@ -48,7 +48,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <title>Forgot Password</title>
     <link rel="stylesheet" href="login-style.css"> <!-- Link the same stylesheet as reset_password.php -->
     <style>

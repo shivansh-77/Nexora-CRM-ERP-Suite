@@ -19,6 +19,7 @@ if (!$user_id || !$user_name) {
 <html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <title>Leave Display</title>
     <style>
         /* Table Styles */

@@ -7,6 +7,7 @@ include('topbar.php');
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     <title>Vendor Contacts</title>
     <style>

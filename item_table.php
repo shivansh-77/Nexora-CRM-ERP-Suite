@@ -11,7 +11,8 @@ $units = $connection->query("SELECT unit, description FROM unit_of_measurement")
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Item Details</title>
     <style>

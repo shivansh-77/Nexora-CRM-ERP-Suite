@@ -70,7 +70,8 @@ if (isset($_GET['fetch_units'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Item Ledger History</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

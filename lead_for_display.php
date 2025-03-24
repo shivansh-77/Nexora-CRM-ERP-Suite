@@ -7,6 +7,7 @@ include('topbar.php');
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <title>Lead For Display</title>
     <style>
     html, body {

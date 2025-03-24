@@ -26,6 +26,7 @@ if (isset($_GET['fy_code'])) {
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <title>User FY Permission</title>
     <style>
     html, body {

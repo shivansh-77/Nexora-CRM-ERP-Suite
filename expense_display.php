@@ -58,6 +58,7 @@ $result = mysqli_query($connection, $query);
 <html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <title>Expense Tracker Display</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>

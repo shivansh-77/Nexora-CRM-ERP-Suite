@@ -6,7 +6,7 @@ if (isset($_GET['purchase_order_id']) && isset($_GET['item_id'])) {
     $item_id = intval($_GET['item_id']);
 
     // Check if an invoice already exists for this purchase order
-    $check_existing_invoice = "SELECT id FROM purchase_invoice WHERE purchase_order_id = $purchase_order_id";
+    $check_existing_invoice = "SELECT id FROM purchase_invoice WHERE purchase_order_item_id = $purchase_order_id";
     $result_check = $connection->query($check_existing_invoice);
 
     if ($result_check->num_rows > 0) {
@@ -38,38 +38,46 @@ if (isset($_GET['purchase_order_id']) && isset($_GET['item_id'])) {
         // Format the new invoice number
         $invoice_no = 'PUR/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
 
-        // Insert into purchase_invoice table with the new invoice_no
-        $insert_invoice_query = "INSERT INTO purchase_invoice (
-            invoice_no, purchase_order_no, purchase_order_id, gross_amount, discount, net_amount, total_igst, total_cgst, total_sgst,
-            vendor_name, vendor_address, vendor_phone, vendor_city, vendor_state, vendor_country,
-            vendor_pincode, vendor_gstno, shipper_company_name, shipper_address, shipper_city,
-            shipper_state, shipper_country, shipper_pincode, shipper_phone, shipper_gstno, vendor_id,
-            shipper_location_code, shipper_id, base_amount, fy_code
-        ) VALUES (
-            '$invoice_no', '{$purchase_order['purchase_order_no']}', $purchase_order_id, {$purchase_order['gross_amount']}, {$purchase_order['discount']},
-            {$purchase_order['net_amount']}, {$purchase_order['total_igst']}, {$purchase_order['total_cgst']}, {$purchase_order['total_sgst']},
-            '{$purchase_order['vendor_name']}', '{$purchase_order['vendor_address']}', '{$purchase_order['vendor_phone']}', '{$purchase_order['vendor_city']}',
-            '{$purchase_order['vendor_state']}', '{$purchase_order['vendor_country']}', '{$purchase_order['vendor_pincode']}',
-            '{$purchase_order['vendor_gstno']}', '{$purchase_order['shipper_company_name']}', '{$purchase_order['shipper_address']}',
-            '{$purchase_order['shipper_city']}', '{$purchase_order['shipper_state']}', '{$purchase_order['shipper_country']}',
-            '{$purchase_order['shipper_pincode']}', '{$purchase_order['shipper_phone']}', '{$purchase_order['shipper_gstno']}',
-            '{$purchase_order['vendor_id']}', '{$purchase_order['shipper_location_code']}', '{$purchase_order['shipper_id']}', '{$purchase_order['base_amount']}', '{$purchase_order['fy_code']}'
-        )";
+        // Fetch the specific purchase order item
+        $item_query = "SELECT poi.*, i.lot_tracking, i.expiration_tracking, i.item_type
+                       FROM purchase_order_items poi
+                       LEFT JOIN item i ON poi.product_id = i.item_code
+                       WHERE poi.id = $item_id";
+        $item_result = $connection->query($item_query);
+        $item = $item_result->fetch_assoc();
 
-        if ($connection->query($insert_invoice_query) === TRUE) {
-            $invoice_id = $connection->insert_id;
+        if ($item) {
+            // Map values from purchase_order_items to purchase_invoice
+            $base_amount = $item['rate']; // Map rate to base_amount
+            $gross_amount = $item['amount']; // Map amount to gross_amount
+            $net_amount = $item['amount']; // Map amount to net_amount
+            $total_igst = $item['igst']; // Map igst to total_igst
+            $total_cgst = $item['cgst']; // Map cgst to total_cgst
+            $total_sgst = $item['sgst']; // Map sgst to total_sgst
+            $pending_amount = $net_amount; // Set pending_amount equal to net_amount
 
-            // Fetch the specific purchase order item
-            $item_query = "SELECT poi.*, i.lot_tracking, i.expiration_tracking, i.item_type
-                           FROM purchase_order_items poi
-                           LEFT JOIN item i ON poi.product_id = i.item_code
-                           WHERE poi.id = $item_id";
-            $item_result = $connection->query($item_query);
-            $item = $item_result->fetch_assoc();
+            // Insert into purchase_invoice table with the new invoice_no
+            $insert_invoice_query = "INSERT INTO purchase_invoice (
+                invoice_no, purchase_order_no, purchase_order_item_id, gross_amount, discount, net_amount, total_igst, total_cgst, total_sgst,
+                vendor_name, vendor_address, vendor_phone, vendor_city, vendor_state, vendor_country,
+                vendor_pincode, vendor_gstno, shipper_company_name, shipper_address, shipper_city,
+                shipper_state, shipper_country, shipper_pincode, shipper_phone, shipper_gstno, vendor_id,
+                shipper_location_code, shipper_id, base_amount, fy_code, pending_amount
+            ) VALUES (
+                '$invoice_no', '{$purchase_order['purchase_order_no']}', $purchase_order_id, $gross_amount, {$purchase_order['discount']},
+                $net_amount, $total_igst, $total_cgst, $total_sgst,
+                '{$purchase_order['vendor_name']}', '{$purchase_order['vendor_address']}', '{$purchase_order['vendor_phone']}', '{$purchase_order['vendor_city']}',
+                '{$purchase_order['vendor_state']}', '{$purchase_order['vendor_country']}', '{$purchase_order['vendor_pincode']}',
+                '{$purchase_order['vendor_gstno']}', '{$purchase_order['shipper_company_name']}', '{$purchase_order['shipper_address']}',
+                '{$purchase_order['shipper_city']}', '{$purchase_order['shipper_state']}', '{$purchase_order['shipper_country']}',
+                '{$purchase_order['shipper_pincode']}', '{$purchase_order['shipper_phone']}', '{$purchase_order['shipper_gstno']}',
+                '{$purchase_order['vendor_id']}', '{$purchase_order['shipper_location_code']}', '{$purchase_order['shipper_id']}', $base_amount, '{$purchase_order['fy_code']}', $pending_amount
+            )";
 
-            if ($item) {
-                $item_type = $item['item_type']; // Define $item_type inside the loop
+            if ($connection->query($insert_invoice_query) === TRUE) {
+                $invoice_id = $connection->insert_id;
 
+                // Insert into purchase_invoice_items
                 $insert_item_query = "INSERT INTO purchase_invoice_items (
                     invoice_id, product_id, product_name, unit, value, quantity, rate, gst, igst, cgst, sgst, amount, lot_tracking, expiration_tracking
                 ) VALUES (
@@ -81,7 +89,7 @@ if (isset($_GET['purchase_order_id']) && isset($_GET['item_id'])) {
                 $connection->query($insert_item_query);
                 $invoice_itemid = $connection->insert_id;
 
-                if ($item_type === 'Inventory') {
+                if ($item['item_type'] === 'Inventory') {
                     // Insert into item_ledger_history
                     $document_type = 'Purchase';
                     $entry_type = 'Purchase Invoice';
@@ -104,10 +112,10 @@ if (isset($_GET['purchase_order_id']) && isset($_GET['item_id'])) {
                 echo "<script>alert('Purchase Invoice generated successfully for the selected item!'); window.location.href='purchase_order_display.php';</script>";
                 exit();
             } else {
-                echo "Item not found.";
+                echo "Error creating purchase invoice: " . $connection->error;
             }
         } else {
-            echo "Error creating purchase invoice: " . $connection->error;
+            echo "Item not found.";
         }
     } else {
         echo "Purchase Order not found.";

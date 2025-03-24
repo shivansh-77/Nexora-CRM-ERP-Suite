@@ -8,6 +8,7 @@ include('topbar.php');
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <title>Party Ledger</title>
     <style>
         /* Table Styles */
@@ -305,6 +306,9 @@ html, body {
               // Convert the date format to display properly
               $transactionDate = date("d-m-Y H:i:s", strtotime($row['date'])); // Format: DD-MM-YYYY HH:MM:SS
 
+              // Determine the redirect URL based on party_type
+              $redirect_url = ($row['party_type'] === 'Vendor') ? 'vendor_ledger_details.php' : 'ledger_details.php';
+
               echo "<tr>
                       <td>{$row['id']}</td>
                       <td>{$row['ledger_type']}</td>
@@ -317,7 +321,7 @@ html, body {
                       <td>{$row['ref_doc_no']}</td>
                       <td>{$transactionDate}</td>
                       <td>
-                          <button class='btn-secondary' title='View all the transaction of this Party' onclick=\"window.location.href='ledger_details.php?document_no=" . urlencode($row['document_no']) . "&party_no=" . urlencode($row['party_no']) . "'\">📜 View</button>
+                          <button class='btn-secondary' title='View all the transaction of this Party' onclick=\"window.location.href='{$redirect_url}?document_no=" . urlencode($row['document_no']) . "&party_no=" . urlencode($row['party_no']) . "'\">📜 View</button>
                       </td>
                   </tr>";
           }

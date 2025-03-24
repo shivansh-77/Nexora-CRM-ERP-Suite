@@ -18,7 +18,8 @@ if (isset($_POST['verify'])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <title>Verify Code</title>
     <link rel="stylesheet" href="login-style.css">
 </head>

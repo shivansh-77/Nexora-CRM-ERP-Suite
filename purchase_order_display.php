@@ -38,22 +38,23 @@ $result = mysqli_query($connection, $query);
 <html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <title>Purchase Order Display</title>
     <style>
-        /* Your existing CSS styles */
-        html, body {
-            overflow: hidden;
-            height: 100%;
-            margin: 0;
-        }
+    html, body {
+        overflow: hidden;
+        height: 100%;
+        margin: 0;
+    }
 
+        /* Table Styles */
         /* Table Wrapper with Responsive Scroll */
         .user-table-wrapper {
             width: calc(100% - 260px);
             margin-left: 260px;
             margin-top: 140px;
-            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-            min-height: 100vh; /* Ensures it doesn't shrink too much */
+            max-height: 526px; /* Dynamic height based on viewport */
+            min-height: 100px; /* Ensures it doesn't shrink too much */
             overflow-y: auto; /* Enables vertical scrolling */
             border: 1px solid #ddd;
             background-color: white;
@@ -85,7 +86,6 @@ $result = mysqli_query($connection, $query);
 
         .user-table td {
             text-align: left;
-            padding: 7px;
         }
 
         .user-table tr:nth-child(even) {
@@ -179,75 +179,6 @@ $result = mysqli_query($connection, $query);
         .search-input:focus {
             border: none;
             outline: none;
-        }
-
-        /* Popup Styles */
-        .popup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            z-index: 1001;
-            width: 300px;
-            text-align: center;
-        }
-
-        .popup input {
-            width: 100%;
-            padding: 8px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        .popup button {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            background-color: #3498db;
-            color: white;
-            cursor: pointer;
-        }
-
-        .popup button:hover {
-            background-color: #2980b9;
-        }
-
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
-
-        .paid-button {
-            background-color: green;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: default; /* Disable pointer events */
-        }
-
-        table tr td:nth-last-child(2) {
-            text-align: center;
-        }
-
-        #downloadExcel {
-            background-color: green;
-        }
-
-        td:last-child {
-            text-align: left;
-            width: 10px;
         }
     </style>
     <!-- Include SheetJS library -->

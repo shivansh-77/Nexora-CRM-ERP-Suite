@@ -10,6 +10,7 @@ include('topbar.php');
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+<link rel="icon" type="image/png" href="favicon.png">
     <title>fresh follow ups</title>
     <style>
     html, body {
