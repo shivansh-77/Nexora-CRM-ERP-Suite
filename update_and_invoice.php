@@ -1,16 +1,25 @@
 <?php
 include 'connection.php'; // Replace with your actual connection file
 
-if (isset($_GET['purchase_order_id']) && isset($_GET['item_id'])) {
-    $purchase_order_id = intval($_GET['purchase_order_id']);
-    $item_id = intval($_GET['item_id']);
+if (isset($_POST['purchase_order_id']) && isset($_POST['item_id']) && isset($_POST['received_qty']) && isset($_POST['new_qytc'])) {
+    $purchase_order_id = intval($_POST['purchase_order_id']);
+    $item_id = intval($_POST['item_id']);
+    $received_qty = floatval($_POST['received_qty']);
+    $new_qytc = floatval($_POST['new_qytc']);
 
-    // Check if an invoice already exists for this purchase order
-    $check_existing_invoice = "SELECT id FROM purchase_invoice WHERE purchase_order_item_id = $item_id";
-    $result_check = $connection->query($check_existing_invoice);
+    // // Check if an invoice already exists for this purchase order
+    // $check_existing_invoice = "SELECT id FROM purchase_invoice WHERE purchase_order_item_id = $item_id";
+    // $result_check = $connection->query($check_existing_invoice);
+    //
+    // if ($result_check->num_rows > 0) {
+    //     echo json_encode(['success' => false, 'message' => 'Invoice already present for this purchase order.']);
+    //     exit();
+    // }
 
-    if ($result_check->num_rows > 0) {
-        echo "<script>alert('Invoice already present for this purchase order.'); window.history.back();</script>";
+    // Update the Q.Y.T.C in purchase_order_items
+    $update_qytc_query = "UPDATE purchase_order_items SET qytc = $new_qytc WHERE id = $item_id";
+    if (!$connection->query($update_qytc_query)) {
+        echo json_encode(['success' => false, 'message' => 'Error updating Q.Y.T.C: ' . $connection->error]);
         exit();
     }
 
@@ -47,14 +56,14 @@ if (isset($_GET['purchase_order_id']) && isset($_GET['item_id'])) {
         $item = $item_result->fetch_assoc();
 
         if ($item) {
-            // Map values from purchase_order_items to purchase_invoice
-            $base_amount = $item['rate']; // Map rate to base_amount
-            $gross_amount = $item['amount']; // Map amount to gross_amount
-            $net_amount = $item['amount']; // Map amount to net_amount
-            $total_igst = $item['igst']; // Map igst to total_igst
-            $total_cgst = $item['cgst']; // Map cgst to total_cgst
-            $total_sgst = $item['sgst']; // Map sgst to total_sgst
-            $pending_amount = $net_amount; // Set pending_amount equal to net_amount
+            // Calculate the amounts for the invoice based on the received quantity
+            $base_amount = $item['rate'] * $received_qty;
+            $gross_amount = $item['amount'] / $item['stock'] * $received_qty;
+            $net_amount = $gross_amount; // Assuming net_amount is the same as gross_amount
+            $total_igst = $item['igst'] / $item['stock'] * $received_qty;
+            $total_cgst = $item['cgst'] / $item['stock'] * $received_qty;
+            $total_sgst = $item['sgst'] / $item['stock'] * $received_qty;
+            $pending_amount = $net_amount;
 
             // Insert into purchase_invoice table with the new invoice_no
             $insert_invoice_query = "INSERT INTO purchase_invoice (
@@ -77,13 +86,21 @@ if (isset($_GET['purchase_order_id']) && isset($_GET['item_id'])) {
             if ($connection->query($insert_invoice_query) === TRUE) {
                 $invoice_id = $connection->insert_id;
 
+                // Calculate the amounts for the invoice based on the received quantity
+                $base_amount = $item['rate'] * $received_qty;
+                $gross_amount = $item['amount'] / $item['quantity'] * $received_qty;
+                $net_amount = $gross_amount; // Assuming net_amount is the same as gross_amount
+                $total_igst = $item['igst'] / $item['quantity'] * $received_qty;
+                $total_cgst = $item['cgst'] / $item['quantity'] * $received_qty;
+                $total_sgst = $item['sgst'] / $item['quantity'] * $received_qty;
+                $pending_amount = $net_amount;
                 // Insert into purchase_invoice_items
                 $insert_item_query = "INSERT INTO purchase_invoice_items (
-                    invoice_id, product_id, product_name, unit, value, quantity, rate, gst, igst, cgst, sgst, amount, lot_tracking, expiration_tracking, stock
+                    invoice_id, product_id, product_name, unit, value, quantity, rate, gst, igst, cgst, sgst, amount, lot_tracking, expiration_tracking, stock,lot_trackingid,expiration_date,receipt_date
                 ) VALUES (
                     $invoice_id, '{$item['product_id']}', '{$item['product_name']}', '{$item['unit']}', '{$item['value']}',
-                    {$item['quantity']}, {$item['rate']}, {$item['gst']}, {$item['igst']}, {$item['cgst']},
-                    {$item['sgst']}, {$item['amount']}, '{$item['lot_tracking']}', '{$item['expiration_tracking']}', '{$item['stock']}'
+                    $received_qty, {$item['rate']}, {$item['gst']}, $total_igst, $total_cgst,
+                    $total_sgst, $gross_amount, '{$item['lot_tracking']}', '{$item['expiration_tracking']}', '{$item['stock']}','{$item['lot_trackingid']}','{$item['expiration_date']}','{$item['receipt_date']}'
                 )";
 
                 $connection->query($insert_item_query);
@@ -93,7 +110,7 @@ if (isset($_GET['purchase_order_id']) && isset($_GET['item_id'])) {
                     // Insert into item_ledger_history
                     $document_type = 'Purchase';
                     $entry_type = 'Purchase Invoice';
-                    $item_quantity = (float)$item['quantity'] * (float)$item['value'];
+                    $item_quantity = $received_qty;
                     $location = $purchase_order['shipper_location_code'];
                     $date = date('Y-m-d');
                     $item_value = $item['value'];
@@ -108,21 +125,21 @@ if (isset($_GET['purchase_order_id']) && isset($_GET['item_id'])) {
                     $connection->query($insert_ledger_history);
                 }
 
-                // Redirect to the invoice page with success message
-                echo "<script>alert('Purchase Invoice generated successfully for the selected item!'); window.location.href='purchase_order_display.php';</script>";
+                // Return success response
+                echo json_encode(['success' => true, 'invoice_id' => $invoice_id]);
                 exit();
             } else {
-                echo "Error creating purchase invoice: " . $connection->error;
+                echo json_encode(['success' => false, 'message' => 'Error creating purchase invoice: ' . $connection->error]);
             }
         } else {
-            echo "Item not found.";
+            echo json_encode(['success' => false, 'message' => 'Item not found.']);
         }
     } else {
-        echo "Purchase Order not found.";
+        echo json_encode(['success' => false, 'message' => 'Purchase Order not found.']);
     }
 
     $connection->close();
 } else {
-    echo "Invalid request.";
+    echo json_encode(['success' => false, 'message' => 'Invalid request.']);
 }
 ?>

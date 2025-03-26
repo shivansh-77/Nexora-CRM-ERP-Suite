@@ -53,7 +53,7 @@ if (isset($_GET['id'])) {
             background-color: #2c3e50;
         }
         .invoice-container {
-            max-width: 1050px;
+            max-width: 1000px;
             margin: 20px auto;
             background: #fff;
             padding: 20px;
@@ -160,25 +160,29 @@ if (isset($_GET['id'])) {
         </div>
 
         <div class="details">
-            <?php if ($invoice) { ?>
-                <div>
-                    <h4>Bill From:</h4>
-                    <p><?php echo htmlspecialchars($invoice['vendor_name']); ?></p>
-                    <p><?php echo htmlspecialchars($invoice['vendor_address']); ?></p>
-                    <p><?php echo htmlspecialchars($invoice['vendor_city']) . ', ' . htmlspecialchars($invoice['vendor_state']) . ' ' . htmlspecialchars($invoice['vendor_pincode']); ?></p>
-                    <p><?php echo htmlspecialchars($invoice['vendor_country']); ?></p>
-                    <p>Phone: <?php echo htmlspecialchars($invoice['vendor_phone']); ?></p>
-                    <p>GSTIN: <?php echo htmlspecialchars($invoice['vendor_gstno']); ?></p>
-                </div>
-                <div>
-                    <h4>Ship From:</h4>
-                    <p><?php echo htmlspecialchars($invoice['shipper_company_name']); ?></p>
-                    <p><?php echo htmlspecialchars($invoice['shipper_address']); ?></p>
-                    <p><?php echo htmlspecialchars($invoice['shipper_city']) . ', ' . htmlspecialchars($invoice['shipper_state']) . ' ' . htmlspecialchars($invoice['shipper_pincode']); ?></p>
-                    <p><?php echo htmlspecialchars($invoice['shipper_country']); ?></p>
-                    <p>Phone: <?php echo htmlspecialchars($invoice['shipper_phone']); ?></p>
-                    <p>GSTIN: <?php echo htmlspecialchars($invoice['shipper_gstno']); ?></p>
-                </div>
+      <?php if ($invoice) { ?>
+          <div>
+              <h4>Bill From / Vendor</h4>
+              <p>Name: <?php echo htmlspecialchars($invoice['vendor_name']); ?></p>
+              <p>Phone: <?php echo htmlspecialchars($invoice['vendor_phone']); ?></p>
+              <p>Address: <?php echo htmlspecialchars($invoice['vendor_address']); ?></p>
+              <p>City: <?php echo htmlspecialchars($invoice['vendor_city']); ?></p>
+              <p>State: <?php echo htmlspecialchars($invoice['vendor_state']); ?></p>
+              <p>Country: <?php echo htmlspecialchars($invoice['vendor_country']); ?></p>
+              <p>Pincode: <?php echo htmlspecialchars($invoice['vendor_pincode']); ?></p>
+              <p>GSTIN: <?php echo htmlspecialchars($invoice['vendor_gstno']); ?></p>
+          </div>
+          <div>
+              <h4>Ship From / Shipper</h4>
+              <p>Name: <?php echo htmlspecialchars($invoice['shipper_company_name']); ?></p>
+              <p>Phone: <?php echo htmlspecialchars($invoice['shipper_phone']); ?></p>
+              <p>Address: <?php echo htmlspecialchars($invoice['shipper_address']); ?></p>
+              <p>City: <?php echo htmlspecialchars($invoice['shipper_city']); ?></p>
+              <p>State: <?php echo htmlspecialchars($invoice['shipper_state']); ?></p>
+              <p>Country: <?php echo htmlspecialchars($invoice['shipper_country']); ?></p>
+              <p>Pincode: <?php echo htmlspecialchars($invoice['shipper_pincode']); ?></p>
+              <p>GSTIN: <?php echo htmlspecialchars($invoice['shipper_gstno']); ?></p>
+          </div>
             <?php } else { ?>
                 <p>No details found for the given invoice ID.</p>
             <?php } ?>
@@ -239,6 +243,7 @@ if (isset($_GET['id'])) {
                 </div>
             </div>
             <div class="amount" style="width: 48%;">
+              <p><strong>Base Amount:</strong> <?php echo isset($invoice['base_amount']) ? htmlspecialchars($invoice['base_amount']) : ''; ?></p>
                 <p><strong>Total CGST:</strong> <?php echo isset($invoice['total_cgst']) ? htmlspecialchars($invoice['total_cgst']) : ''; ?></p>
                 <p><strong>Total SGST:</strong> <?php echo isset($invoice['total_sgst']) ? htmlspecialchars($invoice['total_sgst']) : ''; ?></p>
                 <p><strong>Total IGST:</strong> <?php echo isset($invoice['total_igst']) ? htmlspecialchars($invoice['total_igst']) : ''; ?></p>

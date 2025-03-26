@@ -180,6 +180,9 @@ $result = mysqli_query($connection, $query);
             border: none;
             outline: none;
         }
+        #downloadExcel{
+          background-color: green;
+        }
     </style>
     <!-- Include SheetJS library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>

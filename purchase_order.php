@@ -130,15 +130,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // $amc_due_date = isset($amc_due_dates[$i]) ? $amc_due_dates[$i] : '0000-00-00';
             // $amc_amount = isset($amc_amounts[$i]) ? $amc_amounts[$i] : 0;
 
-            // Insert into purchase_invoice_items without AMC fields
+            // Inside the loop where you insert into purchase_order_items
+            $stock = $quantities[$i] * $unit_values[$i]; // Calculate stock
+
             $insert_item = "INSERT INTO purchase_order_items (
                 purchase_order_id, product_name, product_id, quantity, rate, gst, amount, unit, value, igst, cgst, sgst,
-                lot_trackingid, expiration_date, receipt_date
+                lot_trackingid, expiration_date, receipt_date, stock, qytc
             ) VALUES (
                 '$purchase_order_id', '$product_name', '$product_code', '$quantity', '$rate', '$gst', '$amount', '$unit',
-                '$unit_value', '$igst', '$cgst', '$sgst', '$lot_tracking_id', '$expiration_date', '$receipt_date'
+                '$unit_value', '$igst', '$cgst', '$sgst', '$lot_tracking_id', '$expiration_date', '$receipt_date', '$stock','$stock'
             )";
-
             $connection->query($insert_item);
 
             // Fetch the last inserted invoice_item ID
@@ -207,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-<link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase Invoice System</title>
     <style>
@@ -481,17 +482,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
     </style>
 </head>
-
-
 <body>
-
   <div class="container">
       <a style="text-decoration: none; margin-left: 1347px; padding: 0px; position: relative; top: -34px; transform: translateY(-50%);" href="purchase_order_display.php" class="close-btn">&times;</a>
 
       <form id="invoiceForm" method="POST" action="">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: -25px; width: 100%;">
               <div style="flex-grow: 1; text-align: center;">
-                  <h1 style="margin-left: 150px;">Purchase Invoice Generate</h1>
+                  <h1 style="margin-left: 150px;">Purchase Order Generate</h1>
               </div>
               <div style="margin-right: 10px;">
                   <label for="invoice_date"><strong>Date:</strong></label>
@@ -586,6 +584,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                           <th>Qty</th>
                           <th>Rate</th>
                           <th>GST (%)</th>
+                          <th>Stock</th> <!-- New Stock Column -->
                           <th>IGST</th>
                           <th>CGST</th>
                           <th>SGST</th>
@@ -780,6 +779,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                       ?>
                   </select>
               </td>
+              <td><input type="text" name="stock[]" placeholder="Stock" class="small-input" readonly></td> <!-- New Stock Field -->
               <input type="hidden" name="product_name_actual[]">
               <input type="hidden" name="unit_value[]" value="1" id="unitValueField">
               <td><input type="text" name="igst[]" placeholder="IGST" class="small-input" readonly></td>
@@ -816,6 +816,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                       if (hiddenInput) {
                           hiddenInput.value = unitObj.value;
                       }
+                      calculateRow(inputField); // Recalculate row when unit is selected
                   };
                   ul.appendChild(li);
               });
@@ -893,8 +894,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
           let qty = parseFloat(row.cells[2].querySelector("input").value) || 0;
           let rate = parseFloat(row.cells[3].querySelector("input").value) || 0;
           let gstPercentage = parseFloat(row.querySelector(".product-gst").value) || 0;
+          let unitValue = parseFloat(row.querySelector("input[name='unit_value[]']").value) || 1;
 
-          let amount = qty * rate;
+          let stock = qty * unitValue; // Calculate stock
+          row.cells[5].querySelector("input").value = stock.toFixed(2); // Set stock value
+
+          let amount = stock * rate; // Calculate amount based on stock
           let gstAmount = (amount * gstPercentage) / 100;
 
           let vendorState = document.getElementById("vendor_state").value;
@@ -910,10 +915,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               }
           }
 
-          row.cells[5].querySelector("input").value = igst.toFixed(2);
-          row.cells[6].querySelector("input").value = cgst.toFixed(2);
-          row.cells[7].querySelector("input").value = sgst.toFixed(2);
-          row.cells[8].querySelector("input").value = (amount + gstAmount).toFixed(2);
+          row.cells[6].querySelector("input").value = igst.toFixed(2);
+          row.cells[7].querySelector("input").value = cgst.toFixed(2);
+          row.cells[8].querySelector("input").value = sgst.toFixed(2);
+          row.cells[9].querySelector("input").value = (amount + gstAmount).toFixed(2);
 
           updateGSTTotals();
           calculateTotal();
@@ -924,7 +929,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
           let gross = 0;
 
           rows.forEach(row => {
-              gross += parseFloat(row.cells[8].querySelector("input").value) || 0;
+              gross += parseFloat(row.cells[9].querySelector("input").value) || 0;
           });
 
           document.getElementById("grossAmount").innerText = gross.toFixed(2);
@@ -937,9 +942,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
           let totalGST = 0;
           rows.forEach(row => {
-              let igst = parseFloat(row.cells[5].querySelector("input").value) || 0;
-              let cgst = parseFloat(row.cells[6].querySelector("input").value) || 0;
-              let sgst = parseFloat(row.cells[7].querySelector("input").value) || 0;
+              let igst = parseFloat(row.cells[6].querySelector("input").value) || 0;
+              let cgst = parseFloat(row.cells[7].querySelector("input").value) || 0;
+              let sgst = parseFloat(row.cells[8].querySelector("input").value) || 0;
               totalGST += igst + cgst + sgst;
           });
 
@@ -954,9 +959,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
           let totalIGST = 0, totalCGST = 0, totalSGST = 0;
 
           document.querySelectorAll("#invoiceTable tbody tr").forEach(row => {
-              totalIGST += parseFloat(row.cells[5].querySelector("input").value) || 0;
-              totalCGST += parseFloat(row.cells[6].querySelector("input").value) || 0;
-              totalSGST += parseFloat(row.cells[7].querySelector("input").value) || 0;
+              totalIGST += parseFloat(row.cells[6].querySelector("input").value) || 0;
+              totalCGST += parseFloat(row.cells[7].querySelector("input").value) || 0;
+              totalSGST += parseFloat(row.cells[8].querySelector("input").value) || 0;
           });
 
           document.getElementById("totalIGST").innerText = totalIGST.toFixed(2);
@@ -973,3 +978,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       }
   </script>
 </body>
+</html>
