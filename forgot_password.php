@@ -9,7 +9,8 @@ use PHPMailer\PHPMailer\Exception;
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
-    $verification_code = bin2hex(random_bytes(16)); // Generate a verification code
+    $verification_code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT); // Generate a 6-digit OTP
+
 
     // Store the code and email in the session for later verification
     $_SESSION['verification_code'] = $verification_code;

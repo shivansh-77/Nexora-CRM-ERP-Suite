@@ -21,7 +21,7 @@ include('topbar.php');
         width: calc(100% - 260px);
         margin-left: 260px;
         margin-top: 140px;
-        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+        max-height: calc(100vh - 150px); /* Dynamic height based on viewport */
         min-height: 100vh; /* Ensures it doesn't shrink too much */
         overflow-y: auto; /* Enables vertical scrolling */
         border: 1px solid #ddd;
@@ -197,7 +197,8 @@ include('topbar.php');
         if (mysqli_num_rows($result) > 0) {
             while ($row = mysqli_fetch_assoc($result)) {
                 $isChecked = $row['is_current'] == 1 ? "checked" : ""; // Assuming `is_current` column exists for marking the current row
-                echo "<tr>
+                echo "<tr ondblclick=\"window.location.href='user_fy_permission.php?fy_code={$row['fy_code']}'\" style='cursor: pointer;'>
+
                         <td>" . ($row['fy_code'] ?? 'N/A') . "</td>
                         <td>" . ($row['start_date'] ?? 'N/A') . "</td>
                         <td>" . ($row['end_date'] ?? 'N/A') . "</td>

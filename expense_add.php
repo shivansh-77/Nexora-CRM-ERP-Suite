@@ -1,4 +1,5 @@
 <?php
+session_start(); // Start the session to access user data
 include('connection.php'); // Include your database connection
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -9,9 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $date = mysqli_real_escape_string($connection, $_POST['date']);
     $remark = mysqli_real_escape_string($connection, $_POST['remark']);
 
-    // Insert the new expense into the database
-    $query = "INSERT INTO expense (voucher_no, expense_type, amount, date, remark)
-              VALUES ('$voucher_no', '$expense_type', '$amount', '$date', '$remark')";
+    // Get user info from session
+    $user_id = isset($_SESSION['user_id']) ? mysqli_real_escape_string($connection, $_SESSION['user_id']) : 0;
+    $user_name = isset($_SESSION['user_name']) ? mysqli_real_escape_string($connection, $_SESSION['user_name']) : 'Unknown';
+
+    // Insert the new expense into the database with user info
+    $query = "INSERT INTO expense (voucher_no, expense_type, amount, date, remark, user_id, user_name)
+              VALUES ('$voucher_no', '$expense_type', '$amount', '$date', '$remark', '$user_id', '$user_name')";
 
     if (mysqli_query($connection, $query)) {
         echo "<script>alert('Expense added successfully'); window.location.href='expense_display.php';</script>";
@@ -68,7 +73,7 @@ $todayDate = date('Y-m-d');
 <html lang="en">
 <head>
     <meta charset="utf-8">
-<link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Expense</title>
     <style>

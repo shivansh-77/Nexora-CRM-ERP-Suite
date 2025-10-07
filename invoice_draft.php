@@ -1,3 +1,4 @@
+ <!-- <button class='btn-secondary' title='Close this Invoice' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button> -->
 <?php
 session_start();
 include('connection.php');
@@ -50,14 +51,12 @@ $result = mysqli_query($connection, $query);
             margin: 0;
         }
 
-        /* Table Wrapper with Responsive Scroll */
         .user-table-wrapper {
             width: calc(100% - 260px);
             margin-left: 260px;
             margin-top: 140px;
-            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-            min-height: 100vh; /* Ensures it doesn't shrink too much */
-            overflow-y: auto; /* Enables vertical scrolling */
+            max-height: calc(100vh - 150px); /* Adjust based on your layout */
+            overflow-y: auto; /* Enable vertical scrolling */
             border: 1px solid #ddd;
             background-color: white;
         }
@@ -286,7 +285,8 @@ $result = mysqli_query($connection, $query);
                    <?php
                    if (mysqli_num_rows($result) > 0) {
                        while ($row = mysqli_fetch_assoc($result)) {
-                           echo "<tr>
+                         echo "<tr ondblclick=\"window.location.href='invoice.php?id={$row['id']}'\" style='cursor: pointer;'>
+
                                    <td>{$row['id']}</td>
                                    <td>{$row['invoice_no']}</td>
                                    <td>{$row['quotation_no']}</td>
@@ -297,7 +297,7 @@ $result = mysqli_query($connection, $query);
                                    <td>{$row['net_amount']}</td>
                                    <td>
                                     <button class='btn-secondary' title='Complete this Invoice Draft' onclick=\"window.location.href='invoice.php?id={$row['id']}'\">📄</button>
-                                       <button class='btn-secondary' title='Close this Invoice' onclick=\"window.location.href='invoice_cancel.php?id={$row['id']}'\">⛔</button>
+
                                    </td>
                                </tr>";
                        }

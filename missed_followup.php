@@ -2,22 +2,22 @@
 session_start();
 include('connection.php');
 include('topbar.php');
+// Check if user is logged in
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-<link rel="icon" type="image/png" href="favicon.png">
-    <title>Missed follow ups</title>
-    <style>
-    /* Table Styles */
-    /* Table Styles */
-    /* Wrapper for table to enable scrolling */
-    html, body {
-        overflow: hidden;
-        height: 100%;
-        margin: 0;
-    }
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <title>Missed Follow Ups</title>
+  <style>
+  html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
     .main-content {
         height: 100vh;
         overflow: hidden;
@@ -25,25 +25,27 @@ include('topbar.php');
         flex-direction: column;
     }
 
-    /* Table Wrapper with Responsive Scroll */
     .user-table-wrapper {
-        width: calc(100% - 260px);
-        margin-left: 260px;
-        margin-top: 140px;
-        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-        min-height: 100vh; /* Ensures it doesn't shrink too much */
-        overflow-y: auto; /* Enables vertical scrolling */
-        border: 1px solid #ddd;
-        background-color: white;
-    }
+    width: calc(100% - 260px);
+    margin-left: 260px;
+    margin-top: 140px;
+    height: calc(100vh - 150px);
+    overflow: auto;               /* allow both axes, show scrollbars only when necessary */
+    border: 1px solid #ddd;
+    background-color: white;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;     /* keeps layout from jumping when scrollbar appears (modern browsers) */
+  }
 
-    /* Table Styles */
-    .user-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+  .user-table {
+    width: 100%;
+    border-collapse: collapse;
+    display: table;               /* let the table act like a normal table */
+    white-space: nowrap;          /* prevent cell wrap if you want single-line cells */
+    /* remove overflow from the table itself — wrapper controls scrolling */
+  }
 
-    /* Fix table header */
+
     .user-table thead {
       position: sticky;
       top: 0;
@@ -51,34 +53,15 @@ include('topbar.php');
       z-index: 10;
     }
 
-    /* Styling table header */
-    .user-table th {
+    .user-table th, .user-table td {
       padding: 10px;
       border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    .user-table th {
       background-color: #2c3e50;
       color: white;
-      text-align: left;
-    }
-
-    /* Styling table rows */
-    .user-table td {
-      padding: 12px;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
-
-    /* Zebra striping for rows */
-    .user-table tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-
-    .user-table tr:hover {
-      background-color: #f1f1f1;
-    }
-
-
-    .user-table td {
-      text-align: left;
     }
 
     .user-table tr:nth-child(even) {
@@ -87,20 +70,12 @@ include('topbar.php');
 
     .user-table tr:hover {
       background-color: #f1f1f1;
-    }
-
-    /* Scrollbar styling */
-    .user-table {
-      display: block;
-      width: 100%;
-      overflow: auto;
-      white-space: nowrap;
+      cursor: pointer;
     }
 
     .user-table td:last-child {
-      text-align: right; /* Align buttons to the right */
-      width: : 20px; /* Further reduce the width of the action column */
-      padding: 5px 8px; /* Reduce padding further for action column */
+      text-align: right;
+      padding: 5px 8px;
     }
 
     .btn-primary, .btn-secondary, .btn-danger, .btn-warning {
@@ -111,26 +86,14 @@ include('topbar.php');
       cursor: pointer;
     }
 
-    .btn-primary {
-      background-color: #a5f3fc;
-    }
-
-    .btn-secondary {
-      background-color: #6c757d;
-    }
-
-    .btn-danger {
-      background-color: #dc3545;
-    }
-
-    .btn-warning {
-      background-color: #3498db;
-      color: black;
-    }
+    .btn-primary { background-color: #a5f3fc; }
+    .btn-secondary { background-color: #6c757d; }
+    .btn-danger { background-color: #dc3545; }
+    .btn-warning { background-color: #3498db; color: black; }
 
     .leadforhead {
       position: fixed;
-        width: calc(100% - 290px); /* Adjust width to account for sidebar */
+      width: calc(100% - 290px);
       height: 50px;
       display: flex;
       justify-content: space-between;
@@ -148,16 +111,6 @@ include('topbar.php');
       display: flex;
       align-items: center;
       gap: 10px;
-    }
-
-    .btn-primary {
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
     }
 
     .btn-search {
@@ -193,159 +146,201 @@ include('topbar.php');
       outline: none;
     }
 
+    #downloadExcel {
+      background-color: green;
+    }
 
-    </style>
-  </head>
-  <body>
-    <div class="leadforhead">
-      <h2 class="leadfor">Missed Follow Ups</h2>
-      <div class="lead-actions">
-        <div class="search-bar">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-          <button class="btn-search" id="searchButton">🔍</button>
-        </div>
-
+    .truncate-tooltip {
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="leadforhead">
+    <h2 class="leadfor">Missed Follow Ups</h2>
+    <div class="lead-actions">
+      <div class="search-bar">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+        <button class="btn-search" id="searchButton">🔍</button>
       </div>
+      <button id="downloadExcel" class="btn-primary" title="Download Excel File">
+        <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+      </button>
     </div>
-    <div class="user-table-wrapper">
-      <table class="user-table">
-        <thead>
-          <tr>
-            <th>Id</th>
-            <th>Lead Source</th>
-            <th>Lead For</th>
-            <th>Lead Priority</th>
-            <th>Contact Person</th>
-            <th>Company Name</th>
-            <th>Mobile No</th>
-            <th>WhatsApp No</th>
-            <th>Email ID</th>
-            <th>Lead Generated Date</th>
-            <th>Status</th>
-            <th>Lead Status</th>
-            <th>Next Followups Date</th>
-            <th>Next Followups Time</th>
-            <th>Lead Activity Status</th>
-            <th>Estimate Amount</th>
-            <th>Closed Amount</th>
-            <th>Employee Allocation</th>
-            <th>Reporting Details</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php
-           // Start the session
+  </div>
 
-          if (!isset($_SESSION['user_id'])) {
-              header('Location: login.php'); // Redirect to login page if not logged in
-              exit();
-          }
+  <div class="user-table-wrapper">
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Lead Source</th>
+          <th>Lead For</th>
+          <th>Lead Priority</th>
+          <th>Contact Person</th>
+          <th>Company Name</th>
+          <th>Mobile No</th>
+          <th>WhatsApp No</th>
+          <th>Email ID</th>
+          <th>Lead Generated Date</th>
+          <th>Status</th>
+          <th>Lead Status</th>
+          <th>Next Followups Date</th>
+          <th>Next Followups Time</th>
+          <th>Lead Activity Status</th>
+          <th>Estimate Amount</th>
+          <th>Closed Amount</th>
+          <th>Employee Allocation</th>
+          <th>Reporting Details</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: login.php');
+            exit();
+        }
 
-          // Retrieve User ID from Session
-          $user_id = $_SESSION['user_id'];
+        $user_id = $_SESSION['user_id'];
 
-          // Step 2: Fetch Allowed FY Codes
-          $fy_codes = [];
-          $fy_query = "SELECT fy_code FROM emp_fy_permission WHERE emp_id = ? AND permission = 1";
-          $stmt = $connection->prepare($fy_query);
-          $stmt->bind_param("i", $user_id);
-          $stmt->execute();
-          $result = $stmt->get_result();
+        $fy_codes = [];
+        $fy_query = "SELECT fy_code FROM emp_fy_permission WHERE emp_id = ? AND permission = 1";
+        $stmt = $connection->prepare($fy_query);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $fy_codes[] = $row['fy_code'];
+        }
 
-          while ($row = $result->fetch_assoc()) {
-              $fy_codes[] = $row['fy_code'];
-          }
-
-          // Step 3: Fetch Follow-Up Records
-          if (!empty($fy_codes)) {
-              // Convert the fy_codes array to a comma-separated string for the SQL IN clause
-              $fy_codes_string = implode("','", $fy_codes);
-              $query = "SELECT
-                          f.id AS followup_id, f.lead_source, f.lead_for, f.lead_priority,
-                          c.contact_person, c.company_name, c.mobile_no, c.whatsapp_no,
-                          c.email_id, c.employee, c.followupdate, f.followup_date_nxt, f.status, f.lead_status,
-                          f.followup_date_nxt AS next_followup_date, f.followup_time_nxt,
-                          f.lead_followup, f.estimate_amount, f.closed_amount,
-                          f.reporting_details
-                        FROM
-                          contact c
-                        LEFT JOIN
-                          followup f
-                        ON
-                          c.id = f.contact_id
-                        WHERE
+        if (!empty($fy_codes)) {
+            $fy_codes_string = implode("','", $fy_codes);
+            $query = "SELECT
+                        f.id AS followup_id, f.lead_source, f.lead_for, f.lead_priority,
+                        c.contact_person, c.company_name, c.mobile_no, c.whatsapp_no,
+                        c.email_id, c.employee, c.followupdate, f.followup_date_nxt, f.status, f.lead_status,
+                        f.followup_date_nxt AS next_followup_date, f.followup_time_nxt,
+                        f.lead_followup, f.estimate_amount, f.closed_amount,
+                        f.reporting_details
+                      FROM
+                        contact c
+                      LEFT JOIN
+                        followup f
+                      ON
+                        c.id = f.contact_id
+                      WHERE
                         DATE(f.followup_date_nxt) < CURDATE() AND f.lead_status != 'Close' AND f.fy_code IN ('$fy_codes_string')";
-          } else {
-              // If no fy_codes, set query to an empty result
-              $query = "SELECT * FROM followup WHERE 0"; // Returns no results
-          }
+        } else {
+            $query = "SELECT * FROM followup WHERE 0";
+        }
 
-          $result = mysqli_query($connection, $query);
+        $result = mysqli_query($connection, $query);
 
-          // Step 4: Display the Records
-          if (mysqli_num_rows($result) > 0) {
-              while ($row = mysqli_fetch_assoc($result)) {
-                  echo "<tr>
-                          <td>" . ($row['followup_id'] ?? 'N/A') . "</td>
-                          <td>" . ($row['lead_source'] ?? 'N/A') . "</td>
-                          <td>" . ($row['lead_for'] ?? 'N/A') . "</td>
-                          <td>" . ($row['lead_priority'] ?? 'N/A') . "</td>
-                          <td>{$row['contact_person']}</td>
-                          <td>{$row['company_name']}</td>
-                          <td>{$row['mobile_no']}</td>
-                          <td>{$row['whatsapp_no']}</td>
-                          <td>{$row['email_id']}</td>
-                          <td>{$row['followupdate']}</td>
-                          <td>{$row['status']}</td>
-                          <td>{$row['lead_status']}</td>
-                          <td>{$row['next_followup_date']}</td>
-                          <td>{$row['followup_time_nxt']}</td>
-                          <td>{$row['lead_followup']}</td>
-                          <td>{$row['estimate_amount']}</td>
-                          <td>{$row['closed_amount']}</td>
-                          <td>{$row['employee']}</td>
-                          <td>{$row['reporting_details']}</td>
-                          <td>
-                              <button class='btn-warning edit-btn' title='Update Followup'
-                                  onclick=\"window.location.href='update_missed_followup.php?id={$row['followup_id']}'\">✏️</button>
-                              <button class='btn-danger' title='Delete this followup'
-                                  onclick=\"if(confirm('Are you sure you want to delete this record?')) {
-                                      window.location.href='delete_missed_followup.php?id={$row['followup_id']}';
-                                  }\">🗑️</button>
-                          </td>
-                        </tr>";
-              }
-          } else {
-                echo "<tr><td colspan='19' style='text-align: center;'>No records found</td></tr>";
-          }
-          ?>
-</tbody>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
+        if (mysqli_num_rows($result) > 0) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                echo "<tr data-id='{$row['followup_id']}'>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['followup_id']}\">{$row['followup_id']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['lead_source']}\">{$row['lead_source']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['lead_for']}\">{$row['lead_for']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['lead_priority']}\">{$row['lead_priority']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['contact_person']}\">{$row['contact_person']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['company_name']}\">{$row['company_name']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['mobile_no']}\">{$row['mobile_no']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['whatsapp_no']}\">{$row['whatsapp_no']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['email_id']}\">{$row['email_id']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['followupdate']}\">{$row['followupdate']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['status']}\">{$row['status']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['lead_status']}\">{$row['lead_status']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['next_followup_date']}\">{$row['next_followup_date']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['followup_time_nxt']}\">{$row['followup_time_nxt']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['lead_followup']}\">{$row['lead_followup']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['estimate_amount']}\">{$row['estimate_amount']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['closed_amount']}\">{$row['closed_amount']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['employee']}\">{$row['employee']}</div></td>";
+                echo "<td><div class='truncate-tooltip' title=\"{$row['reporting_details']}\">{$row['reporting_details']}</div></td>";
+                echo "<td>
+                        <button class='btn-warning edit-btn' title='Update Followup'
+                            onclick=\"window.location.href='update_missed_followup.php?id={$row['followup_id']}'\">✏️</button>
+                        <button class='btn-danger' title='Delete this followup'
+                            onclick=\"if(confirm('Are you sure you want to delete this record?')) {
+                                window.location.href='delete_missed_followup.php?id={$row['followup_id']}';
+                            }\">🗑️</button>
+                      </td>";
+                echo "</tr>";
+            }
+        } else {
+            echo "<tr><td colspan='20' style='text-align: center;'>No records found</td></tr>";
+        }
+        ?>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
       const searchInput = document.getElementById('searchInput');
       const tableRows = document.querySelectorAll('.user-table tbody tr');
 
+      // Search functionality
       searchInput.addEventListener('keyup', function() {
-          const searchTerm = searchInput.value.toLowerCase();
-
-          tableRows.forEach(function(row) {
-              const cells = row.querySelectorAll('td');
-              let rowText = '';
-
-              cells.forEach(function(cell) {
-                  rowText += cell.textContent.toLowerCase() + ' '; // Concatenate all cell texts
-              });
-
-              // Toggle row visibility based on search term
-              if (rowText.includes(searchTerm)) {
-                  row.style.display = ''; // Show row
-              } else {
-                  row.style.display = 'none'; // Hide row
-              }
+        const searchTerm = searchInput.value.toLowerCase();
+        tableRows.forEach(function(row) {
+          const cells = row.querySelectorAll('td');
+          let rowText = '';
+          cells.forEach(function(cell) {
+            rowText += cell.textContent.toLowerCase() + ' ';
           });
+          row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+        });
       });
-  });
-</script>
 
+      // Excel Export
+      document.getElementById('downloadExcel').addEventListener('click', function() {
+        const table = document.querySelector('.user-table');
+        const rows = table.querySelectorAll('tr');
+        const data = [];
+
+        const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.textContent);
+        headers.pop(); // remove Actions
+        data.push(headers);
+
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length > 0 && row.style.display !== 'none') {
+            const rowData = Array.from(cells).map(cell => cell.textContent);
+            rowData.pop();
+            data.push(rowData);
+          }
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Missed Followups');
+        XLSX.writeFile(wb, 'missed_followups.xlsx');
+      });
+
+      // Double click to open update page
+      document.querySelectorAll('.user-table tbody tr').forEach(row => {
+        row.addEventListener('dblclick', function(e) {
+          // Don't trigger if clicking on buttons
+          if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+            return;
+          }
+          const followupId = this.getAttribute('data-id');
+          window.location.href = `update_missed_followup.php?id=${followupId}`;
+        });
+      });
+
+      // Single click to show pointer cursor (visual feedback)
+      document.querySelectorAll('.user-table tbody tr').forEach(row => {
+        row.style.cursor = 'pointer';
+      });
+    });
+  </script>
+</body>
 </html>

@@ -22,9 +22,8 @@ include('topbar.php');
         width: calc(100% - 260px);
         margin-left: 260px;
         margin-top: 140px;
-        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-        min-height: 100vh; /* Ensures it doesn't shrink too much */
-        overflow-y: auto; /* Enables vertical scrolling */
+        max-height: calc(100vh - 150px); /* Adjust based on your layout */
+        overflow-y: auto; /* Enable vertical scrolling */
         border: 1px solid #ddd;
         background-color: white;
     }
@@ -220,88 +219,99 @@ include('topbar.php');
     </div>
     <div class="user-table-wrapper">
       <table class="user-table">
-      <thead>
-          <tr>
-              <th>Id</th>
-              <th>Invoice No</th>
-              <th>Client Name</th>
-              <th>Invoice Date</th>
-              <th>Net Amount</th>
-              <th>AMC Code</th>
-              <th>AMC Paid Date</th>
-              <th>AMC Due Date</th>
-              <th>AMC Amount</th>
-              <th>Days Left</th> <!-- New Column -->
-              <th>New AMC Invoice No.</th>
-              <th>New AMC Inv. Generate Dt.</th>
-              <th>Reference Invoice No</th>
-              <th>Actions</th>
-          </tr>
-      </thead>
-      <tbody>
-          <?php
-          $query = "SELECT
-                      i.id AS invoice_id,
-                      i.invoice_no,
-                      i.quotation_no,
-                      i.client_name,
-                      i.invoice_date,
-                      i.gross_amount,
-                      i.discount,
-                      i.net_amount,
-                      ii.id AS invoice_items_id,
-                      ii.amc_code,
-                      ii.amc_term,
-                      ii.amc_paid_date,
-                      ii.amc_due_date,
-                      ii.amc_amount,
-                      ii.new_amc_invoice_no,
-                      ii.new_amc_invoice_gen_date,
-                      ii.reference_invoice_no
-                    FROM invoices i
-                    LEFT JOIN invoice_items ii ON i.id = ii.invoice_id
-                    WHERE i.status = 'Finalized'
-                    AND ii.amc_code REGEXP '^[0-9]+$'";
+          <thead>
+              <tr>
+                  <th>Id</th>
+                  <th>Invoice No</th>
+                  <th>Client Name</th>
+                  <th>Invoice Date</th>
+                  <th>Net Amount</th>
+                  <th>AMC Code</th>
+                  <th>AMC Paid Date</th>
+                  <th>AMC Due Date</th>
+                  <th>AMC Amount</th>
+                  <th>Days Left</th> <!-- New Column -->
+                  <th>New AMC Invoice No.</th>
+                  <th>New AMC Inv. Generate Dt.</th>
+                  <th>Reference Invoice No</th>
+                  <th>Actions</th>
+              </tr>
+          </thead>
+          <tbody>
+    <?php
+    $query = "SELECT
+                i.id AS invoice_id,
+                i.invoice_no,
+                i.quotation_no,
+                i.client_name,
+                i.invoice_date,
+                i.gross_amount,
+                i.discount,
+                i.net_amount,
+                ii.id AS invoice_items_id,
+                ii.amc_code,
+                ii.amc_term,
+                ii.amc_paid_date,
+                ii.amc_due_date,
+                ii.amc_amount,
+                ii.new_amc_invoice_no,
+                ii.new_amc_invoice_gen_date,
+                ii.reference_invoice_no
+              FROM invoices i
+              LEFT JOIN invoice_items ii ON i.id = ii.invoice_id
+              WHERE i.status = 'Finalized'
+              AND ii.amc_code REGEXP '^[0-9]+$'
+              -- AND ii.reference_invoice_no IS NULL
+              ORDER BY i.id DESC";
 
-          $result = mysqli_query($connection, $query);
+    $result = mysqli_query($connection, $query);
 
-          if (mysqli_num_rows($result) > 0) {
-              while ($row = mysqli_fetch_assoc($result)) {
-                  // Calculate Days Left
-                  $today = new DateTime();
-                  $dueDate = new DateTime($row['amc_due_date']);
-                  $daysLeft = $today->diff($dueDate)->days;
-                  $isRedGlow = ($daysLeft <= 31) ? "glow-red" : ""; // Apply class if ≤ 31 days
+    if (mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            // Calculate Days Left
+            $today = new DateTime();
+            $dueDate = new DateTime($row['amc_due_date']);
+            $daysLeft = $today->diff($dueDate)->days;
+            $isRedGlow = ($daysLeft <= 31) ? "glow-red" : ""; // Apply class if ≤ 31 days
 
-                  echo "<tr>
-                          <td>{$row['invoice_id']}</td>
-                          <td>{$row['invoice_no']}</td>
-                          <td>{$row['client_name']}</td>
-                          <td>{$row['invoice_date']}</td>
-                          <td>{$row['net_amount']}</td>
-                          <td>{$row['amc_code']}</td>
-                          <td>{$row['amc_paid_date']}</td>
-                          <td>{$row['amc_due_date']}</td>
-                          <td>{$row['amc_amount']}</td>
-                          <td class='$isRedGlow'>{$daysLeft} days</td> <!-- Days Left Column -->
-                          <td>{$row['new_amc_invoice_no']}</td>
-                          <td>{$row['new_amc_invoice_gen_date']}</td>
-                          <td>{$row['reference_invoice_no']}</td>
-                          <td>
-                              <button class='btn-secondary' title='Print Invoice for this AMC' onclick=\"window.location.href='invoice1.php?id={$row['invoice_id']}'\">🖨️</button>
-                              <button class='btn-secondary' title='Renew this AMC'
-                                  onclick=\"if(confirm('Are you sure you want to renew this AMC record ?')) {
-                                    window.location.href='amc_due_renew.php?id={$row['invoice_items_id']}';
-                                  }\">🔁</button>
-                          </td>
-                      </tr>";
-              }
-          } else {
-           echo "<tr><td colspan='16' style='text-align: center;'>No records found</td></tr>";
-          }
-          ?>
-      </tbody>
-  </table>
+            // Check if AMC can be renewed (paid date is null, empty, or 0000-00-00)
+            $canRenew = empty($row['amc_paid_date']) || $row['amc_paid_date'] == '0000-00-00';
+            $renewButton = $canRenew
+                ? "<button class='btn-secondary' title='Renew this AMC'
+                      onclick=\"if(confirm('Are you sure you want to renew this AMC record?')) {
+                        window.location.href='amc_due_renew.php?id={$row['invoice_items_id']}';
+                      }\">🔁</button>"
+                : "<button class='btn-secondary' title='AMC Renewed already, cannot be renewed again'
+                      onclick=\"alert('The AMC has already been renewed and cannot be renewed again.')\">⛔</button>";
+
+                      echo "<tr ondblclick=\"window.location.href='invoice1.php?id={$row['invoice_id']}'\" style='cursor: pointer;'>
+                    <td>{$row['invoice_id']}</td>
+                    <td>{$row['invoice_no']}</td>
+                    <td>{$row['client_name']}</td>
+                    <td>{$row['invoice_date']}</td>
+                    <td>{$row['net_amount']}</td>
+                    <td>{$row['amc_code']}</td>
+                    <td>{$row['amc_paid_date']}</td>
+                    <td>{$row['amc_due_date']}</td>
+                    <td>{$row['amc_amount']}</td>
+                    <td class='$isRedGlow'>{$daysLeft} days</td>
+                    <td>{$row['new_amc_invoice_no']}</td>
+                    <td>{$row['new_amc_invoice_gen_date']}</td>
+                    <td>{$row['reference_invoice_no']}</td>
+                    <td>
+                        <button class='btn-secondary' title='Print Invoice for this AMC' onclick=\"window.location.href='invoice1.php?id={$row['invoice_id']}'\">🖨️</button>
+                        {$renewButton}
+                    </td>
+                </tr>";
+
+        }
+    } else {
+        echo "<tr><td colspan='16' style='text-align: center;'>No records found</td></tr>";
+    }
+    ?>
+</tbody>
+      </table>
+
 
     </div>
 

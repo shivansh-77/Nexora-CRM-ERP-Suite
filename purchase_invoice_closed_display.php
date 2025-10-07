@@ -54,7 +54,7 @@ $result = mysqli_query($connection, $query);
             width: calc(100% - 260px);
             margin-left: 260px;
             margin-top: 140px;
-            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+            max-height: calc(100vh - 150px); /* Dynamic height based on viewport */
             min-height: 100vh; /* Ensures it doesn't shrink too much */
             overflow-y: auto; /* Enables vertical scrolling */
             border: 1px solid #ddd;
@@ -195,7 +195,7 @@ $result = mysqli_query($connection, $query);
 </head>
 <body>
     <div class="leadforhead">
-        <h2 class="leadfor">Closed Purchase Invoices</h2>
+        <h2 class="leadfor">Returned Purchase Invoices</h2>
         <div class="lead-actions">
             <div class="search-bar">
                 <input type="text" id="searchInput" class="search-input" placeholder="Search...">

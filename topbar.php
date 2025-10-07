@@ -92,15 +92,20 @@ if (!empty($fy_codes)) {
       <!-- Display Dynamic Logo -->
       <img src="<?php echo $company_logo; ?>" alt="Logo" class="sidebar-logo" />
 
-      <div class="topbar-left">Welcome to the Splendid Infotech CMS !</div>
+      <div class="topbar-left">Welcome to Splendid Infotech CRM !</div>
 
+          <!-- Search Container -->
+          <div class="search-container">
+              <input type="text" id="menuSearch" placeholder="Search menus...">
+              <div id="searchResults" class="search-results"></div>
+          </div>
 
-      <button id="checkInOutButton" class="check-in-out-button">CHECK-IN</button>
-      <div id="loadingSpinner" style="display: none;">
-      <img src="uploads/Iphone-spinner-2.gif" alt="Loading..." /> <!-- Ensure the path is correct -->
-  </div>
+          <button id="checkInOutButton" class="check-in-out-button">CHECK-IN</button>
+          <div id="loadingSpinner" style="display: none;">
+              <img src="uploads/Iphone-spinner-2.gif" alt="Loading..." />
+          </div>
 
-      <div class="avatar-dropdown">
+          <div class="avatar-dropdown">
           <div class="avatar-button">
               <div class="avatar-circle">
                   <?php echo isset($_SESSION['user_name']) ? strtoupper(substr($_SESSION['user_name'], 0, 1)) : 'U'; ?>
@@ -110,11 +115,13 @@ if (!empty($fy_codes)) {
               </span>
           </div>
           <div class="dropdown-menu">
-              <a href="update_form.php?id=<?php echo $_SESSION['user_id']; ?>" class="dropdown-item">Profile</a>
-              <a href="user_checkinout_status.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" class="dropdown-item">Attendance</a>
-              <a href="user_leave_display.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" class="dropdown-item">Apply Leave</a>
-              <a href="logout.php" class="dropdown-item">Logout</a>
-          </div>
+    <a href="profile_display.php?id=<?php echo $_SESSION['user_id']; ?>" class="dropdown-item">Profile</a>
+    <a href="user_checkinout_status.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" class="dropdown-item">Attendance</a>
+    <a href="user_leave_display.php?id=<?php echo $_SESSION['user_id']; ?>&name=<?php echo urlencode($_SESSION['user_name']); ?>" class="dropdown-item">Apply Leave</a>
+    <a href="holidays_display_user.php" class="dropdown-item">Holidays</a> <!-- Added Holidays option -->
+    <a href="logout.php" class="dropdown-item">Logout</a>
+</div>
+
       </div>
   </header>
 
@@ -142,8 +149,6 @@ if (!empty($fy_codes)) {
         }
         ?>
         <?php
-        // session_start(); // Ensure the session is started
-
         // Check if the user is logged in and has a role set
         if (isset($_SESSION['user_role'])) {
             $userRole = $_SESSION['user_role'];
@@ -223,9 +228,22 @@ if (!empty($fy_codes)) {
                             <?php if (is_submenu_allowed('Sales', 'Finalized Invoice')): ?>
                                 <li><a href="invoice_display.php">📋✅ Finalized Invoice</a></li>
                             <?php endif; ?>
-                            <?php if (is_submenu_allowed('Sales', 'Returned Invoice')): ?>
-                                <li><a href="invoice_closed.php">📃⛔ Returned Invoice</a></li>
+                            <?php if (is_submenu_allowed('Sales', 'Sales Lot Tracking')): ?>
+                                <li><a href="invoice_add_lot_display.php">📋 Sales Lot Tracking</a></li>
                             <?php endif; ?>
+
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#">📃 Sale Invoice Return</a>
+                        <ul class="submenu nested">
+                            <?php if (is_submenu_allowed('Sales', 'Returned Invoice')): ?>
+                                <li><a href="invoice_cancel_display.php">📋📦 Returned Invoice</a></li>
+                            <?php endif; ?>
+                            <?php if (is_submenu_allowed('Sales', 'Lot Add')): ?>
+                                <li><a href="invoice_cancel_add_lot_display.php">📋✅ Lot Add</a></li>
+                            <?php endif; ?>
+
                         </ul>
                     </li>
                     <?php if (is_submenu_allowed('Sales', 'AMC Dues')): ?>
@@ -237,6 +255,15 @@ if (!empty($fy_codes)) {
                     <?php if (is_submenu_allowed('Sales', 'Party Ledger')): ?>
                         <li><a href="party_ledger.php">📜 Party Ledger</a></li>
                     <?php endif; ?>
+                    <?php if (is_submenu_allowed('Sales', 'Payments')): ?>
+                        <li><a href="payment_advance.php">💸 Payments</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Sales', 'Payment Records')): ?>
+                        <li><a href="payment_display.php">📒 Payment Records</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Sales', 'Stock Report')): ?>
+                        <li><a href="stock_report.php">📋 Stock Report</a></li>
+                    <?php endif; ?>
                     <?php if (is_submenu_allowed('Sales', 'Expenses')): ?>
                         <li><a href="expense_display.php">💸 Expenses</a></li>
                     <?php endif; ?>
@@ -246,16 +273,41 @@ if (!empty($fy_codes)) {
 
         <?php if (has_allowed_submenus('Purchase')): ?>
             <li>
-                <a href="#"><i class="icon">🛒</i>Purchase</a>
+                <a href="#"><i class="icon">🛒</i>Purchase </a>
                 <ul class="submenu">
-                    <?php if (is_submenu_allowed('Purchase', 'Purchase Order')): ?>
-                        <li><a href="purchase_order_display.php">📋 Purchase Order</a></li>
-                    <?php endif; ?>
+                  <?php if (is_submenu_allowed('Purchase', 'Vendor Contact')): ?>
+                      <li><a href="contact_vendor_display.php">📃 Vendor Contacts</a></li>
+                  <?php endif; ?>
+                    <li>
+                        <a href="#">📋 Purchase Order</a>
+                        <ul class="submenu nested">
+                            <?php if (is_submenu_allowed('Purchase', 'Pending Orders')): ?>
+                                <li><a href="purchase_order_pending_display.php">⏳ Pending Orders</a></li>
+                            <?php endif; ?>
+                            <?php if (is_submenu_allowed('Purchase', 'Completed Orders')): ?>
+                                <li><a href="purchase_order_completed_display.php">✅ Completed Orders</a></li>
+                            <?php endif; ?>
+                        </ul>
+                    </li>
                     <?php if (is_submenu_allowed('Purchase', 'Purchase Invoice')): ?>
                         <li><a href="purchase_invoice_display.php">📃 Purchase Invoice</a></li>
                     <?php endif; ?>
-                    <?php if (is_submenu_allowed('Purchase', 'Returned Invoice')): ?>
-                        <li><a href="purchase_invoice_closed_display.php">📃⛔ Returned Invoice</a></li>
+                    <li>
+                        <a href="#">📋 Purchase Inv. Return</a>
+                        <ul class="submenu nested">
+                            <?php if (is_submenu_allowed('Purchase', 'Returned Purchase Invoice')): ?>
+                                <li><a href="purchase_invoice_cancel_display.php">⏳ Returned Invoices</a></li>
+                            <?php endif; ?>
+                            <?php if (is_submenu_allowed('Purchase', 'Add Lot')): ?>
+                                <li><a href="purchase_invoice_cancel_add_lot.php">✅ Add Lot</a></li>
+                            <?php endif; ?>
+                        </ul>
+                    </li>
+                    <?php if (is_submenu_allowed('Purchase', 'Lot Tracking')): ?>
+                        <li><a href="purchase_invoice_add_lot.php">📃 Lot Tracking</a></li>
+                    <?php endif; ?>
+                    <?php if (is_submenu_allowed('Purchase', 'Purchase Ledger Display')): ?>
+                        <li><a href="purchase_item_ledger_display.php">📦 Purchase Ledger</a></li>
                     <?php endif; ?>
                 </ul>
             </li>
@@ -274,56 +326,82 @@ if (!empty($fy_codes)) {
                     <?php if (is_submenu_allowed('Human Resource', 'Leave Balance')): ?>
                         <li><a href="leave_balance_display.php">📅 Leave Balance</a></li>
                     <?php endif; ?>
+                    <?php if (is_submenu_allowed('Human Resource', 'Salary Sheet')): ?>
+                        <li><a href="salary_sheet_fy_display.php">💰 Salary Sheet</a></li>
+                    <?php endif; ?>
                 </ul>
             </li>
         <?php endif; ?>
 
         <?php if (has_allowed_submenus('Settings')): ?>
-            <li>
-                <a href="#"><i class="icon">⚙️</i>Settings</a>
-                <ul class="submenu">
-                    <?php if (is_submenu_allowed('Settings', 'Company Card')): ?>
-                        <li><a href="companycard.php">💼 Company Card</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'Location Card')): ?>
-                        <li><a href="locationcard_display.php">📌 Location Card</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'Financial Year')): ?>
-                        <li><a href="financial_years_display.php">📈 Financial Year</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'GST')): ?>
-                        <li><a href="gst_display.php">💰 GST</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'HSN/SAC')): ?>
-                        <li><a href="hsn_sac_display.php">💼 HSN/SAC</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'Units')): ?>
-                        <li><a href="unit_measurement_display.php">⏳ Units</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'Items')): ?>
-                        <li><a href="item_category_display.php">🛒 Item Category</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'AMC')): ?>
-                        <li><a href="amc_display.php">📆 AMC</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'Departments')): ?>
-                        <li><a href="department_display.php">🏢 Departments</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'Designations')): ?>
-                        <li><a href="designation_display.php">🎓 Designations</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'Expense Tracker')): ?>
-                        <li><a href="expense_tracker_display.php">💸 Expense Type</a></li>
-                    <?php endif; ?>
-                    <?php if (is_submenu_allowed('Settings', 'User')): ?>
-                        <li><a href="display.php">👤 User</a></li>
-                    <?php endif; ?>
-                </ul>
-            </li>
-        <?php endif; ?>
+      <li>
+          <a href="#"><i class="icon">⚙️</i>Settings</a>
+          <ul class="submenu">
+              <?php if (is_submenu_allowed('Settings', 'Company Card')): ?>
+                  <li><a href="companycard.php">💼 Company Card</a></li>
+              <?php endif; ?>
+
+              <?php if (is_submenu_allowed('Settings', 'Location Card')): ?>
+                  <li><a href="locationcard_display.php">📌 Location Card</a></li>
+              <?php endif; ?>
+
+              <!-- ✅ Newly Added Section -->
+              <?php if (is_submenu_allowed('Settings', 'Projects')): ?>
+                  <li><a href="project_display.php">📂 Projects</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'Operation Group')): ?>
+                  <li><a href="operation_group_display.php">⚙️ Operation Group</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'Operations')): ?>
+                  <li><a href="operation_display.php">🧩 Operations</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'Task Group')): ?>
+                  <li><a href="task_group_display.php">🗂️ Task Group</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'Tasks')): ?>
+                  <li><a href="task_display.php">✅ Tasks</a></li>
+              <?php endif; ?>
+              <!-- ✅ End of Newly Added Section -->
+
+              <?php if (is_submenu_allowed('Settings', 'Financial Year')): ?>
+                  <li><a href="financial_years_display.php">📈 Financial Year</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'GST')): ?>
+                  <li><a href="gst_display.php">💰 GST</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'HSN/SAC')): ?>
+                  <li><a href="hsn_sac_display.php">💼 HSN/SAC</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'Units')): ?>
+                  <li><a href="unit_measurement_display.php">⏳ Units</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'Items')): ?>
+                  <li><a href="item_category_display.php">🛒 Item Category</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'AMC')): ?>
+                  <li><a href="amc_display.php">📆 AMC</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'Departments')): ?>
+                  <li><a href="department_display.php">🏢 Departments</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'Designations')): ?>
+                  <li><a href="designation_display.php">🎓 Designations</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'Expense Tracker')): ?>
+                  <li><a href="expense_tracker_display.php">💸 Expense Type</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'Holidays')): ?>
+                  <li><a href="holidays_display.php">📅 Holidays</a></li>
+              <?php endif; ?>
+              <?php if (is_submenu_allowed('Settings', 'User')): ?>
+                  <li><a href="display.php">👤 User</a></li>
+              <?php endif; ?>
+          </ul>
+      </li>
+  <?php endif; ?>
+
     </ul>
 </nav>
-
   <style>
     /* General Styles */
     body {
@@ -337,26 +415,110 @@ if (!empty($fy_codes)) {
       flex-direction: column;
     }
 
-    /* Topbar Styles */
-    .topbar {
-      position: fixed;
-      width: 100%;
-      height: 70px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #2c3e50;
-      color: white;
-      padding: 0 20px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      z-index: 10000;
-    }
+    /* Updated Topbar Styles */
+  .topbar {
+    position: fixed;
+    width: 100%;
+    height: 70px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2c3e50;
+    color: white;
+    padding: 0 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10000;
+    gap: 15px; /* Add gap between flex items */
+  }
 
+  .topbar-left {
+    font-size: 18px; /* Slightly smaller font */
+    font-weight: bold;
+    white-space: nowrap; /* Prevent text from wrapping */
+    min-width: max-content; /* Ensure it doesn't shrink too much */
+    margin-right: 40; /* Remove the large right margin */
+  }
+
+  /* Updated Search Bar Styles - made it smaller */
+  .search-container {
+    position: relative;
+    margin-right: 10px; /* Reduced margin */
+    flex-grow: 1;
+    max-width: 250px; /* Reduced max width */
+    min-width: 150px; /* Minimum width */
+  }
+
+  #menuSearch {
+    width: 100%;
+    padding: 6px 12px; /* Smaller padding */
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 13px; /* Smaller font */
+    outline: none;
+  }
+
+  /* Avatar dropdown adjustments */
+  .avatar-dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+    z-index: 20000;
+    margin-right: 0;
+    min-width: max-content; /* Prevent shrinking */
+  }
+
+  /* Check-in button adjustments */
+  .check-in-out-button {
+    padding: 8px 15px; /* Slightly smaller */
+    font-size: 14px; /* Smaller font */
+    color: white;
+    background-color: green;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 4px #999;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+    margin-right: 10px;
+    white-space: nowrap;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1200px) {
     .topbar-left {
-      font-size: 22px;
-      font-weight: bold;
-      margin-right: 170px;
+      font-size: 16px;
     }
+    .search-container {
+      max-width: 200px;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .topbar-left {
+      font-size: 14px;
+    }
+    #menuSearch {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+    .check-in-out-button {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .topbar {
+      padding: 0 10px;
+      gap: 10px;
+    }
+    .topbar-left {
+      display: none; /* Hide welcome text on very small screens */
+    }
+    .search-container {
+      max-width: 180px;
+      margin-right: 5px;
+    }
+  }
 
     .logout-button {
       background-color: #e74c3c;
@@ -673,6 +835,62 @@ if (!empty($fy_codes)) {
     height: 100%;
 }
 
+/* Search Bar Styles */
+.search-container {
+    position: relative;
+    margin-right: 20px;
+    flex-grow: 1;
+    max-width: 400px;
+}
+
+#menuSearch {
+    width: 100%;
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    outline: none;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.search-result-item {
+    padding: 10px 15px;
+    color: #333;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.search-result-item:hover {
+    background-color: #f5f5f5;
+}
+
+.search-result-item.highlighted {
+    background-color: #e0e0e0;
+}
+/* Add to your existing CSS */
+.highlighted-menu {
+    background-color: #ffeb3b !important;
+    color: #333 !important;
+    transition: background-color 0.5s ease;
+}
+.search-result-item .icon {
+    margin-right: 8px;
+    vertical-align: middle;
+}
   </style>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -870,39 +1088,69 @@ if (!empty($fy_codes)) {
     }
 
     function checkSessionStatus() {
-      const xhr = new XMLHttpRequest();
-      xhr.open("GET", "check_session_status.php", true);
-      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          console.log("Session Status Response:", response); // Debugging line
-          if (response.status === "success") {
-            const button = document.getElementById("checkInOutButton");
-            const currentTime = new Date();
-            const startTime = new Date(response.start_time);
-            const timeDifference = (currentTime - startTime) / (1000 * 60 * 60); // Difference in hours
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", "check_session_status.php", true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        const response = JSON.parse(xhr.responseText);
+        console.log("Session Status Response:", response); // Debugging line
+        if (response.status === "success") {
+          const button = document.getElementById("checkInOutButton");
 
-            if (response.session_status === "active") {
-              if (timeDifference >= 12) {
-                // Automatically check out if the session exceeds 12 hours
+          if (response.session_status === "active") {
+            // First fetch company checkout time and user's checkin time
+            fetchCompanyCheckoutTime().then(companyCheckoutTime => {
+              const currentTime = new Date();
+              const checkinTime = new Date(response.start_time);
+
+              // Create date string from checkin time (YYYY-MM-DD)
+              const checkinDate = checkinTime.toISOString().split('T')[0];
+
+              // Create cutoff datetime (checkin date + company checkout time)
+              const cutoffTime = new Date(`${checkinDate}T${companyCheckoutTime}`);
+
+              // If current time is after cutoff time, auto checkout
+              if (currentTime > cutoffTime) {
                 checkOutSession();
               } else {
                 button.classList.add('checked-out');
                 button.textContent = 'CHECK-OUT';
                 startTimer(); // Start the timer if the session is active
               }
-            } else {
-              button.classList.remove('checked-out');
-              button.textContent = 'CHECK-IN';
-            }
+            });
           } else {
-            alert(response.message); // Show error message
+            button.classList.remove('checked-out');
+            button.textContent = 'CHECK-IN';
+          }
+        } else {
+          alert(response.message); // Show error message
+        }
+      }
+    };
+    xhr.send();
+  }
+
+  // Helper function to fetch company checkout time
+  function fetchCompanyCheckoutTime() {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", "get_company_checkout_time.php", true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          if (response.status === "success") {
+            resolve(response.checkout_time);
+          } else {
+            console.error("Failed to fetch company checkout time");
+            // Fallback to default 23:59:59 if there's an error
+            resolve("23:59:59");
           }
         }
       };
       xhr.send();
-    }
+    });
+  }
 
     // Function to automatically check out the user
     function checkOutSession() {
@@ -925,6 +1173,171 @@ if (!empty($fy_codes)) {
       };
       xhr.send('auto=true'); // Send the auto parameter
     }
+
+    // Menu Search Functionality
+const menuSearch = document.getElementById('menuSearch');
+const searchResults = document.getElementById('searchResults');
+
+// Collect all menu items and their relationships when page loads
+const menuData = [];
+document.querySelectorAll('.nav-menu > li').forEach(menuItem => {
+    const menuLink = menuItem.querySelector('a');
+    const submenu = menuItem.querySelector('.submenu');
+    const submenuItems = submenu ? Array.from(submenu.querySelectorAll('a')).map(item => ({
+        text: item.textContent.trim(),
+        element: item,
+        href: item.getAttribute('href')
+    })) : [];
+
+    menuData.push({
+        menuText: menuLink.textContent.trim(),
+        menuElement: menuLink,
+        submenuItems: submenuItems
+    });
+});
+
+menuSearch.addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase().trim();
+    searchResults.innerHTML = '';
+
+    if (searchTerm.length < 2) {
+        searchResults.style.display = 'none';
+        return;
+    }
+
+    const matchingItems = [];
+
+    // Search through all menu data
+    menuData.forEach(menu => {
+        // Check if search term matches menu text (parent)
+        const menuMatch = menu.menuText.toLowerCase().includes(searchTerm);
+
+        // Find matching submenu items
+        const matchingSubItems = menu.submenuItems.filter(item =>
+            item.text.toLowerCase().includes(searchTerm)
+        );
+
+        // If search matches menu text, include all its submenu items
+        if (menuMatch) {
+            matchingItems.push(...menu.submenuItems);
+        }
+        // Otherwise include just the matching submenu items
+        else if (matchingSubItems.length > 0) {
+            matchingItems.push(...matchingSubItems);
+        }
+    });
+
+    // Display results
+    if (matchingItems.length === 0) {
+        const noResults = document.createElement('div');
+        noResults.className = 'search-result-item';
+        noResults.textContent = 'No results found';
+        searchResults.appendChild(noResults);
+    } else {
+        // Remove duplicates (in case a submenu item appears in multiple parent matches)
+        const uniqueItems = matchingItems.filter((item, index, self) =>
+            index === self.findIndex(i => i.href === item.href && i.text === item.text)
+        );
+
+        uniqueItems.forEach(item => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'search-result-item';
+
+            // Add icon if available
+            const icon = item.element.querySelector('.icon')?.cloneNode(true);
+            if (icon) {
+                resultItem.appendChild(icon);
+            }
+
+            resultItem.appendChild(document.createTextNode(item.text));
+
+            resultItem.addEventListener('click', function() {
+                // Navigate to the page
+                if (item.href && item.href !== '#') {
+                    window.location.href = item.href;
+                }
+
+                // Highlight the selected item in the sidebar
+                highlightMenuItem(item.element);
+
+                // Clear search and hide results
+                menuSearch.value = '';
+                searchResults.style.display = 'none';
+            });
+
+            searchResults.appendChild(resultItem);
+        });
+    }
+
+    searchResults.style.display = matchingItems.length ? 'block' : 'none';
+});
+
+function highlightMenuItem(element) {
+    // Remove any existing highlights
+    document.querySelectorAll('.highlighted-menu').forEach(el => {
+        el.classList.remove('highlighted-menu');
+    });
+
+    // Add highlight to the selected item
+    element.classList.add('highlighted-menu');
+
+    // Open parent menus if this is a submenu item
+    const parentMenu = element.closest('.nav-menu > li');
+    if (parentMenu) {
+        const menuLink = parentMenu.querySelector('a');
+        const submenu = parentMenu.querySelector('.submenu');
+
+        if (submenu && !submenu.classList.contains('visible')) {
+            toggleSubmenu(menuLink);
+        }
+    }
+
+    // Scroll to the item in the sidebar
+    element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Close search results when clicking outside
+document.addEventListener('click', function(e) {
+    if (!menuSearch.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.style.display = 'none';
+    }
+});
+
+// Add keyboard navigation for search results
+menuSearch.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') {
+        const items = searchResults.querySelectorAll('.search-result-item');
+        if (items.length === 0) return;
+
+        let currentIndex = -1;
+        items.forEach((item, index) => {
+            if (item.classList.contains('highlighted')) {
+                item.classList.remove('highlighted');
+                currentIndex = index;
+            }
+        });
+
+        if (e.key === 'ArrowDown') {
+            currentIndex = (currentIndex + 1) % items.length;
+        } else if (e.key === 'ArrowUp') {
+            currentIndex = (currentIndex - 1 + items.length) % items.length;
+        }
+
+        if (currentIndex >= 0) {
+            items[currentIndex].classList.add('highlighted');
+            items[currentIndex].scrollIntoView({ block: 'nearest' });
+
+            if (e.key === 'Enter') {
+                items[currentIndex].click();
+            }
+        }
+
+        e.preventDefault();
+    } else if (e.key === 'Escape') {
+        searchResults.style.display = 'none';
+        menuSearch.blur();
+    }
+});
   </script>
 
 

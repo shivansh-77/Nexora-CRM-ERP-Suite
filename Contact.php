@@ -53,20 +53,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Get the last inserted contact ID
         $last_contact_id = $connection->insert_id;
 
-        // // Retrieve fy_code with permission = 1
-        // $fy_code_sql = "SELECT fy_code FROM emp_fy_permission WHERE permission = 1 LIMIT 1";
-        // $fy_code_result = $connection->query($fy_code_sql);
-        //
-        // // Check if the query was successful and fetch the fy_code
-        // $fy_code = null;
-        // if ($fy_code_result && $fy_code_result->num_rows > 0) {
-        //     $fy_row = $fy_code_result->fetch_assoc();
-        //     $fy_code = $fy_row['fy_code'];
-        // } else {
-        //     // Handle the case where there is no fy_code found (optional)
-        //     echo "No fy_code found with permission 1.";
-        //     exit(); // Stop further execution if needed
-        // }
+        // Retrieve fy_code with permission = 1
+        $fy_code_sql = "SELECT fy_code FROM emp_fy_permission WHERE permission = 1 LIMIT 1";
+        $fy_code_result = $connection->query($fy_code_sql);
+
+        // Check if the query was successful and fetch the fy_code
+        $fy_code = null;
+        if ($fy_code_result && $fy_code_result->num_rows > 0) {
+            $fy_row = $fy_code_result->fetch_assoc();
+            $fy_code = $fy_row['fy_code'];
+        } else {
+            // Handle the case where there is no fy_code found (optional)
+            echo "No fy_code found with permission 1.";
+            exit(); // Stop further execution if needed
+        }
 
         // Prepare the SQL query for inserting into the followup table
         $followup_sql = "INSERT INTO followup (contact_id, lead_source, lead_for, lead_priority, fy_code) VALUES (?, ?, ?, ?, ?)";

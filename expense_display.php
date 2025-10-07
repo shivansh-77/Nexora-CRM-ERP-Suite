@@ -74,9 +74,8 @@ $result = mysqli_query($connection, $query);
             width: calc(100% - 260px);
             margin-left: 260px;
             margin-top: 140px;
-            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-            min-height: 100vh; /* Ensures it doesn't shrink too much */
-            overflow-y: auto; /* Enables vertical scrolling */
+            max-height: calc(100vh - 150px); /* Adjust based on your layout */
+            overflow-y: auto; /* Enable vertical scrolling */
             border: 1px solid #ddd;
             background-color: white;
         }
@@ -250,43 +249,46 @@ $result = mysqli_query($connection, $query);
         </div>
     </div>
     <div class="user-table-wrapper">
-        <table class="user-table">
-            <thead>
-                <tr>
-                    <th>Voucher No.</th>
-                    <th>Expense Type</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Remark</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                if (mysqli_num_rows($result) > 0) {
-                    while ($row = mysqli_fetch_assoc($result)) {
-                        echo "<tr>
-                                <td>{$row['voucher_no']}</td>
-                                <td>{$row['expense_type']}</td>
-                                <td>{$row['amount']}</td>
-                                <td>{$row['date']}</td>
-                                <td>{$row['remark']}</td>
-                                <td>
-                                    <button class='btn-warning edit-btn' title='Update Expense'
-                                        onclick=\"window.location.href='expense_edit.php?id={$row['id']}';\">✏️</button>
-                                    <button class='btn-danger' title='Delete this Expense'
-                                        onclick=\"if(confirm('Are you sure you want to delete this record?')) {
-                                            window.location.href='expense_delete.php?id={$row['id']}';
-                                        }\">🗑️</button>
-                                </td>
-                              </tr>";
-                    }
-                } else {
-                   echo "<tr><td colspan='6' style='text-align: center;'>No records found</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
+      <table class="user-table">
+    <thead>
+        <tr>
+            <th>Voucher No.</th>
+            <th>Expense Type</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Added By</th>
+            <th>Remark</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+        if (mysqli_num_rows($result) > 0) {
+            while ($row = mysqli_fetch_assoc($result)) {
+              echo "<tr ondblclick=\"window.location.href='expense_edit.php?id={$row['id']}'\" style='cursor: pointer;'>
+
+                        <td>{$row['voucher_no']}</td>
+                        <td>{$row['expense_type']}</td>
+                        <td>{$row['amount']}</td>
+                        <td>{$row['date']}</td>
+                        <td>{$row['user_name']}</td>
+                        <td>{$row['remark']}</td>
+                        <td>
+                            <button class='btn-warning edit-btn' title='Update Expense'
+                                onclick=\"window.location.href='expense_edit.php?id={$row['id']}';\">✏️</button>
+                            <button class='btn-danger' title='Delete this Expense'
+                                onclick=\"if(confirm('Are you sure you want to delete this record?')) {
+                                    window.location.href='expense_delete.php?id={$row['id']}';
+                                }\">🗑️</button>
+                        </td>
+                      </tr>";
+            }
+        } else {
+           echo "<tr><td colspan='7' style='text-align: center;'>No records found</td></tr>";
+        }
+        ?>
+    </tbody>
+</table>
     </div>
 
     <script>

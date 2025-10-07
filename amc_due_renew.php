@@ -46,7 +46,7 @@ $query = "INSERT INTO invoices
     client_name, client_address, client_phone, client_city, client_state, client_country, client_pincode, client_gstno,
     shipper_company_name, shipper_address, shipper_city, shipper_state, shipper_country, shipper_pincode,
     shipper_phone, shipper_gstno, created_at, updated_at, quotation_no, quotation_id, client_id,
-    shipper_location_code, shipper_id, base_amount, status, fy_code)
+    shipper_location_code, shipper_id, base_amount, status, fy_code,client_company_name)
     VALUES (
     '{$invoice['invoice_date']}', '{$invoice['gross_amount']}', '{$invoice['discount']}', '{$invoice['net_amount']}',
     '{$invoice['total_igst']}', '{$invoice['total_cgst']}', '{$invoice['total_sgst']}',
@@ -57,7 +57,7 @@ $query = "INSERT INTO invoices
     '{$invoice['shipper_state']}', '{$invoice['shipper_country']}', '{$invoice['shipper_pincode']}',
     '{$invoice['shipper_phone']}', '{$invoice['shipper_gstno']}',
     NOW(), NOW(), '{$invoice['quotation_no']}', '{$invoice['quotation_id']}', '{$invoice['client_id']}',
-    '{$invoice['shipper_location_code']}', '{$invoice['shipper_id']}', '{$invoice['base_amount']}', 'Draft', '$fy_code')";
+    '{$invoice['shipper_location_code']}', '{$invoice['shipper_id']}', '{$invoice['base_amount']}', 'Draft', '$fy_code','{$invoice['client_company_name']}')";
 mysqli_query($connection, $query);
 $new_invoice_id = mysqli_insert_id($connection); // Get the newly created invoice ID
 
@@ -71,8 +71,42 @@ while ($row = mysqli_fetch_assoc($result)) {
     $amc_code = $row['amc_code']; // This should be a number like 31, 60, 90, etc.
     $amc_amount = $row['amc_amount'];
 
-    // Calculate amc_due_date as amc_paid_date (NOW) + amc_code days
-    $query_due_date = "SELECT DATE_ADD(NOW(), INTERVAL $amc_code DAY) AS amc_due_date";
+    // 1. Get payment date from party_ledger (latest entry for this invoice)
+    $payment_date = null;
+    $query_payment = "SELECT DATE(date) as payment_date FROM party_ledger
+                     WHERE document_no = '$reference_invoice_no'
+                     ORDER BY date DESC LIMIT 1";
+    $result_payment = mysqli_query($connection, $query_payment);
+
+    if (mysqli_num_rows($result_payment) > 0) {
+        $payment_row = mysqli_fetch_assoc($result_payment);
+        $payment_date = $payment_row['payment_date'];
+    }
+
+    // 2. Set amc_paid_date (use payment date if available, otherwise NOW())
+    $amc_paid_date = $payment_date ? $payment_date : date('Y-m-d');
+
+    // 3. Get the original AMC due date from the invoice
+    $query_original_due_date = "SELECT amc_due_date FROM invoice_items
+                               WHERE invoice_id = $invoice_id AND product_id = '{$row['product_id']}'
+                               ORDER BY id DESC LIMIT 1";
+    $result_original_due = mysqli_query($connection, $query_original_due_date);
+    $original_due_date = null;
+
+    if (mysqli_num_rows($result_original_due) > 0) {
+        $original_due_row = mysqli_fetch_assoc($result_original_due);
+        $original_due_date = $original_due_row['amc_due_date'];
+    }
+
+    // 4. Calculate new amc_due_date:
+    //    - If we have original due date, add amc_code days to it
+    //    - Otherwise, add amc_code days to payment date or current date
+    if ($original_due_date) {
+        $query_due_date = "SELECT DATE_ADD('$original_due_date', INTERVAL $amc_code DAY) AS amc_due_date";
+    } else {
+        $query_due_date = "SELECT DATE_ADD('$amc_paid_date', INTERVAL $amc_code DAY) AS amc_due_date";
+    }
+
     $result_due_date = mysqli_query($connection, $query_due_date);
     $due_date_row = mysqli_fetch_assoc($result_due_date);
     $amc_due_date = $due_date_row['amc_due_date'];
@@ -83,13 +117,17 @@ while ($row = mysqli_fetch_assoc($result)) {
         $product_name .= '-AMC';
     }
 
-    $insertQuery = "INSERT INTO invoice_items (invoice_id, product_name, product_id, unit, value, quantity, rate, gst, igst, cgst, sgst, amount, lot_tracking, expiration_tracking, expiration_date, lot_trackingid, reference_invoice_no, amc_code, amc_paid_date, amc_due_date, amc_amount)
+    // Prepare the INSERT query with proper date values
+    $insertQuery = "INSERT INTO invoice_items
+                   (invoice_id, product_name, product_id, unit, value, quantity, rate, gst, igst, cgst, sgst,
+                    amount, lot_tracking, expiration_tracking, expiration_date, lot_trackingid,
+                    reference_invoice_no, amc_code,  amc_due_date, amc_amount)
                     VALUES (
                     '$new_invoice_id', '$product_name', '{$row['product_id']}', '{$row['unit']}', '{$row['value']}',
                     '{$row['quantity']}', '{$row['rate']}', '{$row['gst']}', '{$row['igst']}', '{$row['cgst']}',
                     '{$row['sgst']}', '{$row['amount']}', '{$row['lot_tracking']}', '{$row['expiration_tracking']}',
                     '{$row['expiration_date']}', '{$row['lot_trackingid']}', '$reference_invoice_no',
-                    '$amc_code', NOW(), '$amc_due_date', '$amc_amount')";
+                    '$amc_code', '$amc_due_date', '$amc_amount')";
     mysqli_query($connection, $insertQuery);
 }
 
@@ -100,6 +138,12 @@ $query_update_pending = "UPDATE invoices
                              reference_invoice_no = (SELECT reference_invoice_no FROM invoice_items WHERE invoice_id = $new_invoice_id LIMIT 1)
                          WHERE id = $new_invoice_id";
 mysqli_query($connection, $query_update_pending);
+
+// Step 7: Update the existing amc_paid_date in the invoice_items table
+$query_update_amc_paid_date = "UPDATE invoice_items
+                                SET amc_paid_date = '$amc_paid_date'
+                                WHERE id = $invoice_item_id";
+mysqli_query($connection, $query_update_amc_paid_date);
 
 // Redirect back to AMC dues display page or confirmation page
 echo "<script>alert('AMC Renewed Successfully !'); window.location.href='amc_due_display.php';</script>";

@@ -25,9 +25,8 @@ include('topbar.php');
         width: calc(100% - 260px);
         margin-left: 260px;
         margin-top: 140px;
-        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-        min-height: 100vh; /* Ensures it doesn't shrink too much */
-        overflow-y: auto; /* Enables vertical scrolling */
+        max-height: calc(100vh - 150px); /* Adjust based on your layout */
+        overflow-y: auto; /* Enable vertical scrolling */
         border: 1px solid #ddd;
         background-color: white;
     }
@@ -54,6 +53,18 @@ include('topbar.php');
             position: sticky; /* Make headers sticky */
             top: 0; /* Stick to the top */
             z-index: 1; /* Ensure headers are above the body */
+        }
+
+        /* Make the filter row sticky */
+        .user-table thead tr:first-child th {
+            top: 0; /* Stick to the top of the table wrapper */
+            background-color: #2c3e50; /* Match the header background */
+        }
+
+        /* Make the table headings row sticky */
+        .user-table thead tr:nth-child(2) th {
+            top: 50px; /* Stick below the filter row */
+            background-color: #2c3e50; /* Match the header background */
         }
 
         .user-table td {
@@ -152,8 +163,34 @@ include('topbar.php');
             border: none;
             outline: none;
         }
+
         #downloadExcel{
           background-color: green;
+        }
+
+        /* Filter Styles */
+        .filter-select {
+            padding: 8px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .date-filter {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            margin-right: 10px;
+            width: 120px;
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 6px;
+            box-sizing: border-box;
+            border-radius: 6px;
         }
     </style>
   </head>
@@ -161,20 +198,47 @@ include('topbar.php');
     <div class="leadforhead">
       <h2 class="leadfor">Item Ledger</h2>
       <div class="lead-actions">
-        <div class="search-bar">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-          <button class="btn-search" id="searchButton">🔍</button>
-        </div>
-
+        <input type="text" id="globalSearch" class="filter-input" placeholder="Search all records...">
+        <input type="date" id="startDateFilter" class="date-filter">
+        <input type="date" id="endDateFilter" class="date-filter">
         <button id="downloadExcel" class="btn-primary" title="Export to Excel">
-      <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
-  </button>
-
+          <img src="Excel-icon.png" alt="Export to Excel" style="width: 20px; height: 20px; margin-right: 0px;">
+        </button>
       </div>
     </div>
     <div class="user-table-wrapper">
-      <table class="user-table">
+      <table class="user-table" id="ledgerTable">
     <thead>
+        <!-- Filter Row -->
+        <tr>
+            <th><input type="text" id="idFilter" class="filter-input" placeholder="Search ID"></th>
+            <th><input type="text" id="documentNoFilter" class="filter-input" placeholder="Search..."></th>
+            <th><select id="documentTypeFilter" class="filter-select">
+                <option value="all">All</option>
+                <option value="Sales Invoice">Sales Invoice</option>
+                <option value="Purchase Invoice">Purchase Invoice</option>
+                <option value="Transfer">Transfer</option>
+                <option value="Adjustment">Adjustment</option>
+            </select></th>
+            <th><select id="entryTypeFilter" class="filter-select">
+                <option value="all">All</option>
+                <option value="Purchase">Purchase</option>
+                <option value="Sale">Sale</option>
+                <option value="Positive Adjmt.">Positive Adjmt.</option>
+                <option value="Negative Adjmt.">Negative Adjmt.</option>
+                <option value="Transfer">Transfer</option>
+            </select></th>
+            <th><input type="text" id="productIdFilter" class="filter-input" placeholder="Search..."></th>
+            <th><input type="text" id="productNameFilter" class="filter-input" placeholder="Search..."></th>
+            <th><input type="text" id="quantityFilter" class="filter-input" placeholder="Search..."></th>
+            <th><input type="text" id="locationFilter" class="filter-input" placeholder="Search..."></th>
+            <th><input type="text" id="unitFilter" class="filter-input" placeholder="Search..."></th>
+            <th><input type="text" id="dateFilter" class="filter-input" placeholder="Search..."></th>
+            <th><input type="text" id="lotIdFilter" class="filter-input" placeholder="Search..."></th>
+            <th><input type="text" id="expiryFilter" class="filter-input" placeholder="Search..."></th>
+        </tr>
+
+        <!-- Table Headings Row -->
         <tr>
             <th>Id</th>
             <th>Document No</th>
@@ -225,37 +289,93 @@ include('topbar.php');
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-      const searchInput = document.getElementById('searchInput');
-      const tableRows = document.querySelectorAll('.user-table tbody tr');
+      function filterTable() {
+          const searchQuery = document.getElementById('globalSearch').value.toLowerCase();
+          const idFilter = document.getElementById('idFilter').value.toLowerCase();
+          const documentNoFilter = document.getElementById('documentNoFilter').value.toLowerCase();
+          const documentTypeFilter = document.getElementById('documentTypeFilter').value;
+          const entryTypeFilter = document.getElementById('entryTypeFilter').value;
+          const productIdFilter = document.getElementById('productIdFilter').value.toLowerCase();
+          const productNameFilter = document.getElementById('productNameFilter').value.toLowerCase();
+          const quantityFilter = document.getElementById('quantityFilter').value.toLowerCase();
+          const locationFilter = document.getElementById('locationFilter').value.toLowerCase();
+          const unitFilter = document.getElementById('unitFilter').value.toLowerCase();
+          const lotIdFilter = document.getElementById('lotIdFilter').value.toLowerCase();
+          const expiryFilter = document.getElementById('expiryFilter').value.toLowerCase();
+          const startDate = document.getElementById('startDateFilter').value;
+          const endDate = document.getElementById('endDateFilter').value;
 
-      searchInput.addEventListener('keyup', function() {
-          const searchTerm = searchInput.value.toLowerCase();
-
-          tableRows.forEach(function(row) {
+          document.querySelectorAll('.user-table tbody tr').forEach(row => {
+              const rowText = row.innerText.toLowerCase();
               const cells = row.querySelectorAll('td');
-              let rowText = '';
 
-              cells.forEach(function(cell) {
-                  rowText += cell.textContent.toLowerCase() + ' '; // Concatenate all cell texts
-              });
+              const idText = cells[0].textContent.toLowerCase();
+              const docNoText = cells[1].textContent.toLowerCase();
+              const docTypeText = cells[2].textContent.trim();
+              const entryTypeText = cells[3].textContent.trim();
+              const productIdText = cells[4].textContent.toLowerCase();
+              const productNameText = cells[5].textContent.toLowerCase();
+              const quantityText = cells[6].textContent.toLowerCase();
+              const locationText = cells[7].textContent.toLowerCase();
+              const unitText = cells[8].textContent.toLowerCase();
+              const dateText = cells[9].textContent.trim();
+              const lotIdText = cells[10].textContent.toLowerCase();
+              const expiryText = cells[11].textContent.toLowerCase();
 
-              // Toggle row visibility based on search term
-              if (rowText.includes(searchTerm)) {
-                  row.style.display = ''; // Show row
-              } else {
-                  row.style.display = 'none'; // Hide row
+              let rowDate = dateText ? new Date(dateText.split(' ')[0]) : null;
+              let start = startDate ? new Date(startDate) : null;
+              let end = endDate ? new Date(endDate) : null;
+              if (end) end.setHours(23, 59, 59, 999); // Include the full end date
+
+              let dateMatch = true;
+              if (start && end) {
+                  dateMatch = rowDate && rowDate >= start && rowDate <= end;
+              } else if (start) {
+                  dateMatch = rowDate && rowDate >= start;
+              } else if (end) {
+                  dateMatch = rowDate && rowDate <= end;
               }
+
+              let showRow =
+                  (idFilter === '' || idText.includes(idFilter)) &&
+                  (documentNoFilter === '' || docNoText.includes(documentNoFilter)) &&
+                  (documentTypeFilter === 'all' || docTypeText === documentTypeFilter) &&
+                  (entryTypeFilter === 'all' || entryTypeText === entryTypeFilter) &&
+                  (productIdFilter === '' || productIdText.includes(productIdFilter)) &&
+                  (productNameFilter === '' || productNameText.includes(productNameFilter)) &&
+                  (quantityFilter === '' || quantityText.includes(quantityFilter)) &&
+                  (locationFilter === '' || locationText.includes(locationFilter)) &&
+                  (unitFilter === '' || unitText.includes(unitFilter)) &&
+                  (lotIdFilter === '' || lotIdText.includes(lotIdFilter)) &&
+                  (expiryFilter === '' || expiryText.includes(expiryFilter)) &&
+                  dateMatch &&
+                  (searchQuery === '' || rowText.includes(searchQuery));
+
+              row.style.display = showRow ? '' : 'none';
           });
+      }
+
+      // Add event listeners to all filter inputs
+      document.querySelectorAll('.filter-input, .filter-select').forEach(input => {
+          input.addEventListener('input', filterTable);
       });
+
+      document.getElementById('startDateFilter').addEventListener('change', filterTable);
+      document.getElementById('endDateFilter').addEventListener('change', filterTable);
 
       // Download Excel
       const downloadExcelButton = document.getElementById('downloadExcel');
       downloadExcelButton.addEventListener('click', function() {
-          const table = document.querySelector('.user-table');
-          const ws = XLSX.utils.table_to_sheet(table, { raw: true });
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, 'Item Ledger');
-          XLSX.writeFile(wb, 'item_ledger.xlsx');
+          let table = document.getElementById('ledgerTable');
+          // Clone the table to avoid modifying the original
+          let clonedTable = table.cloneNode(true);
+          // Remove the first row (filter row)
+          clonedTable.deleteRow(0);
+
+          let wb = XLSX.utils.book_new();
+          let ws = XLSX.utils.table_to_sheet(clonedTable, { raw: true });
+          XLSX.utils.book_append_sheet(wb, ws, "Item Ledger");
+          XLSX.writeFile(wb, "Item_Ledger_Records.xlsx");
       });
   });
 </script>

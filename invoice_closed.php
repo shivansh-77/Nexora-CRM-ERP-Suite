@@ -54,7 +54,7 @@ $result = mysqli_query($connection, $query);
             width: calc(100% - 260px);
             margin-left: 260px;
             margin-top: 140px;
-            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
+            max-height: calc(100vh - 150px); /* Dynamic height based on viewport */
             min-height: 100vh; /* Ensures it doesn't shrink too much */
             overflow-y: auto; /* Enables vertical scrolling */
             border: 1px solid #ddd;

@@ -32,9 +32,8 @@ if (!$user_id || !$user_name) {
         width: calc(100% - 260px);
         margin-left: 260px;
         margin-top: 140px;
-        max-height: calc(100vh - 140px);
-        min-height: 100vh;
-        overflow-y: auto;
+        max-height: calc(100vh - 150px); /* Adjust based on your layout */
+        overflow-y: auto; /* Enable vertical scrolling */
         border: 1px solid #ddd;
         background-color: white;
     }
@@ -326,7 +325,7 @@ if (!$user_id || !$user_name) {
                     list($hours, $minutes, $seconds) = explode(':', $sessionDuration);
                     $totalHours = (float) $hours + ((float) $minutes / 60) + ((float) $seconds / 3600);
 
-                    if ($totalHours < 8) {
+                    if ($totalHours < 6) {
                         $sessionDurationStyle = 'color: red; font-weight: bold;'; // Make session_duration dark bold red
                     }
                 }

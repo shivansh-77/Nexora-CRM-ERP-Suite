@@ -27,27 +27,62 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $gstno = mysqli_real_escape_string($connection, $_POST['gstno']);
     $registration_no = mysqli_real_escape_string($connection, $_POST['registration_no']);
     $company_type = mysqli_real_escape_string($connection, $_POST['company_type']);
+    $working = mysqli_real_escape_string($connection, $_POST['working']);
+    $working_days = mysqli_real_escape_string($connection, $_POST['working_days']);
+    $minimum_shift = mysqli_real_escape_string($connection, $_POST['minimum_shift']);
+    $checkout_time = mysqli_real_escape_string($connection, $_POST['checkout_time']); // Added checkout_time
+    $bank_name = mysqli_real_escape_string($connection, $_POST['bank_name']);
+    $branch_no = mysqli_real_escape_string($connection, $_POST['branch_no']);
+    $account_no = mysqli_real_escape_string($connection, $_POST['account_no']);
+    $ifsc_code = mysqli_real_escape_string($connection, $_POST['ifsc_code']);
+    $swift_code = mysqli_real_escape_string($connection, $_POST['swift_code']);
+    $company_email_id = mysqli_real_escape_string($connection, $_POST['company_email_id']);
+$company_passkey = mysqli_real_escape_string($connection, $_POST['company_passkey']);
 
-    // File Upload Handling
+
+    // Validate working days
+    if ($working_days > 7) {
+        echo "<script>alert('Working days should not exceed 7.'); window.location.href='companycard.php';</script>";
+        exit(); // Stop further execution
+    }
+
+    // File Upload Handling for Company Logo
     $target_dir = "uploads/"; // Ensure this directory exists with proper permissions
     if (!is_dir($target_dir)) {
         mkdir($target_dir, 0777, true); // Create the directory if it doesn't exist
     }
 
-    $target_file = $target_dir . basename($_FILES["company_logo"]["name"]);
-    $uploadOk = 1;
+    $target_file_logo = $target_dir . basename($_FILES["company_logo"]["name"]);
+    $uploadOkLogo = 1;
 
-    // Check file type
-    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-    if (!in_array($imageFileType, ['jpg', 'png', 'jpeg'])) {
-        echo "<script>alert('Only JPG, JPEG, and PNG files are allowed.');</script>";
-        $uploadOk = 0;
+    // Check file type for Company Logo
+    $imageFileTypeLogo = strtolower(pathinfo($target_file_logo, PATHINFO_EXTENSION));
+    if (!in_array($imageFileTypeLogo, ['jpg', 'png', 'jpeg'])) {
+        echo "<script>alert('Only JPG, JPEG, and PNG files are allowed for company logo.');</script>";
+        $uploadOkLogo = 0;
     }
 
-    if ($uploadOk && move_uploaded_file($_FILES["company_logo"]["tmp_name"], $target_file)) {
+    // File Upload Handling for QR Scanner
+    $target_file_qr = $target_dir . basename($_FILES["qr_scanner"]["name"]);
+    $uploadOkQr = 1;
+
+    // Check file type for QR Scanner
+    $imageFileTypeQr = strtolower(pathinfo($target_file_qr, PATHINFO_EXTENSION));
+    if (!in_array($imageFileTypeQr, ['jpg', 'png', 'jpeg'])) {
+        echo "<script>alert('Only JPG, JPEG, and PNG files are allowed for QR scanner.');</script>";
+        $uploadOkQr = 0;
+    }
+
+    if ($uploadOkLogo && move_uploaded_file($_FILES["company_logo"]["tmp_name"], $target_file_logo) &&
+        $uploadOkQr && move_uploaded_file($_FILES["qr_scanner"]["tmp_name"], $target_file_qr)) {
+
         // Insert the new company into the database
-        $query = "INSERT INTO company_card (company_name, address, pincode, city, state, country, contact_no, whatsapp_no, email_id, pancard, gstno, registration_no, company_type, company_logo)
-                  VALUES ('$company_name', '$address', '$pincode', '$city', '$state', '$country', '$contact_no', '$whatsapp_no', '$email_id', '$pancard', '$gstno', '$registration_no', '$company_type', '$target_file')";
+        $query = "INSERT INTO company_card (
+      company_name, address, pincode, city, state, country, contact_no, whatsapp_no, email_id, pancard, gstno, registration_no, company_type, company_logo, working, working_days, minimum_shift, checkout_time, bank_name, branch_no, account_no, ifsc_code, swift_code, company_email_id, company_passkey, qr_scanner
+  ) VALUES (
+      '$company_name', '$address', '$pincode', '$city', '$state', '$country', '$contact_no', '$whatsapp_no', '$email_id', '$pancard', '$gstno', '$registration_no', '$company_type', '$target_file_logo', '$working', '$working_days', '$minimum_shift', '$checkout_time', '$bank_name', '$branch_no', '$account_no', '$ifsc_code', '$swift_code', '$company_email_id', '$company_passkey', '$target_file_qr'
+  )";
+
 
         if (mysqli_query($connection, $query)) {
             echo "<script>alert('Company added successfully'); window.location.href='companycard.php';</script>";
@@ -55,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             echo "<script>alert('Error adding company: " . mysqli_error($connection) . "');</script>";
         }
     } else {
-        echo "<script>alert('Error uploading logo.');</script>";
+        echo "<script>alert('Error uploading files.');</script>";
     }
 }
 ?>
@@ -64,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html lang="en">
 <head>
     <meta charset="utf-8">
-<link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href=""> <!-- Link your external CSS file -->
     <title>Add Company</title>
@@ -227,9 +262,70 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
 
         <!-- Row 8 -->
-        <div class="input_field" style="grid-column: span 2;">
+        <div class="input_field">
+            <label for="working">Working Time</label>
+            <input type="time" name="working" id="working">
+        </div>
+        <div class="input_field">
+            <label for="working_days">Working Days</label>
+            <input type="number" name="working_days" id="working_days" min="1" max="7">
+        </div>
+
+        <!-- Row 9 -->
+        <div class="input_field">
             <label for="company_logo">Company Logo</label>
             <input type="file" name="company_logo" id="company_logo" accept="image/png, image/jpeg">
+        </div>
+        <div class="input_field">
+            <label for="minimum_shift">Minimum Shift</label>
+            <input type="text" name="minimum_shift" id="minimum_shift">
+        </div>
+
+        <!-- Row 10 -->
+        <div class="input_field">
+            <label for="checkout_time">Checkout Time</label>
+            <input type="time" name="checkout_time" id="checkout_time">
+        </div>
+        <div class="input_field">
+            <label for="bank_name">Bank Name</label>
+            <input type="text" name="bank_name" id="bank_name">
+        </div>
+
+        <!-- Row 11 -->
+        <div class="input_field">
+            <label for="branch_no">Branch No.</label>
+            <input type="text" name="branch_no" id="branch_no">
+        </div>
+        <div class="input_field">
+            <label for="account_no">Account No.</label>
+            <input type="text" name="account_no" id="account_no">
+        </div>
+
+        <!-- Row 12 -->
+        <div class="input_field">
+            <label for="ifsc_code">IFSC Code</label>
+            <input type="text" name="ifsc_code" id="ifsc_code">
+        </div>
+        <div class="input_field">
+            <label for="swift_code">Swift Code</label>
+            <input type="text" name="swift_code" id="swift_code">
+        </div>
+
+        <!-- Row 13 (New Fields for Email & Passkey) -->
+<div class="input_field">
+    <label for="company_email_id">Company Email ID (For Sending Mails)</label>
+    <input type="email" name="company_email_id" id="company_email_id">
+</div>
+<div class="input_field">
+    <label for="company_passkey">Company Email ID Passkey</label>
+    <input type="password" name="company_passkey" id="company_passkey">
+</div>
+
+
+        <!-- Row 14 -->
+        <div class="input_field">
+            <label for="qr_scanner">QR Scanner</label>
+            <input type="file" name="qr_scanner" id="qr_scanner" accept="image/png, image/jpeg">
         </div>
     </div>
 

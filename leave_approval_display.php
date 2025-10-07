@@ -25,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_id']) && isset(
     $stmt->bind_param("si", $status, $leave_id);
     $stmt->execute();
 
-    // If the leave is approved, update the user_leave_balance table
-    if ($status === 'Approved') {
+    // If the leave is rejected, increment the leave balance in the user_leave_balance table
+    if ($status === 'Rejected') {
         $user_id = $leave['user_id'];
         $leave_type = $leave['leave_type'];
         $total_days = $leave['total_days'];
@@ -43,9 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_id']) && isset(
             $column_to_update = null;
         }
 
-        // Update the user_leave_balance table
+        // Increment the leave balance in the user_leave_balance table
         if ($column_to_update) {
-            $sql = "UPDATE user_leave_balance SET $column_to_update = $column_to_update + ? WHERE user_id = ?";
+            $sql = "UPDATE user_leave_balance SET $column_to_update = $column_to_update - ? WHERE user_id = ?";
             $stmt = $connection->prepare($sql);
             $stmt->bind_param("di", $total_days, $user_id); // Use "d" for decimal values
             $stmt->execute();
@@ -59,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_id']) && isset(
     echo "Leave status updated successfully";
     exit; // Stop further execution after handling the AJAX request
 }
+
 
 // Include topbar.php only if it's not an AJAX request
 if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
@@ -107,8 +108,8 @@ $result = $stmt->get_result();
         width: calc(100% - 260px);
         margin-left: 260px;
         margin-top: 140px;
-        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-        min-height: 100vh; /* Ensures it doesn't shrink too much */
+        max-height: calc(100vh - 150px); /* Dynamic height based on viewport */
+        
         overflow-y: auto; /* Enables vertical scrolling */
         border: 1px solid #ddd;
         background-color: white;

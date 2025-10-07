@@ -39,25 +39,49 @@ switch ($menu) {
             "Invoice" => [
                 "Draft Invoices" => "invoice_draft.php",
                 "Finalized Invoice" => "invoice_display.php",
-                "Returned Invoice" => "invoice_closed.php"
+                "Sales Lot Tracking" => "invoice_lot_add_display.php"
+            ],
+            "Invoice Return" => [
+                "Returned Invoice" => "invoice_cancel_display.php",
+                "Lot Add" => "invoice_cancel_add_lot_display.php"
             ],
             "AMC Dues" => "amc_due_display.php",
             "Item Ledger Display" => "item_ledger_display.php",
             "Party Ledger" => "party_ledger.php",
-            "Expenses" => "expense_display.php" // Added Expenses
+            "Payments" => "payment_advance.php",
+            "Payment Records" => "payment_display.php",
+            "Stock Report" => "stock_report.php",
+            "Expenses" => "expense_display.php"
         ];
         break;
-    case 'Purchase': // New Purchase Menu
+    case 'Purchase':
         $submenus = [
-            "Purchase Order" => "purchase_order_display.php",
+            "Vendor Contact" => "vendor_contact_display.php",
+            "Purchase Order" => [
+                "Pending Orders" => "purchase_order_pending_display.php",
+                "Completed Orders" => "purchase_order_completed_display.php"
+            ],
             "Purchase Invoice" => "purchase_invoice_display.php",
-            "Returned Invoice" => "purchase_invoice_closed_display.php"
+            "Lot Tracking" => "purchase_invoice_add_lot.php",
+            "Purchase Invoice Return" => [
+                "Returned Purchase Invoice" => "purchase_invoice_cancel_display.php",
+                "Add Lot" => "purchase_invoice_cancel_add_lot.php"
+            ],
+            "Purchase Ledger Display" => "purchase_item_ledger_display.php"
         ];
         break;
-    case 'Settings':
+        case 'Settings':
         $submenus = [
             "Company Card" => "companycard.php",
             "Location Card" => "locationcard_display.php",
+            // Newly added pages
+            "Projects" => "project_display.php",
+            "Operation Group" => "operation_group_display.php",
+            "Operations" => "operation_display.php",
+            "Task Group" => "task_group_display.php",
+            "Tasks" => "task_display.php",
+
+            // Existing pages continue
             "Financial Year" => "financial_years_display.php",
             "GST" => "gst_display.php",
             "HSN/SAC" => "hsn_sac_display.php",
@@ -67,14 +91,17 @@ switch ($menu) {
             "Departments" => "department_display.php",
             "Designations" => "designation_display.php",
             "Expense Tracker" => "expense_tracker_display.php",
+            "Holidays" => "holidays_display.php",
             "User" => "display.php"
         ];
         break;
+
     case 'Human Resource':
         $submenus = [
             "Attendance" => "attendance_display.php",
             "Leave Applications" => "leave_display.php",
-            "Leave Balance" => "leave_balance_display.php"
+            "Leave Balance" => "leave_balance_display.php",
+            "Salary Sheet" => "salary_sheet_fy_display.php"
         ];
         break;
     default:
@@ -100,26 +127,29 @@ $stmt->close();
 <html lang="en">
 <head>
     <meta charset="utf-8">
-<link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submenu Access</title>
     <style>
-        html, body {
-            overflow: hidden;
-            height: 100%;
-            margin: 0;
-        }
+    html, body {
+  height: 100%;
+  margin: 0;
+  overflow-y: auto; /* Enables vertical scroll */
+}
+
         /* Table Wrapper with Responsive Scroll */
         .user-table-wrapper {
-            width: calc(100% - 260px);
-            margin-left: 260px;
-            margin-top: 140px;
-            max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-            min-height: 100vh; /* Ensures it doesn't shrink too much */
-            overflow-y: auto; /* Enables vertical scrolling */
-            border: 1px solid #ddd;
-            background-color: white;
-        }
+      width: calc(100% - 260px);
+      margin-left: 260px;
+      margin-top: 140px;
+      max-height: unset; /* Remove fixed max height */
+      min-height: unset;
+      overflow-x: auto;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      background-color: white;
+  }
+
         .user-table {
             width: 100%;
             border-collapse: collapse;

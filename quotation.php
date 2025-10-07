@@ -6,6 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Retrieve form data
     $quotation_date = $_POST['quotation_date'];
     $client_name = $_POST['client_name'];
+    $client_company_name = $_POST['client_company_name']; // New field
     $shipper_location_code = $_POST['shipper_location_code'];
     $gross_amount = $_POST['gross_amount'];
     $discount = $_POST['discount'];
@@ -70,14 +71,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $quotation_no = 'QUO/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
 
     // Insert data into the quotations table
-    $insert_quotation = "INSERT INTO quotations (client_name, shipper_location_code,
+    $insert_quotation = "INSERT INTO quotations (
+        client_name, client_company_name, shipper_location_code,
         quotation_no, client_id, shipper_id, gross_amount, discount,
         net_amount, quotation_date, total_igst, total_cgst, total_sgst, base_amount,
         client_address, client_phone, client_city, client_state, client_country,
         client_pincode, client_gstno, shipper_company_name, shipper_address,
         shipper_city, shipper_state, shipper_country, shipper_pincode,
         shipper_phone, shipper_gstno, fy_code
-    ) VALUES ('$client_name', '$shipper_location_code',
+    ) VALUES (
+        '$client_name', '$client_company_name', '$shipper_location_code',
         '$quotation_no', '$client_id', '$shipper_id', '$gross_amount',
         '$discount', '$net_amount', '$quotation_date', '$total_igst', '$total_cgst',
         '$total_sgst', '$base_amount', '$client_address', '$client_phone',
@@ -102,6 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $igsts = $_POST['igst'];
         $cgsts = $_POST['cgst'];
         $sgsts = $_POST['sgst'];
+        $stocks = $_POST['stock']; // Added stock field
 
         for ($i = 0; $i < count($products); $i++) {
             $product_code = $products[$i];
@@ -115,10 +119,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $igst = $igsts[$i];
             $cgst = $cgsts[$i];
             $sgst = $sgsts[$i];
+            $stock = $stocks[$i]; // Get stock value
 
-            // Insert into quotation_items
-            $insert_item = "INSERT INTO quotation_items (quotation_id, product_name, product_id, quantity, rate, gst, amount, unit, value, igst, cgst, sgst) VALUES
-                ('$quotation_id', '$product_name', '$product_code', '$quantity', '$rate', '$gst', '$amount', '$unit', '$unit_value', '$igst', '$cgst', '$sgst')";
+            // Insert into quotation_items with stock field
+            $insert_item = "INSERT INTO quotation_items (
+                quotation_id, product_name, product_id, quantity, rate, gst, amount, unit, value, igst, cgst, sgst, stock
+            ) VALUES (
+                '$quotation_id', '$product_name', '$product_code', '$quantity', '$rate', '$gst', '$amount', '$unit',
+                '$unit_value', '$igst', '$cgst', '$sgst', '$stock'
+            )";
             $connection->query($insert_item);
         }
 
@@ -128,9 +137,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
-
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -464,40 +470,43 @@ tr:hover {
           <h3>Client & Shipper Details</h3>
 
           <div class="form-section">
-              <div class="column">
-                  <h4>Client Details</h4>
-                  <label>Name:</label>
-                  <select id="client_name" name="client_name" required>
-                      <option value="" disabled selected>Select Client</option>
-                      <?php
-                      $result = $connection->query("SELECT * FROM contact");
-                      while ($row = $result->fetch_assoc()) {
-                          echo "<option value='{$row['contact_person']}'
-                              data-phone='{$row['mobile_no']}'
-                              data-address='{$row['address']}'
-                              data-city='{$row['city']}'
-                              data-gstno='{$row['gstno']}'
-                              data-state='{$row['state']}'
-                              data-country='{$row['country']}'
-                              data-pincode='{$row['pincode']}'>{$row['contact_person']}</option>";
-                      }
-                      ?>
-                  </select>
-                  <label>Address:</label>
-                  <input type="text" id="client_address" name="client_address" readonly>
-                  <label>Phone:</label>
-                  <input type="text" id="client_phone" name="client_phone" readonly>
-                  <label>City:</label>
-                  <input type="text" id="client_city" name="client_city" readonly>
-                  <label>State:</label>
-                  <input type="text" id="client_state" name="client_state" readonly>
-                  <label>Country:</label>
-                  <input type="text" id="client_country" name="client_country" readonly>
-                  <label>Pincode:</label>
-                  <input type="text" id="client_pincode" name="client_pincode" readonly>
-                  <label>GST No.:</label>
-                  <input type="text" id="client_gstno" name="client_gstno" readonly>
-              </div>
+    <div class="column">
+        <h4>Client Details</h4>
+        <label>Name:</label>
+        <select id="client_name" name="client_name" required>
+            <option value="" disabled selected>Select Client</option>
+            <?php
+            $result = $connection->query("SELECT * FROM contact");
+            while ($row = $result->fetch_assoc()) {
+                echo "<option value='{$row['contact_person']}'
+                      data-phone='{$row['mobile_no']}'
+                      data-address='{$row['address']}'
+                      data-city='{$row['city']}'
+                      data-gstno='{$row['gstno']}'
+                      data-state='{$row['state']}'
+                      data-country='{$row['country']}'
+                      data-pincode='{$row['pincode']}'
+                      data-company='{$row['company_name']}'>{$row['contact_person']} ({$row['company_name']})</option>";
+            }
+            ?>
+        </select>
+        <label>Company Name:</label>
+        <input type="text" id="client_company_name" name="client_company_name" readonly>
+        <label>Address:</label>
+        <input type="text" id="client_address" name="client_address" readonly>
+        <label>Phone:</label>
+        <input type="text" id="client_phone" name="client_phone" readonly>
+        <label>City:</label>
+        <input type="text" id="client_city" name="client_city" readonly>
+        <label>State:</label>
+        <input type="text" id="client_state" name="client_state" readonly>
+        <label>Country:</label>
+        <input type="text" id="client_country" name="client_country" readonly>
+        <label>Pincode:</label>
+        <input type="text" id="client_pincode" name="client_pincode" readonly>
+        <label>GST No.:</label>
+        <input type="text" id="client_gstno" name="client_gstno" readonly>
+    </div>
 
               <div class="column">
                   <h4>Shipper Details</h4>
@@ -547,6 +556,7 @@ tr:hover {
                       <th>Qty</th>
                       <th>Rate</th>
                       <th>GST (%)</th>
+                      <th>Stock</th>
                       <th>IGST</th>
                       <th>CGST</th>
                       <th>SGST</th>
@@ -617,16 +627,18 @@ tr:hover {
   </div>
 
   <script>
-      document.getElementById("client_name").addEventListener("change", function () {
-          let selectedOption = this.options[this.selectedIndex];
-          document.getElementById("client_address").value = selectedOption.getAttribute("data-address");
-          document.getElementById("client_phone").value = selectedOption.getAttribute("data-phone");
-          document.getElementById("client_city").value = selectedOption.getAttribute("data-city");
-          document.getElementById("client_state").value = selectedOption.getAttribute("data-state");
-          document.getElementById("client_country").value = selectedOption.getAttribute("data-country");
-          document.getElementById("client_pincode").value = selectedOption.getAttribute("data-pincode");
-          document.getElementById("client_gstno").value = selectedOption.getAttribute("data-gstno");
-      });
+  document.getElementById("client_name").addEventListener("change", function () {
+  let selectedOption = this.options[this.selectedIndex];
+  document.getElementById("client_address").value = selectedOption.getAttribute("data-address");
+  document.getElementById("client_phone").value = selectedOption.getAttribute("data-phone");
+  document.getElementById("client_city").value = selectedOption.getAttribute("data-city");
+  document.getElementById("client_state").value = selectedOption.getAttribute("data-state");
+  document.getElementById("client_country").value = selectedOption.getAttribute("data-country");
+  document.getElementById("client_pincode").value = selectedOption.getAttribute("data-pincode");
+  document.getElementById("client_gstno").value = selectedOption.getAttribute("data-gstno");
+  document.getElementById("client_company_name").value = selectedOption.getAttribute("data-company");
+});
+
 
       document.getElementById("shipper_location_code").addEventListener("change", function () {
           let selectedOption = this.options[this.selectedIndex];
@@ -639,7 +651,6 @@ tr:hover {
           document.getElementById("shipper_pincode").value = selectedOption.getAttribute("data-pincode");
           document.getElementById("shipper_gstno").value = selectedOption.getAttribute("data-gstno");
       });
-
       function addRow() {
           let table = document.getElementById("invoiceTable").getElementsByTagName("tbody")[0];
           let row = table.insertRow();
@@ -667,8 +678,8 @@ tr:hover {
                       <ul></ul>
                   </div>
               </td>
-              <td><input type="number" name="quantity[]" oninput="calculateRow(this)" required></td>
-              <td><input type="number" name="rate[]" readonly required></td>
+              <td><input type="number" name="quantity[]" step="any" oninput="calculateRow(this)" required></td>
+              <td><input type="number" step="any" name="rate[]" oninput="calculateRow(this)" required></td>
               <td>
                   <select class="product-gst" name="product_gst[]" onchange="calculateRow(this)" required>
                       <option value="" disabled selected>Select GST %</option>
@@ -680,6 +691,7 @@ tr:hover {
                       ?>
                   </select>
               </td>
+              <td><input type="text" name="stock[]" placeholder="Stock" readonly></td>
               <input type="hidden" name="product_name_actual[]">
               <input type="hidden" name="unit_value[]" value="1" id="unitValueField">
               <td><input type="text" name="igst[]" readonly></td>
@@ -692,33 +704,35 @@ tr:hover {
           styleRowInputs(row);
       }
 
+
       function loadUnitOptions(inputField) {
-          const unitDropdown = inputField.nextElementSibling;
-          const productSelect = inputField.closest('tr').querySelector('select[name="product_name[]"]');
-          const selectedOption = productSelect.options[productSelect.selectedIndex];
-          const itemCode = selectedOption.value;
+        const unitDropdown = inputField.nextElementSibling;
+        const productSelect = inputField.closest('tr').querySelector('select[name="product_name[]"]');
+        const selectedOption = productSelect.options[productSelect.selectedIndex];
+        const itemCode = selectedOption.value;
 
-          const ul = unitDropdown.querySelector('ul');
-          ul.innerHTML = '';
+        const ul = unitDropdown.querySelector('ul');
+        ul.innerHTML = '';
 
-          fetchUnits(itemCode).then(units => {
-              units.forEach(unitObj => {
-                  const li = document.createElement('li');
-                  li.textContent = `${unitObj.unit_name} - ${unitObj.value}`;
-                  li.onclick = function() {
-                      inputField.value = unitObj.unit_name;
-                      inputField.dataset.unitValue = unitObj.value;
-                      unitDropdown.style.display = 'none';
-                      const hiddenInput = inputField.closest('tr').querySelector('input[name="unit_value[]"]');
-                      if (hiddenInput) {
-                          hiddenInput.value = unitObj.value;
-                      }
-                  };
-                  ul.appendChild(li);
-              });
-              unitDropdown.style.display = 'block';
-          });
-      }
+        fetchUnits(itemCode).then(units => {
+            units.forEach(unitObj => {
+                const li = document.createElement('li');
+                li.textContent = `${unitObj.unit_name} - ${unitObj.value}`;
+                li.onclick = function() {
+                    inputField.value = unitObj.unit_name;
+                    inputField.dataset.unitValue = unitObj.value;
+                    unitDropdown.style.display = 'none';
+                    const hiddenInput = inputField.closest('tr').querySelector('input[name="unit_value[]"]');
+                    if (hiddenInput) {
+                        hiddenInput.value = unitObj.value;
+                    }
+                    calculateRow(inputField); // Recalculate row when unit is selected
+                };
+                ul.appendChild(li);
+            });
+            unitDropdown.style.display = 'block';
+        });
+    }
 
       function fetchUnits(itemCode) {
           return new Promise((resolve, reject) => {
@@ -763,110 +777,131 @@ tr:hover {
       }
 
       function fetchProductDetails(selectElement) {
-          let selectedOption = selectElement.options[selectElement.selectedIndex];
-          let unit = selectedOption.getAttribute("data-unit") || "";
-          let rate = selectedOption.getAttribute("data-rate") || "";
-          let gst = selectedOption.getAttribute("data-gst") || "";
-          let itemName = selectedOption.getAttribute("data-name") || "";
-          let itemCode = selectedOption.value;
+      let selectedOption = selectElement.options[selectElement.selectedIndex];
+      let unit = selectedOption.getAttribute("data-unit") || "";
+      let rate = selectedOption.getAttribute("data-rate") || "";
+      let gst = selectedOption.getAttribute("data-gst") || "";
+      let itemName = selectedOption.getAttribute("data-name") || "";
+      let itemCode = selectedOption.value;
+      let row = selectElement.closest("tr");
 
-          let row = selectElement.closest("tr");
-          row.querySelector("input[name='unit[]']").value = unit;
-          row.querySelector("input[name='rate[]']").value = rate;
-          row.querySelector("input[name='product_name_actual[]']").value = itemName;
+      row.querySelector("input[name='unit[]']").value = unit;
+      row.querySelector("input[name='rate[]']").value = rate;
+      row.querySelector("input[name='product_name_actual[]']").value = itemName;
 
-          let gstSelect = row.querySelector("select[name='product_gst[]']");
-          if (gstSelect) {
-              gstSelect.value = gst;
-          }
-
-          row.querySelector("input[name='quantity[]']").value = "";
-          calculateRow(row.querySelector("input[name='quantity[]']"));
+      let gstSelect = row.querySelector("select[name='product_gst[]']");
+      if (gstSelect) {
+          gstSelect.value = gst;
       }
 
-      function calculateRow(input) {
-          let row = input.parentElement.parentElement;
-          let qty = row.cells[2].querySelector("input").value;
-          let rate = row.cells[3].querySelector("input").value;
-          let gstPercentage = parseFloat(row.querySelector(".product-gst").value) || 0;
+      row.querySelector("input[name='quantity[]']").value = "";
+      calculateRow(row.querySelector("input[name='quantity[]']"));
+  }
+  function calculateRow(input) {
+  let row = input.parentElement.parentElement;
+  let qty = parseFloat(row.cells[2].querySelector("input").value) || 0;
+  let rate = parseFloat(row.cells[3].querySelector("input").value) || 0;
+  let gstPercentage = parseFloat(row.querySelector(".product-gst").value) || 0;
+  let unitValue = parseFloat(row.querySelector("input[name='unit_value[]']").value) || 1;
 
-          let amount = qty * rate;
-          let gstAmount = (amount * gstPercentage) / 100;
+  let stock = qty * unitValue; // Calculate stock
+  row.cells[5].querySelector("input").value = stock.toFixed(2); // Set stock value
 
-          let clientState = document.getElementById("client_state").value;
-          let shipperState = document.getElementById("shipper_state").value;
+  let amount = stock * rate; // Calculate amount based on stock
+  let gstAmount = (amount * gstPercentage) / 100;
 
-          let igst = 0, cgst = 0, sgst = 0;
-          if (clientState && shipperState) {
-              if (clientState === shipperState) {
-                  cgst = gstAmount / 2;
-                  sgst = gstAmount / 2;
-              } else {
-                  igst = gstAmount;
-              }
-          }
+  let clientState = document.getElementById("client_state").value;
+  let shipperState = document.getElementById("shipper_state").value;
 
-          row.cells[5].querySelector("input").value = igst.toFixed(2);
-          row.cells[6].querySelector("input").value = cgst.toFixed(2);
-          row.cells[7].querySelector("input").value = sgst.toFixed(2);
-          row.cells[8].querySelector("input").value = (amount + gstAmount).toFixed(2);
-
-          updateGSTTotals();
-          calculateTotal();
+  let igst = 0, cgst = 0, sgst = 0;
+  if (clientState && shipperState) {
+      if (clientState === shipperState) {
+          cgst = gstAmount / 2;
+          sgst = gstAmount / 2;
+      } else {
+          igst = gstAmount;
       }
+  }
 
-      function calculateTotal() {
-          let rows = document.querySelectorAll("#invoiceTable tbody tr");
-          let gross = 0;
+  row.cells[6].querySelector("input").value = igst.toFixed(2);
+  row.cells[7].querySelector("input").value = cgst.toFixed(2);
+  row.cells[8].querySelector("input").value = sgst.toFixed(2);
+  row.cells[9].querySelector("input").value = (amount + gstAmount).toFixed(2);
 
-          rows.forEach(row => {
-              gross += parseFloat(row.cells[8].querySelector("input").value) || 0;
-          });
+  updateGSTTotals();
+  calculateTotal();
+}
 
-          document.getElementById("grossAmount").innerText = gross.toFixed(2);
-          document.getElementById("grossAmountInput").value = gross.toFixed(2);
+function calculateTotal() {
+let rows = document.querySelectorAll("#invoiceTable tbody tr");
+let gross = 0;
 
-          let discount = parseFloat(document.getElementById("discount").value) || 0;
-          let netAmount = gross - discount;
-          document.getElementById("netAmount").innerText = netAmount.toFixed(2);
-          document.getElementById("netAmountInput").value = netAmount.toFixed(2);
+rows.forEach(row => {
+    // Amount is now in cell 9 (previously was 8)
+    gross += parseFloat(row.cells[9].querySelector("input").value) || 0;
+});
 
-          let totalGST = 0;
-          rows.forEach(row => {
-              let igst = parseFloat(row.cells[5].querySelector("input").value) || 0;
-              let cgst = parseFloat(row.cells[6].querySelector("input").value) || 0;
-              let sgst = parseFloat(row.cells[7].querySelector("input").value) || 0;
-              totalGST += igst + cgst + sgst;
-          });
+document.getElementById("grossAmount").innerText = gross.toFixed(2);
+document.getElementById("grossAmountInput").value = gross.toFixed(2);
 
-          let baseAmount = gross - totalGST;
-          document.getElementById("baseAmount").innerText = baseAmount.toFixed(2);
-          document.getElementById("baseAmountInput").value = baseAmount.toFixed(2);
+let discount = parseFloat(document.getElementById("discount").value) || 0;
+let netAmount = gross - discount;
+document.getElementById("netAmount").innerText = netAmount.toFixed(2);
+document.getElementById("netAmountInput").value = netAmount.toFixed(2);
 
-          updateGSTTotals();
-      }
+let totalGST = 0;
+rows.forEach(row => {
+    // IGST is now in cell 6 (previously was 5)
+    let igst = parseFloat(row.cells[6].querySelector("input").value) || 0;
+    // CGST is now in cell 7 (previously was 6)
+    let cgst = parseFloat(row.cells[7].querySelector("input").value) || 0;
+    // SGST is now in cell 8 (previously was 7)
+    let sgst = parseFloat(row.cells[8].querySelector("input").value) || 0;
+    totalGST += igst + cgst + sgst;
+});
 
-      function updateGSTTotals() {
-          let totalIGST = 0, totalCGST = 0, totalSGST = 0;
+let baseAmount = gross - totalGST;
+document.getElementById("baseAmount").innerText = baseAmount.toFixed(2);
+document.getElementById("baseAmountInput").value = baseAmount.toFixed(2);
 
-          document.querySelectorAll("#invoiceTable tbody tr").forEach(row => {
-              totalIGST += parseFloat(row.cells[5].querySelector("input").value) || 0;
-              totalCGST += parseFloat(row.cells[6].querySelector("input").value) || 0;
-              totalSGST += parseFloat(row.cells[7].querySelector("input").value) || 0;
-          });
+updateGSTTotals();
+}
 
-          document.getElementById("totalIGST").innerText = totalIGST.toFixed(2);
-          document.getElementById("totalIGSTInput").value = totalIGST.toFixed(2);
-          document.getElementById("totalCGST").innerText = totalCGST.toFixed(2);
-          document.getElementById("totalCGSTInput").value = totalCGST.toFixed(2);
-          document.getElementById("totalSGST").innerText = totalSGST.toFixed(2);
-          document.getElementById("totalSGSTInput").value = totalSGST.toFixed(2);
-      }
+function updateGSTTotals() {
+let totalIGST = 0, totalCGST = 0, totalSGST = 0;
 
+document.querySelectorAll("#invoiceTable tbody tr").forEach(row => {
+    // Updated cell indexes to match the new column positions
+    totalIGST += parseFloat(row.cells[6].querySelector("input").value) || 0;
+    totalCGST += parseFloat(row.cells[7].querySelector("input").value) || 0;
+    totalSGST += parseFloat(row.cells[8].querySelector("input").value) || 0;
+});
+
+document.getElementById("totalIGST").innerText = totalIGST.toFixed(2);
+document.getElementById("totalIGSTInput").value = totalIGST.toFixed(2);
+document.getElementById("totalCGST").innerText = totalCGST.toFixed(2);
+document.getElementById("totalCGSTInput").value = totalCGST.toFixed(2);
+document.getElementById("totalSGST").innerText = totalSGST.toFixed(2);
+document.getElementById("totalSGSTInput").value = totalSGST.toFixed(2);
+}
       function removeRow(button) {
           button.parentElement.parentElement.remove();
           calculateTotal();
       }
+
+      // Add form submission confirmation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('invoiceForm');
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Show confirmation dialog
+        if (confirm("Do you want to save this quotation?")) {
+            form.submit();
+        }
+        // If user clicks "No", nothing happens and they stay on the page
+    });
+});
   </script>
 
 

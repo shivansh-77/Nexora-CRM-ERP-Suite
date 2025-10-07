@@ -11,147 +11,220 @@ include('topbar.php');
     <title>Leave Balances</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <style>
+    /* Table Styles */
     html, body {
         overflow: hidden;
         height: 100%;
         margin: 0;
     }
 
-    /* Table Wrapper with Responsive Scroll */
     .user-table-wrapper {
         width: calc(100% - 260px);
         margin-left: 260px;
         margin-top: 140px;
-        max-height: calc(100vh - 140px); /* Dynamic height based on viewport */
-        min-height: 100vh; /* Ensures it doesn't shrink too much */
-        overflow-y: auto; /* Enables vertical scrolling */
+        max-height: calc(100vh - 150px); /* Adjust based on your layout */
+        overflow-y: auto; /* Enable vertical scrolling */
         border: 1px solid #ddd;
         background-color: white;
     }
 
-        .user-table {
-            width: 100%; /* Full width */
-            border-collapse: collapse;
-            background-color: white;
-            table-layout: auto; /* Allow columns to adjust based on content */
-        }
+    .main-content {
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
 
-        .user-table th, .user-table td {
-            padding: 10px; /* Increased padding for wider columns */
-            border: 1px solid #ddd;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+    }
 
-        .user-table th {
-            background-color: #2c3e50; /* Header color */
-            color: white;
-            text-align: left;
-            position: sticky; /* Make headers sticky */
-            top: 0; /* Stick to the top */
-            z-index: 1; /* Ensure headers are above the body */
-        }
+    .user-table th, .user-table td {
+        border: 1px solid #ddd;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap; /* Ensure text stays in a single line */
+    }
 
-        .user-table td {
-            text-align: left;
-        }
+    .user-table th {
+        padding: 12px;
+        background-color: #2c3e50;
+        color: white;
+        text-align: left;
+        position: sticky;
+        z-index: 1;
+    }
 
-        .user-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
+    .user-table thead tr:first-child th {
+        top: 0;
+        background-color: #2c3e50;
+    }
 
-        .user-table tr:hover {
-            background-color: #f1f1f1;
-        }
+    .user-table thead tr:nth-child(2) th {
+        top: 50px;
+        background-color: #2c3e50;
+    }
 
-        .user-table td:last-child {
-            text-align: right; /* Align buttons to the right */
-            width: auto; /* Further reduce the width of the action column */
-            padding: 5px 8px; /* Reduce padding further for action column */
-        }
+    .user-table td {
+        text-align: left;
+        padding: 8px;
+    }
 
-        .btn-primary, .btn-secondary, .btn-danger, .btn-warning {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 4px;
-            color: white;
-            cursor: pointer;
-        }
+    .user-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
 
-        .btn-primary { background-color: #a5f3fc; }
-        .btn-secondary { background-color: #6c757d; }
-        .btn-danger { background-color: #dc3545; }
-        .btn-warning { background-color: #3498db; color: black; }
+    .user-table tr:hover {
+        background-color: #f1f1f1;
+    }
 
-        .leadforhead {
-            position: fixed;
-            width: calc(100% - 290px); /* Adjust width to account for sidebar */
-            height: 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #2c3e50;
-            color: white;
-            padding: 0 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            overflow: visible; /* Ensure child elements are visible */
-            margin-left: 260px;
-            margin-top: 80px;
-        }
+    .user-table td:last-child {
+        text-align: center;
+        width: auto;
+        white-space: nowrap;
+    }
 
-        .lead-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+    .user-table td:hover {
+        white-space: nowrap; /* Ensure no wrapping on hover */
+        overflow: hidden; /* Prevent overflow */
+        text-overflow: ellipsis; /* Show ellipsis if text overflows */
+    }
 
-        .btn-primary {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
+    /* Button Styles */
+    .btn-primary, .btn-secondary, .btn-danger, .btn-warning, .btn-info {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        margin-right: 5px;
+        display: inline-block;
+    }
 
-        .btn-search {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
+    .btn-primary { background-color: green; }
+    .btn-secondary { background-color: #6c757d; }
+    .btn-danger { background-color: #dc3545; }
+    .btn-warning { background-color: #3498db; color: black; }
+    .btn-info { background-color: #17a2b8; }
 
-        .search-bar {
-            display: flex;
-            align-items: center;
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-right: 40px;
-        }
+    /* Header Styles */
+    .leadforhead {
+        position: fixed;
+        width: calc(100% - 290px);
+        height: 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #2c3e50;
+        color: white;
+        padding: 0 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        overflow: visible;
+        margin-left: 260px;
+        margin-top: 80px;
+    }
 
-        .search-input {
-            border: none;
-            padding: 8px;
-            outline: none;
-            font-size: 14px;
-            width: 273px;
-        }
+    .lead-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-        .search-input:focus {
-            border: none;
-            outline: none;
-        }
-        #downloadExcel{
-          background-color: green;
-        }
+    .btn-primary {
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .btn-search {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    /* Search Bar Styles */
+    .search-bar {
+        display: flex;
+        align-items: center;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-right: 40px;
+    }
+
+    .search-input {
+        border: none;
+        padding: 8px;
+        outline: none;
+        font-size: 14px;
+        width: 273px;
+    }
+
+    .search-input:focus {
+        border: none;
+        outline: none;
+    }
+
+    /* Filter Styles */
+    .filter-select {
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+        margin-right: 10px;
+    }
+
+    .date-filter {
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+        margin-right: 10px;
+    }
+
+    .glow-red {
+        color: red;
+        font-weight: bold;
+        text-shadow: 0px 0px 0px red;
+    }
+
+    .date-filter {
+        width: 120px;
+        padding: 7px;
+        font-size: 14px;
+    }
+
+    .filter-input, .filter-select {
+        width: 100%;
+        padding: 6px;
+        box-sizing: border-box;
+        border-radius: 6px;
+    }
+
+    #downloadExcel {
+        background-color: green;
+    }
+
+    .highlight-red {
+        background-color: #ffcccc;
+    }
+
+    .highlight-red:hover {
+        background-color: #ffcccc !important;
+    }
+
     </style>
 </head>
 <body>
@@ -198,7 +271,7 @@ include('topbar.php');
                         echo "<tr>
                                 <td>{$leaveRow['id']}</td>
                                 <td>{$leaveRow['name']}</td>
-                                <td>{$leaveRow['D.O.J']}</td>
+                                <td>{$leaveRow['doj']}</td>
                                 <td>{$leaveRow['total_sick_leaves']}</td>
                                 <td>{$leaveRow['total_earned_leaves']}</td>
                                 <td>{$leaveRow['sick_leaves_taken']}</td>

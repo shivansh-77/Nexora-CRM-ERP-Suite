@@ -86,22 +86,19 @@ if ($leaveBalanceResult && mysqli_num_rows($leaveBalanceResult) > 0) {
     exit;
 }
 
-
 // Process form submission only when POST request is made
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Sanitize and validate inputs
     $leave_type = mysqli_real_escape_string($connection, $_POST['leave_type']);
+    $leave_duration = mysqli_real_escape_string($connection, $_POST['leave_duration']);
     $start_date = mysqli_real_escape_string($connection, $_POST['start_date']);
-    $end_date = ($leave_type === 'Half Day') ? mysqli_real_escape_string($connection, $_POST['start_date']) : mysqli_real_escape_string($connection, $_POST['end_date']);
+    $end_date = ($leave_duration === 'Half Day') ? mysqli_real_escape_string($connection, $_POST['start_date']) : mysqli_real_escape_string($connection, $_POST['end_date']);
     $approver_id = mysqli_real_escape_string($connection, $_POST['approver_id']);
 
-    // Skip date validation for "Half Day" leave type
-    if ($leave_type !== 'Half Day') {
-        // Validate dates for other leave types
-        if (strtotime($start_date) > strtotime($end_date)) {
-            echo "<script>alert('Invalid date: Start date cannot be greater than end date.'); window.location.href='user_leave_add.php';</script>";
-            exit;
-        }
+    // Validate dates for other leave types
+    if ($leave_duration !== 'Half Day' && strtotime($start_date) > strtotime($end_date)) {
+        echo "<script>alert('Invalid date: Start date cannot be greater than end date.'); window.location.href='user_leave_add.php';</script>";
+        exit;
     }
 
     // Fetch the user's name based on the user_id
@@ -131,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $approver_name = $approver_row['name'];
 
         // Calculate the total number of leave days
-        if ($leave_type === 'Half Day') {
+        if ($leave_duration === 'Half Day') {
             $total_days = 0.5; // Set total_days to 0.5 for Half Day
         } else {
             $start = new DateTime($start_date);
@@ -140,35 +137,94 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $total_days = $interval->days + 1; // Include both start and end dates
         }
 
-        // Insert the new leave request into the database using prepared statements
-        $query = "INSERT INTO user_leave (user_id, user_name, leave_type, start_date, end_date, approver_id, approver_name, total_days)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $connection->prepare($query);
-      $stmt->bind_param("issssisd", $user_id, $user_name, $leave_type, $start_date, $end_date, $approver_id, $approver_name, $total_days);
-
-        if ($stmt->execute()) {
-            // echo "<script>alert('Leave request submitted successfully'); window.location.href='user_leave_display.php?id=" . $_SESSION['user_id'] . "';</script>";
-            echo "<script>
-      alert('Leave request submitted successfully');
-      window.location.href='user_leave_display.php?id=" . $_SESSION['user_id'] . "&name=" . urlencode($_SESSION['user_name']) . "';
-  </script>";
-
-        } else {
-            echo "<script>alert('Error submitting leave request: " . $stmt->error . "'); window.location.href='user_leave_add.php';</script>";
+        // Check leave balance before applying for leave
+        if ($leave_type === 'Earned Leave' || $leave_duration === 'Half Day') {
+            $available_leaves = $leaveBalance['total_earned_leaves'] - ($leaveBalance['earned_leaves_taken'] + $leaveBalance['half_day_leaves_taken']);
+            if ($total_days > $available_leaves) {
+                echo "<script>alert('You do not have enough earned leave balance.'); window.location.href='user_leave_add.php';</script>";
+                exit;
+            }
+        } elseif ($leave_type === 'Sick Leave') {
+            $available_sick_leaves = 6.00 - $leaveBalance['sick_leaves_taken'];
+            if ($total_days > $available_sick_leaves) {
+                echo "<script>alert('You do not have enough sick leave balance.'); window.location.href='user_leave_add.php';</script>";
+                exit;
+            }
         }
-        $stmt->close();
+
+        // Begin transaction
+        $connection->begin_transaction();
+        $success = true;
+
+        try {
+            if ($leave_duration === 'Half Day') {
+                // For Half Day, just insert one record as before
+                $query = "INSERT INTO user_leave (user_id, user_name, leave_type, leave_duration, start_date, end_date, approver_id, approver_name, total_days)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $connection->prepare($query);
+                $stmt->bind_param("isssssisd", $user_id, $user_name, $leave_type, $leave_duration, $start_date, $end_date, $approver_id, $approver_name, $total_days);
+                $stmt->execute();
+            } else {
+                // For other leave types, create one record per day
+                $start = new DateTime($start_date);
+                $end = new DateTime($end_date);
+                $end->modify('+1 day'); // To include the end date in the period
+                $interval = new DateInterval('P1D');
+                $period = new DatePeriod($start, $interval, $end);
+
+                foreach ($period as $date) {
+    $current_date = $date->format('Y-m-d');
+    $query = "INSERT INTO user_leave (user_id, user_name, leave_type, leave_duration, start_date, end_date, approver_id, approver_name, total_days)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $connection->prepare($query);
+    $total_days_for_day = 1.0; // Each day counts as 1 day
+    $stmt->bind_param("isssssisd", $user_id, $user_name, $leave_type, $leave_duration, $current_date, $current_date, $approver_id, $approver_name, $total_days_for_day);
+    $stmt->execute();
+}
+            }
+
+            // Update leave balance after successful leave application
+            if ($leave_type === 'Earned Leave') {
+                $leaveBalance['earned_leaves_taken'] += $total_days;
+            } elseif ($leave_duration === 'Half Day') {
+                $leaveBalance['half_day_leaves_taken'] += $total_days;
+            } elseif ($leave_type === 'Sick Leave') {
+                $leaveBalance['sick_leaves_taken'] += $total_days;
+            } elseif ($leave_type === 'Leave Without Pay') {
+                $leaveBalance['total_lwp'] += $total_days;
+            }
+
+            // Update the leave balance in the database
+            $updateBalanceQuery = "UPDATE user_leave_balance
+                                   SET earned_leaves_taken = ?, half_day_leaves_taken = ?, sick_leaves_taken = ?, total_lwp = ?
+                                   WHERE user_id = ?";
+            $stmt = $connection->prepare($updateBalanceQuery);
+            $stmt->bind_param("ddddi", $leaveBalance['earned_leaves_taken'], $leaveBalance['half_day_leaves_taken'], $leaveBalance['sick_leaves_taken'], $leaveBalance['total_lwp'], $user_id);
+            $stmt->execute();
+
+            // Commit the transaction if all queries succeeded
+            $connection->commit();
+
+            echo "<script>
+                alert('Leave request submitted successfully');
+                window.location.href='user_leave_display.php?id=" . $_SESSION['user_id'] . "&name=" . urlencode($_SESSION['user_name']) . "';
+            </script>";
+        } catch (Exception $e) {
+            // Rollback the transaction on error
+            $connection->rollback();
+            echo "<script>alert('Error submitting leave request: " . $e->getMessage() . "'); window.location.href='user_leave_add.php';</script>";
+        }
     } else {
         echo "<script>alert('Invalid approver selected.'); window.location.href='user_leave_add.php';</script>";
     }
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-<link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apply for Leave</title>
     <style>
@@ -185,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             background-color: #f9f9f9;
             text-align: center;
         }
-        .leave-balance h3 {
+        .leave-balance h2 {
             margin-bottom: 15px;
             font-size: 20px;
             font-weight: bold;
@@ -294,19 +350,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <select name="leave_type" id="leave_type" required onchange="handleLeaveTypeChange()">
                     <option value="Sick Leave">Sick Leave</option>
                     <option value="Earned Leave">Earned Leave</option>
-                    <option value="Half Day">Half Day</option>
+                    <option value="Leave Without Pay">Leave Without Pay</option>
                 </select>
             </div>
             <div class="input_field">
-                <label for="start_date">Start Date <span class="required">*</span></label>
-                <input type="date" name="start_date" id="start_date" required onchange="handleStartDateChange()">
+                <label for="leave_duration">Leave Duration <span class="required">*</span></label>
+                <select name="leave_duration" id="leave_duration" required onchange="handleLeaveDurationChange()">
+                    <option value="Full Day" selected>Full Day</option>
+                    <option value="Half Day">Half Day</option>
+                </select>
             </div>
 
             <!-- Row 2 -->
             <div class="input_field">
+                <label for="start_date">Start Date <span class="required">*</span></label>
+                <input type="date" name="start_date" id="start_date" required onchange="handleStartDateChange()">
+            </div>
+            <div class="input_field">
                 <label for="end_date">End Date <span class="required">*</span></label>
                 <input type="date" name="end_date" id="end_date" required>
             </div>
+
+            <!-- Row 3 -->
             <div class="input_field">
                 <label for="approver_id">Approver <span class="required">*</span></label>
                 <select name="approver_id" id="approver_id" required>
@@ -329,11 +394,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </div>
 
 <script>
-    function handleLeaveTypeChange() {
-        const leaveType = document.getElementById('leave_type').value;
+    function handleLeaveDurationChange() {
+        const leaveDuration = document.getElementById('leave_duration').value;
         const endDateInput = document.getElementById('end_date');
 
-        if (leaveType === 'Half Day') {
+        if (leaveDuration === 'Half Day') {
             // Disable the end_date field and set it to the same as start_date
             endDateInput.disabled = true;
             const startDate = document.getElementById('start_date').value;
@@ -345,10 +410,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     function handleStartDateChange() {
-        const leaveType = document.getElementById('leave_type').value;
+        const leaveDuration = document.getElementById('leave_duration').value;
         const endDateInput = document.getElementById('end_date');
 
-        if (leaveType === 'Half Day') {
+        if (leaveDuration === 'Half Day') {
             // Set end_date to the same as start_date
             const startDate = document.getElementById('start_date').value;
             endDateInput.value = startDate;

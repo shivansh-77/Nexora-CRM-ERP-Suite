@@ -19,13 +19,19 @@ if (isset($_GET['id'])) {
     $quotation = $quotation_result->fetch_assoc();
 
     if ($quotation) {
+        // Get terms and conditions from invoice_terms_conditions using quotation_no as document_no
+        $quotation_no = $quotation['quotation_no'];
+        $terms_query = "SELECT type, terms_and_conditions FROM invoice_terms_conditions WHERE document_no = '$quotation_no' AND type = 'Sales'";
+        $terms_result = $connection->query($terms_query);
+        $terms_data = $terms_result->fetch_assoc();
+
         // Insert into invoices table **without** invoice_no
         $insert_invoice_query = "INSERT INTO invoices (
             invoice_no, quotation_no, quotation_id, gross_amount, discount, net_amount, total_igst, total_cgst, total_sgst,
             client_name, client_address, client_phone, client_city, client_state, client_country,
             client_pincode, client_gstno, shipper_company_name, shipper_address, shipper_city,
             shipper_state, shipper_country, shipper_pincode, shipper_phone, shipper_gstno, client_id,
-            shipper_location_code, shipper_id, base_amount, fy_code
+            shipper_location_code, shipper_id, base_amount, fy_code , client_company_name
         ) VALUES (
             NULL, '{$quotation['quotation_no']}', $quotation_id, {$quotation['gross_amount']}, {$quotation['discount']},
             {$quotation['net_amount']}, {$quotation['total_igst']}, {$quotation['total_cgst']}, {$quotation['total_sgst']},
@@ -34,7 +40,7 @@ if (isset($_GET['id'])) {
             '{$quotation['client_gstno']}', '{$quotation['shipper_company_name']}', '{$quotation['shipper_address']}',
             '{$quotation['shipper_city']}', '{$quotation['shipper_state']}', '{$quotation['shipper_country']}',
             '{$quotation['shipper_pincode']}', '{$quotation['shipper_phone']}', '{$quotation['shipper_gstno']}',
-            '{$quotation['client_id']}', '{$quotation['shipper_location_code']}', '{$quotation['shipper_id']}', '{$quotation['base_amount']}','{$quotation['fy_code']}'
+            '{$quotation['client_id']}', '{$quotation['shipper_location_code']}', '{$quotation['shipper_id']}', '{$quotation['base_amount']}','{$quotation['fy_code']}','{$quotation['client_company_name']}'
         )";
 
         if ($connection->query($insert_invoice_query) === TRUE) {
@@ -49,38 +55,26 @@ if (isset($_GET['id'])) {
 
             // Insert items into invoice_items table
             while ($item = $items_result->fetch_assoc()) {
-                $item_type = $item['item_type']; // Define $item_type inside the loop
-
                 $insert_item_query = "INSERT INTO invoice_items (
-                    invoice_id, product_id, product_name, unit, value, quantity, rate, gst, igst, cgst, sgst, amount, lot_tracking, expiration_tracking
+                    invoice_id, product_id, product_name, unit, value, quantity, rate, gst, igst, cgst, sgst, amount, lot_tracking, expiration_tracking, stock
                 ) VALUES (
                     $invoice_id, '{$item['product_id']}', '{$item['product_name']}', '{$item['unit']}', '{$item['value']}',
                     {$item['quantity']}, {$item['rate']}, {$item['gst']}, {$item['igst']}, {$item['cgst']},
-                    {$item['sgst']}, {$item['amount']}, '{$item['lot_tracking']}', '{$item['expiration_tracking']}'
+                    {$item['sgst']}, {$item['amount']}, '{$item['lot_tracking']}', '{$item['expiration_tracking']}','{$item['stock']}'
                 )";
 
                 $connection->query($insert_item_query);
-                $invoice_itemid = $connection->insert_id;
-
-                if ($item_type === 'Inventory') {
-                    // Insert into item_ledger_history
-                    $document_type = 'Sale';
-                    $entry_type = 'Sales Invoice';
-                    $item_quantity = -((float)$item['quantity'] * (float)$item['value']);
-                    $location = $quotation['shipper_location_code'];
-                    $date = date('Y-m-d');
-                    $item_value = $item['value'];
-
-                    $insert_ledger_history = "INSERT INTO item_ledger_history (
-                        document_type, entry_type, product_id, product_name, quantity, location, unit, date, value, invoice_itemid
-                    ) VALUES (
-                        '$document_type', '$entry_type', '{$item['product_id']}', '{$item['product_name']}',
-                        $item_quantity, '$location', '{$item['unit']}', '$date', $item_value, $invoice_itemid
-                    )";
-
-                    $connection->query($insert_ledger_history);
-                }
             }
+
+            // // If terms data exists for the quotation, copy it to the new invoice
+            // if ($terms_data && !empty($terms_data['terms_and_conditions'])) {
+            //     $insert_terms_query = "INSERT INTO invoice_terms_conditions (
+            //         invoice_id,  type, terms_and_conditions
+            //     ) VALUES (
+            //         $invoice_id, '{$terms_data['type']}', '{$terms_data['terms_and_conditions']}'
+            //     )";
+            //     $connection->query($insert_terms_query);
+            // }
 
             // Redirect to the invoice page with success message
             echo "<script>alert('Invoice generated successfully!'); window.location.href='quotation_display.php';</script>";
@@ -95,7 +89,6 @@ if (isset($_GET['id'])) {
     $connection->close();
 }
 ?>
-
 
 
 

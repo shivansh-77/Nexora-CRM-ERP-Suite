@@ -22,9 +22,8 @@ include('topbar.php');
         width: calc(100% - 260px);
         margin-left: 260px;
         margin-top: 140px;
-        max-height: calc(100vh - 140px);
-        min-height: 100vh;
-        overflow-y: auto;
+        max-height: calc(100vh - 150px); /* Adjust based on your layout */
+        overflow-y: auto; /* Enable vertical scrolling */
         border: 1px solid #ddd;
         background-color: white;
     }
@@ -248,93 +247,110 @@ include('topbar.php');
       </div>
     </div>
     <div class="user-table-wrapper">
-        <table class="user-table" id="attendanceTable">
-            <thead>
-                <!-- Filter Row -->
-                <tr>
-                    <th><input type="text" id="idFilter" class="filter-input" placeholder="Search ID"></th>
-                    <th><input type="text" id="userIdFilter" class="filter-input" placeholder="Search User ID"></th>
-                    <th><input type="text" id="userNameFilter" class="filter-input" placeholder="Search User Name"></th>
-                    <th><input type="text" id="loginTimeFilter" class="filter-input" placeholder="Search Checkin Time"></th>
-                    <th><input type="text" id="logoutTimeFilter" class="filter-input" placeholder="Search Checkout Time"></th>
-                    <th><input type="text" id="sessionDurationFilter" class="filter-input" placeholder="Search Duration"></th>
-                    <th>
-                        <select id="sessionStatusFilter" class="filter-select">
-                            <option value="all">All</option>
-                            <option value="active">Active</option>
-                            <option value="ended">Ended</option>
-                            <option value="Auto Checkout">Auto Checkout</option>
-                        </select>
-                    </th>
-                    <th><input type="text" id="locationFilter" class="filter-input" placeholder="Search Location"></th>
-                    <th></th>
-                </tr>
+      <table class="user-table" id="attendanceTable">
+                  <thead>
+                      <!-- Filter Row -->
+                      <tr>
+                          <th><input type="text" id="idFilter" class="filter-input" placeholder="Search ID"></th>
+                          <th><input type="text" id="userIdFilter" class="filter-input" placeholder="Search User ID"></th>
+                          <th><input type="text" id="userNameFilter" class="filter-input" placeholder="Search User Name"></th>
+                          <th><input type="text" id="loginTimeFilter" class="filter-input" placeholder="Search Checkin Time"></th>
+                          <th><input type="text" id="logoutTimeFilter" class="filter-input" placeholder="Search Checkout Time"></th>
+                          <th><input type="text" id="sessionDurationFilter" class="filter-input" placeholder="Search Duration"></th>
+                          <th>
+                              <select id="sessionStatusFilter" class="filter-select">
+                                  <option value="all">All</option>
+                                  <option value="active">Active</option>
+                                  <option value="ended">Ended</option>
+                                  <option value="Auto Checkout">Auto Checkout</option>
+                              </select>
+                          </th>
+                          <th><input type="text" id="locationFilter" class="filter-input" placeholder="Search Location"></th>
+                          <th></th>
+                      </tr>
 
-                <!-- Table Headings Row -->
-                <tr>
-                    <th>ID</th>
-                    <th>User ID</th>
-                    <th>User Name</th>
-                    <th>Checkin Time</th>
-                    <th>Checkout Time</th>
-                    <th>Working Hours</th>
-                    <th>Session Status</th>
-                    <th>Location</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                include('connection.php');
-                $query = "SELECT * FROM attendance";
-                $result = mysqli_query($connection, $query);
+                      <!-- Table Headings Row -->
+                      <tr>
+                          <th>ID</th>
+                          <th>User ID</th>
+                          <th>User Name</th>
+                          <th>Checkin Time</th>
+                          <th>Checkout Time</th>
+                          <th>Working Hours</th>
+                          <th>Session Status</th>
+                          <th>Location</th>
+                          <th>Action</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <?php
+                      include('connection.php');
 
-                if (mysqli_num_rows($result) > 0) {
-                    while ($row = mysqli_fetch_assoc($result)) {
-                        // Initialize variables for highlighting
-                        $highlightClass = '';
-                        $sessionStatusStyle = '';
-                        $sessionDurationStyle = '';
+                      // Fetch the working hours thresholds from company_card table where id = 1
+                      $thresholdQuery = "SELECT working, minimum_shift FROM company_card WHERE id = 1";
+                      $thresholdResult = mysqli_query($connection, $thresholdQuery);
+                      $thresholdRow = mysqli_fetch_assoc($thresholdResult);
+                      $workingHoursThreshold = isset($thresholdRow['working']) ? (float)$thresholdRow['working'] : 9; // Default to 9 if not found
+                      $minimumShiftThreshold = isset($thresholdRow['minimum_shift']) ? (float)$thresholdRow['minimum_shift'] : 4; // Default to 4 if not found
 
-                        // Check if session_status is "Auto Checkout"
-                        if ($row['session_status'] === 'Auto Checkout') {
-                            $highlightClass = 'highlight-red'; // Highlight entire row
-                            $sessionStatusStyle = 'color: red; font-weight:bold;'; // Make "Auto Checkout" red
-                        }
-                        // Check if session_status is "ended" and session_duration is less than 8 hours
-                        elseif ($row['session_status'] === 'ended') {
-                            // Convert session_duration (time) to total hours
-                            $sessionDuration = $row['session_duration'];
-                            if (!empty($sessionDuration)) {
-                                list($hours, $minutes, $seconds) = explode(':', $sessionDuration);
-                                $totalHours = (float) $hours + ((float) $minutes / 60) + ((float) $seconds / 3600);
+                      $query = "SELECT * FROM attendance";
+                      $result = mysqli_query($connection, $query);
 
-                                if ($totalHours < 8) {
-                                    $sessionDurationStyle = 'color: red; font-weight: bold;'; // Make session_duration dark bold red
-                                }
-                            }
-                        }
+                      if (mysqli_num_rows($result) > 0) {
+                          while ($row = mysqli_fetch_assoc($result)) {
+                              // Initialize variables for highlighting
+                              $highlightClass = '';
+                              $sessionStatusStyle = '';
+                              $sessionDurationStyle = '';
 
-                        echo "<tr class='$highlightClass'>
-                                <td>{$row['id']}</td>
-                                <td>{$row['user_id']}</td>
-                                <td>{$row['user_name']}</td>
-                                <td>{$row['checkin_time']}</td>
-                                <td>{$row['checkout_time']}</td>
-                                <td style='$sessionDurationStyle'>{$row['session_duration']}</td>
-                                <td style='$sessionStatusStyle'>{$row['session_status']}</td>
-                                <td>{$row['checkin_location']}</td>
-                                <td>
-                                    <a href='attendance_update.php?id={$row['id']}' class='btn-warning edit-btn' style='text-decoration:None;' title='Update this Attendance Record'>✏️</a>
-                                </td>
-                              </tr>";
-                    }
-                } else {
-                   echo "<tr><td colspan='9' style='text-align: center;'>No records found</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
+                              // Check if session_status is "Auto Checkout"
+                              if ($row['session_status'] === 'Auto Checkout') {
+                                  $highlightClass = 'highlight-red'; // Highlight entire row
+                                  $sessionStatusStyle = 'color: red; font-weight:bold;'; // Make "Auto Checkout" red
+                              }
+                              // Check if session_status is "ended" to evaluate working hours
+                              elseif ($row['session_status'] === 'ended') {
+                                  // Convert session_duration (time) to total hours
+                                  $sessionDuration = $row['session_duration'];
+                                  if (!empty($sessionDuration)) {
+                                      $timeParts = explode(':', $sessionDuration);
+                                      $hours = isset($timeParts[0]) ? (float)$timeParts[0] : 0;
+                                      $minutes = isset($timeParts[1]) ? (float)$timeParts[1] : 0;
+                                      $seconds = isset($timeParts[2]) ? (float)$timeParts[2] : 0;
+
+                                      $totalHours = $hours + ($minutes / 60) + ($seconds / 3600);
+
+                                      if ($totalHours < $minimumShiftThreshold) {
+                                          // Less than minimum shift - bold red
+                                          $sessionDurationStyle = 'color: #FF0000; font-weight: bold;';
+                                      } elseif ($totalHours < $workingHoursThreshold) {
+                                          // Less than working hours but more than minimum shift - bold orange
+                                          $sessionDurationStyle = 'color: #FF681F; font-weight: bold;';
+                                      }
+                                  }
+                              }
+
+                              echo "<tr class='$highlightClass' ondblclick=\"window.location.href='attendance_update.php?id={$row['id']}'\" style='cursor: pointer;'>
+
+                                      <td>{$row['id']}</td>
+                                      <td>{$row['user_id']}</td>
+                                      <td>{$row['user_name']}</td>
+                                      <td>{$row['checkin_time']}</td>
+                                      <td>{$row['checkout_time']}</td>
+                                      <td style='$sessionDurationStyle'>{$row['session_duration']}</td>
+                                      <td style='$sessionStatusStyle'>{$row['session_status']}</td>
+                                      <td>{$row['checkin_location']}</td>
+                                      <td>
+                                          <a href='attendance_update.php?id={$row['id']}' class='btn-warning edit-btn' style='text-decoration:None;' title='Update this Attendance Record'>✏️</a>
+                                      </td>
+                                    </tr>";
+                          }
+                      } else {
+                         echo "<tr><td colspan='9' style='text-align: center;'>No records found</td></tr>";
+                      }
+                      ?>
+                  </tbody>
+              </table>
     </div>
 
 
@@ -489,6 +505,18 @@ include('topbar.php');
             });
         }
     });
+
+    document.getElementById('downloadExcel').addEventListener('click', function() {
+    // Get the table element
+    const table = document.getElementById('attendanceTable');
+
+    // Convert the table to a workbook
+    const workbook = XLSX.utils.table_to_book(table);
+
+    // Generate an Excel file and trigger the download
+    XLSX.writeFile(workbook, 'Attendance.xlsx');
+});
+
 
     </script>
   </body>

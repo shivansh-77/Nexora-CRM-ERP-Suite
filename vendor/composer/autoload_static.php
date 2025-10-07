@@ -13,7 +13,9 @@ class ComposerStaticInit341c2c93b0ca3b7fcc7ccc3d1e1b07ab
         ),
         'S' => 
         array (
+            'Svg\\' => 4,
             'Shivansh\\Form\\' => 14,
+            'Sabberworm\\CSS\\' => 15,
         ),
         'P' => 
         array (
@@ -26,6 +28,15 @@ class ComposerStaticInit341c2c93b0ca3b7fcc7ccc3d1e1b07ab
         'M' => 
         array (
             'Matrix\\' => 7,
+            'Masterminds\\' => 12,
+        ),
+        'F' => 
+        array (
+            'FontLib\\' => 8,
+        ),
+        'D' => 
+        array (
+            'Dompdf\\' => 7,
         ),
         'C' => 
         array (
@@ -49,9 +60,17 @@ class ComposerStaticInit341c2c93b0ca3b7fcc7ccc3d1e1b07ab
         array (
             0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
         ),
+        'Svg\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/dompdf/php-svg-lib/src/Svg',
+        ),
         'Shivansh\\Form\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
+        ),
+        'Sabberworm\\CSS\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/sabberworm/php-css-parser/src',
         ),
         'Psr\\SimpleCache\\' => 
         array (
@@ -77,6 +96,18 @@ class ComposerStaticInit341c2c93b0ca3b7fcc7ccc3d1e1b07ab
         'Matrix\\' => 
         array (
             0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
+        ),
+        'Masterminds\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/masterminds/html5/src',
+        ),
+        'FontLib\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/dompdf/php-font-lib/src/FontLib',
+        ),
+        'Dompdf\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/dompdf/dompdf/src',
         ),
         'Complex\\' => 
         array (
@@ -131,6 +162,7 @@ class ComposerStaticInit341c2c93b0ca3b7fcc7ccc3d1e1b07ab
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Datamatrix' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/datamatrix.php',
+        'Dompdf\\Cpdf' => __DIR__ . '/..' . '/dompdf/dompdf/lib/Cpdf.php',
         'PDF417' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/pdf417.php',
         'QRcode' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/qrcode.php',
         'TCPDF' => __DIR__ . '/..' . '/tecnickcom/tcpdf/tcpdf.php',

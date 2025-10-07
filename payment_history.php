@@ -1,10 +1,8 @@
 <?php
 // Include your database connection file
 include 'connection.php';
-
 // Get the contact_id from the URL
 $contact_id = $_GET['id'] ?? '';
-
 // Fetch contact details from the contact table based on contact_id
 $contact_details = [];
 if (!empty($contact_id)) {
@@ -15,48 +13,43 @@ if (!empty($contact_id)) {
     $contact_details = $contact_result->fetch_assoc();
     $stmt->close();
 }
-
 // Fetch payment history from the party_ledger table based on party_no (which is contact_id)
 $payment_history = [];
 if (!empty($contact_id)) {
-    $stmt = $connection->prepare("SELECT * FROM party_ledger WHERE party_no = ?");
+    $stmt = $connection->prepare("SELECT * FROM party_ledger WHERE party_no = ? AND party_type = 'Customer'");
     $stmt->bind_param("i", $contact_id);
     $stmt->execute();
     $payment_history = $stmt->get_result();
     $stmt->close();
 }
-
 // Calculate Amount Payable, Amount Paid, and Amount Yet to Be Paid
 $amount_payable = 0;
 $amount_paid = 0;
 if (!empty($contact_id)) {
     // Fetch all amounts for the given party_no
-    $stmt = $connection->prepare("SELECT amount FROM party_ledger WHERE party_no = ?");
+    $stmt = $connection->prepare("SELECT amount FROM party_ledger WHERE party_no = ? AND party_type = 'Customer'");
     $stmt->bind_param("i", $contact_id);
     $stmt->execute();
     $amount_result = $stmt->get_result();
     $stmt->close();
-
     // Calculate totals
     while ($row = $amount_result->fetch_assoc()) {
         $amount = $row['amount'];
         if ($amount < 0) {
-            $amount_payable += abs($amount); // Sum of negative amounts (payable)
+            $amount_paid += abs($amount); // Sum of negative amounts (payable)
         } else {
-            $amount_paid += $amount; // Sum of positive amounts (paid)
+            $amount_payable += $amount; // Sum of positive amounts (paid)
         }
     }
 }
-
 // Calculate Amount Yet to Be Paid
 $amount_yet_to_be_paid = $amount_payable - $amount_paid;
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-<link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment History</title>
     <link rel="stylesheet" href="style.css"> <!-- Link to your CSS file -->
@@ -67,9 +60,7 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
         margin: 0;
         padding: 0;
         height: 150vh;
-        /* overflow: hidden; */
     }
-
     .wrapper {
         display: flex;
         flex-direction: column;
@@ -77,7 +68,6 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
         margin: 0;
         height: 100%;
     }
-
     .container {
         display: flex;
         flex-direction: column;
@@ -87,8 +77,57 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
         max-width: 1200px;
         max-height: 5500px;
         height: 100%;
+        position: relative;
     }
-
+    .top-controls {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        z-index: 20;
+        gap: 12px;
+    }
+    .export-button,
+    .print-button {
+        padding: 7px 18px;
+        font-size: 16px;
+        background-color: #2c3e50;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 5px;
+    }
+    .export-button:hover,
+    .print-button:hover {
+        background-color: #219a52;
+    }
+    .close-btn {
+        position: absolute;
+        top: 18px;
+        right: 20px;
+        text-decoration: none;
+        font-size: 25px;
+        color: #2c3e50;
+        font-weight: bold;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #fff;
+        z-index: 30;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.07);
+    }
+    .close-btn:hover {
+        color: #e74c3c;
+        background: #f9f9f9;
+    }
     .card, .table-container {
         border: 1px solid #ccc;
         border-radius: 10px;
@@ -97,13 +136,11 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
         background-color: #fff;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-
     .card h2 {
         text-align: center;
         color: #333;
         margin-bottom: 20px;
     }
-
     .contact-details {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -111,27 +148,22 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
         justify-content: right;
         text-align: left;
     }
-
     .contact-details p {
         margin: 0;
         font-size: 16px;
     }
-
     .contact-details strong {
         color: #2c3e50;
     }
-
     .table-container {
-        max-height: 400px; /* Set a maximum height for the table container */
-        overflow-y: auto; /* Enable vertical scrolling */
+        max-height: 400px;
+        overflow-y: auto;
     }
-
     .table-container table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 20px;
     }
-
     .table-container table th,
     .table-container table td {
         border: 1px solid #ccc;
@@ -139,48 +171,28 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
         text-align: center;
         font-size: 14px;
     }
-
     .table-container table th {
         background-color: #f4f4f4;
         color: #333;
     }
-
     .table-container table tr:nth-child(even) {
         background-color: #f9f9f9;
     }
-
     .table-container table tr:hover {
         background-color: #f1f1f1;
     }
-
     .card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 15px;
     }
-
     .card-header h2 {
         margin: 0;
         margin-left: 400px;
         padding: 0;
         margin-bottom: 8px;
     }
-
-    .export-button-container button {
-        padding: 7px 15px;
-        font-size: 16px;
-        background-color: #2c3e50;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .export-button-container button:hover {
-        background-color: #2c3e50;
-    }
-
     .amount-summary {
         display: flex;
         justify-content: space-around;
@@ -190,33 +202,37 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
         margin-bottom: 20px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-
     .amount-summary div {
         text-align: center;
     }
-
     .amount-summary strong {
         font-size: 18px;
         color: #2c3e50;
     }
-
     .amount-summary p {
         font-size: 16px;
         margin: 5px 0;
     }
-
     h1 {
         margin-bottom: 5px;
     }
-
+    @media print {
+        body * { visibility: hidden !important; }
+        .container, .container * { visibility: visible !important; }
+        .top-controls, .close-btn { display: none !important; }
+        .container { position: static !important; }
+    }
     </style>
 </head>
 <body>
     <div class="wrapper">
-        <div class="container">
-          <h1 >Payment History</h1>
-            <a href="contact_display.php" style="position: absolute; top: 10px; right: 10px; text-decoration: none; font-size: 20px; color: #2c3e50; font-weight: bold; border-radius: 50%; width: 30px; height: 20px; display: flex; justify-content: center; align-items: center; background-color: #fff;">&times;</a>
-
+        <div class="container" id="payment-history-container">
+            <div class="top-controls">
+                <button class="export-button" id="excel-export">📥 Excel</button>
+                <button class="print-button" onclick="printSection()">🖨️ Print</button>
+            </div>
+            <a href="contact_display.php" class="close-btn">&times;</a>
+            <h1 style="margin-top:40px;">Payment History</h1>
             <!-- Contact Details Card -->
             <div class="card">
                 <h2>Contact Details</h2>
@@ -229,30 +245,29 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
                     <p><strong>Generated on:</strong> <?= htmlspecialchars($contact_details['followupdate']) ?></p>
                 </div>
             </div>
-
             <!-- Amount Summary Section -->
-  <div class="card">
-      <h2>Payment Summary</h2>
-      <div class="amount-summary">
-          <div>
-              <strong>Amount Payable</strong>
-              <p style="color: red; font-weight: bold;">₹<?= number_format($amount_payable, 2) ?></p>
-          </div>
-          <div>
-              <strong>Amount Paid</strong>
-              <p style="color: green; font-weight: bold;">₹<?= number_format($amount_paid, 2) ?></p>
-          </div>
-          <div>
-              <strong>Amount to Be Paid</strong>
-              <p style="color: red; font-weight: bold;">₹<?= number_format($amount_yet_to_be_paid, 2) ?></p>
-          </div>
-      </div>
-  </div>
-
-
+            <div class="card">
+                <h2>Payment Summary</h2>
+                <div class="amount-summary">
+                    <div>
+                        <strong>Amount Payable</strong>
+                        <p style="color: red; font-weight: bold;">₹<?= number_format($amount_payable, 2) ?></p>
+                    </div>
+                    <div>
+                        <strong>Amount Paid</strong>
+                        <p style="color: green; font-weight: bold;">₹<?= number_format($amount_paid, 2) ?></p>
+                    </div>
+                    <div>
+                        <strong>Amount to Be Paid</strong>
+                        <p style="color: <?= ($amount_yet_to_be_paid < 0) ? 'green' : 'red' ?>; font-weight: bold;">
+                            ₹<?= number_format(abs($amount_yet_to_be_paid), 2) ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
             <!-- Payment History Table -->
             <div class="table-container">
-                <table>
+                <table id="paymentTable">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -263,38 +278,74 @@ $amount_yet_to_be_paid = $amount_payable - $amount_paid;
                             <th>Document No</th>
                             <th>Amount</th>
                             <th>Reference Doc No</th>
-                            <th>Date</th>
+                            <th>Payment Method</th>
+                            <th>Payment Details</th>
+                            <th>Payment Date</th>
+                            <th>Transaction Date</th>
                         </tr>
                     </thead>
                     <tbody>
-      <?php if ($payment_history && $payment_history->num_rows > 0): ?>
-          <?php while ($row = $payment_history->fetch_assoc()): ?>
-              <?php
-                  $amount = $row['amount'];
-                  $amount_style = ($amount > 0) ? "style='color: green; font-weight: bold;'" : "style='color: red; font-weight: bold;'";
-              ?>
-              <tr>
-                  <td><?= htmlspecialchars($row['id']) ?></td>
-                  <td><?= htmlspecialchars($row['ledger_type']) ?></td>
-                  <td><?= htmlspecialchars($row['party_name']) ?></td>
-                  <td><?= htmlspecialchars($row['party_type']) ?></td>
-                  <td><?= htmlspecialchars($row['document_type']) ?></td>
-                  <td><?= htmlspecialchars($row['document_no']) ?></td>
-                  <td <?= $amount_style ?>>₹<?= number_format($amount, 2) ?></td>
-                  <td><?= htmlspecialchars($row['ref_doc_no']) ?></td>
-                  <td><?= htmlspecialchars($row['date']) ?></td>
-              </tr>
-          <?php endwhile; ?>
-      <?php else: ?>
-          <tr>
-              <td colspan="9">No payment history available for contact ID: <?= htmlspecialchars($contact_id) ?></td>
-          </tr>
-      <?php endif; ?>
-  </tbody>
-
+                        <?php if ($payment_history && $payment_history->num_rows > 0): ?>
+                            <?php while ($row = $payment_history->fetch_assoc()): ?>
+                                <?php
+                                    $amount = $row['amount'];
+                                    $amount_style = ($amount > 0) ? "style='color: green; font-weight: bold;'" : "style='color: red; font-weight: bold;'";
+                                    $payment_date = !empty($row['payment_date']) ? htmlspecialchars($row['payment_date']) : 'N/A';
+                                ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($row['id']) ?></td>
+                                    <td><?= htmlspecialchars($row['ledger_type']) ?></td>
+                                    <td><?= htmlspecialchars($row['party_name']) ?></td>
+                                    <td><?= htmlspecialchars($row['party_type']) ?></td>
+                                    <td><?= htmlspecialchars($row['document_type']) ?></td>
+                                    <td><?= htmlspecialchars($row['document_no']) ?></td>
+                                    <td <?= $amount_style ?>>₹<?= number_format($amount, 2) ?></td>
+                                    <td><?= htmlspecialchars($row['ref_doc_no']) ?></td>
+                                    <td><?= !empty($row['payment_method']) ? htmlspecialchars($row['payment_method']) : 'N/A' ?></td>
+                                    <td><?= !empty($row['payment_details']) ? htmlspecialchars($row['payment_details']) : 'N/A' ?></td>
+                                    <td><?= $payment_date ?></td>
+                                    <td><?= htmlspecialchars($row['date']) ?></td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="12">No payment history available for contact ID: <?= htmlspecialchars($contact_id) ?></td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
                 </table>
             </div>
         </div>
     </div>
+    <script>
+    // Export Table to Excel
+    document.getElementById('excel-export').addEventListener('click', function () {
+        exportTableToExcel('paymentTable', 'Payment_History_<?= date('Ymd_His') ?>');
+    });
+
+    function exportTableToExcel(tableID, filename = ''){
+        var downloadLink;
+        var dataType = 'application/vnd.ms-excel';
+        var tableSelect = document.getElementById(tableID);
+        var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+        filename = filename?filename+'.xls':'excel_data.xls';
+        downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+        if(navigator.msSaveOrOpenBlob){
+            var blob = new Blob(['\ufeff', tableHTML], { type: dataType });
+            navigator.msSaveOrOpenBlob( blob, filename);
+        }else{
+            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+            downloadLink.download = filename;
+            downloadLink.click();
+        }
+        document.body.removeChild(downloadLink);
+    }
+
+    // Print only the container
+    function printSection() {
+        window.print();
+    }
+    </script>
 </body>
 </html>

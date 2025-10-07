@@ -8,11 +8,13 @@ $departments = mysqli_query($connection, "SELECT * FROM department");
 $designations = mysqli_query($connection, "SELECT * FROM designation");
 ?>
 
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-<link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/png" href="favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
   <title>User Registration Form</title>
@@ -117,6 +119,33 @@ $designations = mysqli_query($connection, "SELECT * FROM designation");
           </select>
         </div>
 
+        <!-- Status -->
+        <div class="input_field">
+          <label>Status <span class="required">*</span></label>
+          <select name="status" class="input" required>
+            <option value="Active" selected>Active</option>
+            <option value="Blocked">Blocked</option>
+          </select>
+        </div>
+
+        <!-- Salary -->
+        <div class="input_field">
+          <label>Salary <span class="required">*</span></label>
+          <input type="number" name="salary" class="input" required>
+        </div>
+
+        <!-- Date of Joining -->
+        <div class="input_field">
+          <label>Date of Joining <span class="required">*</span></label>
+          <input type="date" name="date_of_joining" class="input" required>
+        </div>
+
+        <!-- Date of Leaving -->
+        <div class="input_field">
+          <label>Date of Leaving</label>
+          <input type="date" name="date_of_leaving" class="input">
+        </div>
+
       </div>
 
       <div class="btn-container">
@@ -140,9 +169,13 @@ if (isset($_POST['register'])) {
     $address = mysqli_real_escape_string($connection, $_POST['address']);
     $designation = mysqli_real_escape_string($connection, $_POST['designation']);
     $role = mysqli_real_escape_string($connection, $_POST['role']);
+    $status = mysqli_real_escape_string($connection, $_POST['status']); // Get the status value
+    $salary = mysqli_real_escape_string($connection, $_POST['salary']); // Get the salary value
+    $date_of_joining = mysqli_real_escape_string($connection, $_POST['date_of_joining']);
+    $date_of_leaving = isset($_POST['date_of_leaving']) ? mysqli_real_escape_string($connection, $_POST['date_of_leaving']) : null;
 
     // Check for empty fields
-    if (!empty($name) && !empty($department) && !empty($password) && !empty($cpassword) && !empty($gender) && !empty($email) && !empty($phone) && !empty($designation) && !empty($role)) {
+    if (!empty($name) && !empty($department) && !empty($password) && !empty($cpassword) && !empty($gender) && !empty($email) && !empty($phone) && !empty($designation) && !empty($role) && !empty($status) && !empty($salary) && !empty($date_of_joining)) {
 
         // Check if passwords match
         if ($password === $cpassword) {
@@ -157,9 +190,9 @@ if (isset($_POST['register'])) {
                 echo "Failed to update department count! Error: " . mysqli_error($connection);
             }
 
-            // Insert user data into login_db with hashed password
-            $query = "INSERT INTO login_db (name, department, password, conpassword, gender, email, phone, address, designation, role)
-                      VALUES ('$name', '$department', '$hashed_password', '$hashed_password', '$gender', '$email', '$phone', '$address', '$designation', '$role')";
+            // Insert user data into login_db with hashed password, status, and salary
+            $query = "INSERT INTO login_db (name, department, password, conpassword, gender, email, phone, address, designation, role, status, salary, doj, dol)
+                      VALUES ('$name', '$department', '$hashed_password', '$hashed_password', '$gender', '$email', '$phone', '$address', '$designation', '$role', '$status', '$salary', '$date_of_joining', " . ($date_of_leaving ? "'$date_of_leaving'" : "NULL") . ")";
 
             $result = mysqli_query($connection, $query);
 
@@ -168,8 +201,8 @@ if (isset($_POST['register'])) {
                 $user_id = mysqli_insert_id($connection);
 
                 // Insert a record into user_leave_balance with default values
-                $leaveBalanceQuery = "INSERT INTO user_leave_balance (user_id, name, `D.O.J`, total_sick_leaves, total_earned_leaves, sick_leaves_taken, earned_leaves_taken, half_day_leaves_taken, last_updated, next_update)
-                          VALUES ($user_id, '$name', CURDATE(), 6.00, 0.00, 0.00, 0.00, 0.00, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 MONTH))";
+                $leaveBalanceQuery = "INSERT INTO user_leave_balance (user_id, name, doj, total_sick_leaves, total_earned_leaves, sick_leaves_taken, earned_leaves_taken, half_day_leaves_taken, last_updated, next_update)
+                          VALUES ($user_id, '$name', '$date_of_joining', 6.00, 0.00, 0.00, 0.00, 0.00, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 MONTH))";
                 $leaveBalanceResult = mysqli_query($connection, $leaveBalanceQuery);
 
                 if ($leaveBalanceResult) {

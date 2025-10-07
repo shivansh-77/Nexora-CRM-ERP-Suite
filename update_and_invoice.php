@@ -36,7 +36,7 @@ if (isset($_POST['purchase_order_id']) && isset($_POST['item_id']) && isset($_PO
         $last_invoice_query = "
             SELECT COALESCE(MAX(CAST(SUBSTRING(invoice_no, 8) AS UNSIGNED)), 0) AS last_invoice_no
             FROM purchase_invoice
-            WHERE invoice_no LIKE 'PUR/$currentYear/%'
+            WHERE invoice_no LIKE 'PI/$currentYear/%'
         ";
         $last_invoice_result = $connection->query($last_invoice_query);
         $last_invoice = $last_invoice_result->fetch_assoc();
@@ -45,7 +45,7 @@ if (isset($_POST['purchase_order_id']) && isset($_POST['item_id']) && isset($_PO
         $new_sequence_no = $last_invoice['last_invoice_no'] + 1;
 
         // Format the new invoice number
-        $invoice_no = 'PUR/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
+        $invoice_no = 'PI/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
 
         // Fetch the specific purchase order item
         $item_query = "SELECT poi.*, i.lot_tracking, i.expiration_tracking, i.item_type

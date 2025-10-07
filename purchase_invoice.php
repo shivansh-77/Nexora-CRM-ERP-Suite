@@ -1,24 +1,23 @@
 <?php
-// Include the connection file
-include 'connection.php'; // Ensure this file contains the $connection variable
+include 'connection.php';
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Retrieve form data
     $invoice_date = $_POST['invoice_date'];
-    $vendor_name = $_POST['vendor_name']; // Changed from client_name to vendor_name
+    $vendor_name = $_POST['vendor_name'];
+    $vendor_company_name = $_POST['vendor_company_name']; // New field
     $shipper_location_code = $_POST['shipper_location_code'];
     $gross_amount = $_POST['gross_amount'];
     $discount = $_POST['discount'];
     $net_amount = $_POST['net_amount'];
     $base_amount = $_POST['base_amount'];
 
-    // Retrieve IGST, CGST, and SGST values
+    // Retrieve tax values
     $total_igst = $_POST['total_igst'];
     $total_cgst = $_POST['total_cgst'];
     $total_sgst = $_POST['total_sgst'];
 
-    // Vendor Details (Changed from Client Details)
+    // Vendor Details
     $vendor_address = $_POST['vendor_address'];
     $vendor_phone = $_POST['vendor_phone'];
     $vendor_city = $_POST['vendor_city'];
@@ -37,55 +36,70 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $shipper_phone = $_POST['shipper_phone'];
     $shipper_gstno = $_POST['shipper_gstno'];
 
-    // Fetch vendor_id from contact_vendor table
+    // Fetch vendor and shipper IDs
     $vendor_result = $connection->query("SELECT id FROM contact_vendor WHERE contact_person = '$vendor_name'");
     $vendor_row = $vendor_result->fetch_assoc();
     $vendor_id = $vendor_row['id'];
 
-    // Fetch shipper_id
     $shipper_result = $connection->query("SELECT id FROM location_card WHERE location_code = '$shipper_location_code'");
     $shipper_row = $shipper_result->fetch_assoc();
     $shipper_id = $shipper_row['id'];
 
-    // Fetch fy_code from financial_years table where is_current = 1
-    $fy_result = $connection->query("SELECT fy_code FROM financial_years WHERE is_current = 1 LIMIT 1");
-    $fy_row = $fy_result->fetch_assoc();
-    $fy_code = $fy_row ? $fy_row['fy_code'] : '';
+    // Check if any items require lot tracking
+    $requires_lot_tracking = false;
+    $products = $_POST['product_name'];
 
-    // Get the current year and format it to get the last two digits
+    foreach ($products as $product_code) {
+        $item_check = $connection->query("SELECT lot_tracking FROM item WHERE item_code = '$product_code'");
+        if ($item_check->num_rows > 0) {
+            $item_row = $item_check->fetch_assoc();
+            if ($item_row['lot_tracking'] == 1) {
+                $requires_lot_tracking = true;
+                break;
+            }
+        }
+    }
+
+    // Generate invoice number (only if not requiring lot tracking)
     $currentYear = date('y');
+    $purchase_invoice_no = '';
+    $invoice_status = 'Finalized';
 
-    // Generate the new invoice number before updating item_ledger_history
-    $last_invoice_query = "SELECT MAX(CAST(SUBSTRING(invoice_no, 8) AS UNSIGNED)) AS last_invoice_no FROM purchase_invoice WHERE invoice_no LIKE 'PUR/$currentYear/%'";
-    $last_invoice_result = $connection->query($last_invoice_query);
-    $last_invoice = $last_invoice_result->fetch_assoc();
-
-    // Calculate the new sequential number
-    $new_sequence_no = $last_invoice['last_invoice_no'] + 1;
-
-    // Format the new invoice number
-    $purchase_invoice_no = 'PUR/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
+    if (!$requires_lot_tracking) {
+        $last_invoice_query = "SELECT MAX(CAST(SUBSTRING(invoice_no, 8) AS UNSIGNED)) AS last_invoice_no
+                             FROM purchase_invoice WHERE invoice_no LIKE 'PI/$currentYear/%'";
+        $last_invoice_result = $connection->query($last_invoice_query);
+        $last_invoice = $last_invoice_result->fetch_assoc();
+        $new_sequence_no = ($last_invoice['last_invoice_no'] ?? 0) + 1;
+        $purchase_invoice_no = 'PI/' . $currentYear . '/' . str_pad($new_sequence_no, 4, '0', STR_PAD_LEFT);
+    } else {
+        $invoice_status = 'Add Lot';
+    }
 
     // Insert into purchase_invoice table
     $insert_invoice = "INSERT INTO purchase_invoice (
-        invoice_no, vendor_name, shipper_location_code, vendor_id, shipper_id, gross_amount, discount,
+        invoice_no, status, vendor_name, vendor_company_name, shipper_location_code, vendor_id, shipper_id, gross_amount, discount,
         net_amount, invoice_date, total_igst, total_cgst, total_sgst, base_amount, vendor_address, vendor_phone,
         vendor_city, vendor_state, vendor_country, vendor_pincode, vendor_gstno, shipper_company_name,
         shipper_address, shipper_city, shipper_state, shipper_country, shipper_pincode, shipper_phone,
-        shipper_gstno, fy_code,pending_amount
+        shipper_gstno, fy_code, pending_amount
     ) VALUES (
-        '$purchase_invoice_no', '$vendor_name', '$shipper_location_code', '$vendor_id', '$shipper_id', '$gross_amount',
+        " . ($requires_lot_tracking ? 'NULL' : "'$purchase_invoice_no'") . ",
+        '$invoice_status',
+        '$vendor_name', '$vendor_company_name', '$shipper_location_code', '$vendor_id', '$shipper_id', '$gross_amount',
         '$discount', '$net_amount', '$invoice_date', '$total_igst', '$total_cgst', '$total_sgst', '$base_amount',
         '$vendor_address', '$vendor_phone', '$vendor_city', '$vendor_state', '$vendor_country', '$vendor_pincode',
         '$vendor_gstno', '$shipper_company_name', '$shipper_address', '$shipper_city', '$shipper_state',
-        '$shipper_country', '$shipper_pincode', '$shipper_phone', '$shipper_gstno',  '$fy_code', '$net_amount'
+        '$shipper_country', '$shipper_pincode', '$shipper_phone', '$shipper_gstno',
+        (SELECT fy_code FROM financial_years WHERE is_current = 1 LIMIT 1),
+        '$net_amount'
     )";
+
 
     if ($connection->query($insert_invoice) === TRUE) {
         $purchase_invoice_id = $connection->insert_id;
 
-        // Retrieve form data
-        $products = $_POST['product_name'];
+        // Process invoice items
         $product_names = $_POST['product_name_actual'];
         $quantities = $_POST['quantity'];
         $rates = $_POST['rate'];
@@ -96,9 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $igsts = $_POST['igst'];
         $cgsts = $_POST['cgst'];
         $sgsts = $_POST['sgst'];
-        $lot_tracking_ids = $_POST['lot_tracking_id'];
-        $expiration_dates = $_POST['expiring_date'];
-        $receipt_dates = $_POST['receipt_date']; // New field for receipt date
+        $receipt_dates = $_POST['receipt_date'];
 
         for ($i = 0; $i < count($products); $i++) {
             $product_code = $products[$i];
@@ -112,84 +124,90 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $igst = $igsts[$i];
             $cgst = $cgsts[$i];
             $sgst = $sgsts[$i];
-            $lot_tracking_id = $lot_tracking_ids[$i];
-            $expiration_date = $expiration_dates[$i];
-            $receipt_date = $receipt_dates[$i]; // New field for receipt date
+            $receipt_date = $receipt_dates[$i];
 
             // Calculate stock
             $stock = $quantities[$i] * $unit_values[$i];
 
-            // Insert into purchase_invoice_items with stock
+            // Insert into purchase_invoice_items (removed lot_trackingid and expiration_date)
             $insert_item = "INSERT INTO purchase_invoice_items (
                 invoice_id, product_name, product_id, quantity, rate, gst, amount, unit, value, igst, cgst, sgst,
-                lot_trackingid, expiration_date, receipt_date, stock
+                receipt_date, stock
             ) VALUES (
                 '$purchase_invoice_id', '$product_name', '$product_code', '$quantity', '$rate', '$gst', '$amount', '$unit',
-                '$unit_value', '$igst', '$cgst', '$sgst', '$lot_tracking_id', '$expiration_date', '$receipt_date', '$stock'
+                '$unit_value', '$igst', '$cgst', '$sgst', '$receipt_date', '$stock'
             )";
             $connection->query($insert_item);
 
-            // Fetch the last inserted invoice_item ID
             $invoice_item_id = $connection->insert_id;
 
-            // Fetch unit_of_measurement_code from item table
-            $item_query = "SELECT item_type, unit_of_measurement_code FROM item WHERE item_code = '$product_code'";
-            $item_result = $connection->query($item_query);
+            // Only create ledger entries if not requiring lot tracking
+            if (!$requires_lot_tracking) {
+                $item_query = "SELECT item_type, unit_of_measurement_code FROM item WHERE item_code = '$product_code'";
+                $item_result = $connection->query($item_query);
 
-            if ($item_result->num_rows > 0) {
-                $item_row = $item_result->fetch_assoc();
-                $item_type = $item_row['item_type']; // Get the item_type
-                $unit = $item_row['unit_of_measurement_code']; // Get the unit from the item table
+                if ($item_result->num_rows > 0) {
+                    $item_row = $item_result->fetch_assoc();
+                    $item_type = $item_row['item_type'];
+                    $unit = $item_row['unit_of_measurement_code'];
 
-                // Check item_type
-                if ($item_type === 'Inventory') {
-                    // Now insert into item_ledger_history
-                    $document_type = 'Purchase'; // Changed from Sale to Purchase
-                    $entry_type = 'Purchase Invoice'; // Changed from Sales Invoice to Purchase Invoice
-                    $item_quantity = (float)$quantity * (float)$unit_value; // Make quantity positive for purchase
-                    $location = $shipper_location_code; // Assuming you want to track where the product is shipped to
-                    $date = date('Y-m-d'); // Use today's date
-                    $item_value = $unit_value; // Store the unit value as the value in the item_ledger_history
+                    if ($item_type === 'Inventory') {
+                        $document_type = 'Purchase';
+                        $entry_type = 'Purchase Invoice';
+                        $item_quantity = (float)$quantity * (float)$unit_value;
+                        $location = $shipper_location_code;
+                        $date = date('Y-m-d');
+                        $item_value = $unit_value;
 
-                    // Insert into item_ledger_history with invoice_item_id, lot_trackingid, and expiration_date
-                    $insert_ledger_history = "INSERT INTO item_ledger_history (
-                        invoice_no, document_type, entry_type, product_id, product_name, quantity, location, unit,
-                        date, value, invoice_itemid, lot_trackingid, expiration_date
-                    ) VALUES (
-                        '$purchase_invoice_no', '$document_type', '$entry_type', '$product_code', '$product_name',
-                        '$item_quantity', '$location', '$unit', '$date', '$item_value', '$invoice_item_id',
-                        '$lot_tracking_id', '$expiration_date'
-                    )";
-
-                    $connection->query($insert_ledger_history);
+                        // Insert into item_ledger_history (removed lot_trackingid and expiration_date)
+                        $insert_ledger_history = "INSERT INTO item_ledger_history (
+                            invoice_no, document_type, entry_type, product_id, product_name, quantity, location, unit,
+                            date, value, invoice_itemid
+                        ) VALUES (
+                            '$purchase_invoice_no', '$document_type', '$entry_type', '$product_code', '$product_name',
+                            '$item_quantity', '$location', '$unit', '$date', '$item_value', '$invoice_item_id'
+                        )";
+                        $connection->query($insert_ledger_history);
+                    }
                 }
-            } else {
-                // Handle case where item is not found if needed
-                // You may want to log or alert the user here
             }
         }
 
-        // Insert into party_ledger table
-        $insert_party_ledger = "INSERT INTO party_ledger (
-            ledger_type, party_type, party_no, party_name, document_type, document_no, amount, ref_doc_no, date
-        ) VALUES (
-            'Vendor Ledger', 'Vendor', '$vendor_id', '$vendor_name', 'Purchase Invoice', '$purchase_invoice_no',
-            -$net_amount, NULL, NOW()
-        )";
+        // Create party ledger entry if not requiring lot tracking
+        if (!$requires_lot_tracking) {
+            $insert_party_ledger = "INSERT INTO party_ledger (
+                ledger_type, party_type, party_no, party_name, document_type, document_no, amount, ref_doc_no, date
+            ) VALUES (
+                'Vendor Ledger', 'Vendor', '$vendor_id', '$vendor_name', 'Purchase Invoice', '$purchase_invoice_no',
+                -$net_amount, NULL, NOW()
+            )";
+            $party_ledger_result = $connection->query($insert_party_ledger);
 
-        if ($connection->query($insert_party_ledger) === TRUE) {
-            // Success message or further actions if needed
-        } else {
-            echo "<p>Error saving party ledger entry: " . $connection->error . "</p>";
+            // // Insert the same entry into advance_payments table immediately after
+            // if ($party_ledger_result) {
+            //     $insert_advance_payments = "INSERT INTO advance_payments (
+            //         ledger_type, party_type, party_no, party_name, document_type, document_no, amount, ref_doc_no, date
+            //     ) VALUES (
+            //         'Vendor Ledger', 'Vendor', '$vendor_id', '$vendor_name', 'Purchase Invoice', '$purchase_invoice_no',
+            //         -$net_amount, NULL, NOW()
+            //     )";
+            //     $connection->query($insert_advance_payments);
+            // }
         }
 
-        // Success message
-        echo "<script>alert('Purchase Invoice Registered Successfully'); window.location.href='purchase_invoice_display.php';</script>";
+        // Redirect based on lot tracking requirement
+        if ($requires_lot_tracking) {
+            header("Location: purchase_lot_tracking_form_display.php?id=$purchase_invoice_id");
+            exit();
+        } else {
+            echo "<script>alert('Purchase Invoice Registered Successfully'); window.location.href='purchase_invoice_display.php';</script>";
+        }
     } else {
         echo "<p>Error saving invoice: " . $connection->error . "</p>";
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -487,40 +505,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
           <h3>Vendor & Shipper Details</h3>
 
           <div class="form-section">
-              <div class="column">
-                  <h4>Vendor Details</h4>
-                  <label>Name:</label>
-                  <select id="vendor_name" name="vendor_name" required>
-                      <option value="" disabled selected>Select Vendor</option>
-                      <?php
-                      $result = $connection->query("SELECT * FROM contact_vendor");
-                      while ($row = $result->fetch_assoc()) {
-                          echo "<option value='{$row['contact_person']}'
-                              data-phone='{$row['mobile_no']}'
-                              data-address='{$row['address']}'
-                              data-city='{$row['city']}'
-                              data-gstno='{$row['gstno']}'
-                              data-state='{$row['state']}'
-                              data-country='{$row['country']}'
-                              data-pincode='{$row['pincode']}'>{$row['contact_person']}</option>";
-                      }
-                      ?>
-                  </select>
-                  <label>Address:</label>
-                  <input type="text" id="vendor_address" name="vendor_address" readonly>
-                  <label>Phone:</label>
-                  <input type="text" id="vendor_phone" name="vendor_phone" readonly>
-                  <label>City:</label>
-                  <input type="text" id="vendor_city" name="vendor_city" readonly>
-                  <label>State:</label>
-                  <input type="text" id="vendor_state" name="vendor_state" readonly>
-                  <label>Country:</label>
-                  <input type="text" id="vendor_country" name="vendor_country" readonly>
-                  <label>Pincode:</label>
-                  <input type="text" id="vendor_pincode" name="vendor_pincode" readonly>
-                  <label>GST No.:</label>
-                  <input type="text" id="vendor_gstno" name="vendor_gstno" readonly>
-              </div>
+    <div class="column">
+        <h4>Vendor Details</h4>
+        <label>Name:</label>
+        <select id="vendor_name" name="vendor_name" required>
+            <option value="" disabled selected>Select Vendor</option>
+            <?php
+            $result = $connection->query("SELECT * FROM contact_vendor");
+            while ($row = $result->fetch_assoc()) {
+                echo "<option value='{$row['contact_person']}'
+                      data-phone='{$row['mobile_no']}'
+                      data-address='{$row['address']}'
+                      data-city='{$row['city']}'
+                      data-gstno='{$row['gstno']}'
+                      data-state='{$row['state']}'
+                      data-country='{$row['country']}'
+                      data-pincode='{$row['pincode']}'
+                      data-company='{$row['company_name']}'>{$row['contact_person']} ({$row['company_name']})</option>";
+            }
+            ?>
+        </select>
+        <label>Company Name:</label>
+        <input type="text" id="vendor_company_name" name="vendor_company_name" readonly>
+        <label>Address:</label>
+        <input type="text" id="vendor_address" name="vendor_address" readonly>
+        <label>Phone:</label>
+        <input type="text" id="vendor_phone" name="vendor_phone" readonly>
+        <label>City:</label>
+        <input type="text" id="vendor_city" name="vendor_city" readonly>
+        <label>State:</label>
+        <input type="text" id="vendor_state" name="vendor_state" readonly>
+        <label>Country:</label>
+        <input type="text" id="vendor_country" name="vendor_country" readonly>
+        <label>Pincode:</label>
+        <input type="text" id="vendor_pincode" name="vendor_pincode" readonly>
+        <label>GST No.:</label>
+        <input type="text" id="vendor_gstno" name="vendor_gstno" readonly>
+    </div>
 
               <div class="column">
                   <h4>Shipper Details</h4>
@@ -576,8 +597,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                           <th>CGST</th>
                           <th>SGST</th>
                           <th>Amount</th>
-                          <th>Lot Tracking Id</th>
-                          <th>Expiration Date</th>
+
                           <th>Receipt Date</th>
                           <th>Action</th>
                       </tr>
@@ -641,7 +661,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               </div>
           </div>
 
-          <button type="submit">Save Purchase Order</button>
+          <button type="submit">Save Invoice</button>
           <div id="message">
       </form>
   </div>
@@ -668,24 +688,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                   const lotInput = row.querySelector('input[name="lot_tracking_id[]"]');
                   const expirationInput = row.querySelector('input[name="expiring_date[]"]');
                   const receiptInput = row.querySelector('input[name="receipt_date[]"]'); // New receipt date field
-
-                  // Check and clear lot tracking
-                  if (!lotTracking && lotInput.value.trim()) {
-                      alert(`Lot Tracking is not required for ${productOption.textContent}`);
-                      lotInput.value = '';
-                  } else if (lotTracking && !lotInput.value.trim()) {
-                      alert(`Please enter Lot Tracking ID for ${productOption.textContent}`);
-                      isValid = false;
-                  }
-
-                  // Check and clear expiration tracking
-                  if (!expirationTracking && expirationInput.value) {
-                      alert(`Expiration Date is not required for ${productOption.textContent}`);
-                      expirationInput.value = '';
-                  } else if (expirationTracking && !expirationInput.value) {
-                      alert(`Please enter Expiration Date for ${productOption.textContent}`);
-                      isValid = false;
-                  }
+                  //
+                  // // Check and clear lot tracking
+                  // if (!lotTracking && lotInput.value.trim()) {
+                  //     alert(`Lot Tracking is not required for ${productOption.textContent}`);
+                  //     lotInput.value = '';
+                  // } else if (lotTracking && !lotInput.value.trim()) {
+                  //     alert(`Please enter Lot Tracking ID for ${productOption.textContent}`);
+                  //     isValid = false;
+                  // }
+                  //
+                  // // Check and clear expiration tracking
+                  // if (!expirationTracking && expirationInput.value) {
+                  //     alert(`Expiration Date is not required for ${productOption.textContent}`);
+                  //     expirationInput.value = '';
+                  // } else if (expirationTracking && !expirationInput.value) {
+                  //     alert(`Please enter Expiration Date for ${productOption.textContent}`);
+                  //     isValid = false;
+                  // }
 
                   // Check and clear receipt date (if required)
                   if (!receiptInput.value) {
@@ -695,21 +715,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               });
 
               if (isValid) {
-                  form.submit();
+                  // Add confirmation dialog
+                  if (confirm("Do you want to save this Purchase Invoice?")) {
+                      form.submit();
+                  }
+                  // If user clicks "No", nothing happens and they stay on the page
               }
           });
       });
 
       document.getElementById("vendor_name").addEventListener("change", function () {
-          let selectedOption = this.options[this.selectedIndex];
-          document.getElementById("vendor_address").value = selectedOption.getAttribute("data-address");
-          document.getElementById("vendor_phone").value = selectedOption.getAttribute("data-phone");
-          document.getElementById("vendor_city").value = selectedOption.getAttribute("data-city");
-          document.getElementById("vendor_state").value = selectedOption.getAttribute("data-state");
-          document.getElementById("vendor_country").value = selectedOption.getAttribute("data-country");
-          document.getElementById("vendor_pincode").value = selectedOption.getAttribute("data-pincode");
-          document.getElementById("vendor_gstno").value = selectedOption.getAttribute("data-gstno");
-      });
+    let selectedOption = this.options[this.selectedIndex];
+    document.getElementById("vendor_address").value = selectedOption.getAttribute("data-address");
+    document.getElementById("vendor_phone").value = selectedOption.getAttribute("data-phone");
+    document.getElementById("vendor_city").value = selectedOption.getAttribute("data-city");
+    document.getElementById("vendor_state").value = selectedOption.getAttribute("data-state");
+    document.getElementById("vendor_country").value = selectedOption.getAttribute("data-country");
+    document.getElementById("vendor_pincode").value = selectedOption.getAttribute("data-pincode");
+    document.getElementById("vendor_gstno").value = selectedOption.getAttribute("data-gstno");
+    document.getElementById("vendor_company_name").value = selectedOption.getAttribute("data-company");
+});
 
       document.getElementById("shipper_location_code").addEventListener("change", function () {
           let selectedOption = this.options[this.selectedIndex];
@@ -738,9 +763,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                               data-rate='" . $row['sales_price'] . "'
                               data-unit='" . $row['unit_of_measurement_code'] . "'
                               data-gst='" . $row['gst_code'] . "'
-                              data-name='" . $row['item_name'] . "'
-                              data-lot-tracking='" . $row['lot_tracking'] . "'
-                              data-expiration-tracking='" . $row['expiration_tracking'] . "'>" . $row['item_name'] . "</option>";
+                              data-name='" . $row['item_name'] . "'>" . $row['item_name'] . "</option>";
                       }
                       ?>
                   </select>
@@ -754,7 +777,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               </td>
 
               <td><input type="number" name="quantity[]" step="any" oninput="calculateRow(this)" placeholder="Quantity" class="small-input" required></td>
-              <td><input type="number" name="rate[]" placeholder="Rate" class="small-input"></td>
+              <td><input type="number" name="rate[]" step="any" oninput="calculateRow(this)" placeholder="Rate" class="small-input" required></td>
               <td>
                   <select class="product-gst" name="product_gst[]" onchange="calculateRow(this)" required>
                       <option value="" disabled selected>Select GST %</option>
@@ -766,21 +789,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                       ?>
                   </select>
               </td>
-              <td><input type="text" name="stock[]" placeholder="Stock" class="small-input" readonly></td> <!-- New Stock Field -->
+              <td><input type="text" name="stock[]" placeholder="Stock" class="small-input" readonly></td>
               <input type="hidden" name="product_name_actual[]">
               <input type="hidden" name="unit_value[]" value="1" id="unitValueField">
               <td><input type="text" name="igst[]" placeholder="IGST" class="small-input" readonly></td>
               <td><input type="text" name="cgst[]" placeholder="CGST" class="small-input" readonly></td>
               <td><input type="text" name="sgst[]" placeholder="SGST" class="small-input" readonly></td>
               <td><input type="text" name="amount[]" placeholder="Amount" class="small-input" readonly></td>
-              <td><input type="text" name="lot_tracking_id[]" placeholder="Enter Lot ID" class="small-input"></td>
-              <td><input type="date" name="expiring_date[]" placeholder="Expiry Date" class="small-input"></td>
               <td><input type="date" name="receipt_date[]" placeholder="Receipt Date" class="small-input" required></td>
               <td><button type="button" onclick="removeRow(this)" class="remove-button">Remove</button></td>
           `;
 
           styleRowInputs(row);
       }
+
 
       function loadUnitOptions(inputField) {
           const unitDropdown = inputField.nextElementSibling;
@@ -855,26 +877,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       }
 
       function fetchProductDetails(selectElement) {
-          let selectedOption = selectElement.options[selectElement.selectedIndex];
-          let unit = selectedOption.getAttribute("data-unit") || "";
-          let rate = selectedOption.getAttribute("data-rate") || "";
-          let gst = selectedOption.getAttribute("data-gst") || "";
-          let itemName = selectedOption.getAttribute("data-name") || "";
-          let itemCode = selectedOption.value;
-          let row = selectElement.closest("tr");
+      let selectedOption = selectElement.options[selectElement.selectedIndex];
+      let unit = selectedOption.getAttribute("data-unit") || "";
+      let rate = selectedOption.getAttribute("data-rate") || "";
+      let gst = selectedOption.getAttribute("data-gst") || "";
+      let itemName = selectedOption.getAttribute("data-name") || "";
+      let itemCode = selectedOption.value;
+      let row = selectElement.closest("tr");
 
-          row.querySelector("input[name='unit[]']").value = unit;
-          row.querySelector("input[name='rate[]']").value = rate;
-          row.querySelector("input[name='product_name_actual[]']").value = itemName;
+      row.querySelector("input[name='unit[]']").value = unit;
+      row.querySelector("input[name='rate[]']").value = rate;
+      row.querySelector("input[name='product_name_actual[]']").value = itemName;
 
-          let gstSelect = row.querySelector("select[name='product_gst[]']");
-          if (gstSelect) {
-              gstSelect.value = gst;
-          }
-
-          row.querySelector("input[name='quantity[]']").value = "";
-          calculateRow(row.querySelector("input[name='quantity[]']"));
+      let gstSelect = row.querySelector("select[name='product_gst[]']");
+      if (gstSelect) {
+          gstSelect.value = gst;
       }
+
+      row.querySelector("input[name='quantity[]']").value = "";
+      calculateRow(row.querySelector("input[name='quantity[]']"));
+  }
 
       function calculateRow(input) {
           let row = input.parentElement.parentElement;
@@ -963,6 +985,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
           button.parentElement.parentElement.remove();
           calculateTotal();
       }
+
   </script>
 </body>
 </html>

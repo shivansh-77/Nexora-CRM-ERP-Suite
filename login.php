@@ -12,8 +12,8 @@ if (isset($_POST['login'])) {
     $username = $_POST['username'];
     $pwd = $_POST['password'];
 
-    // Step 1: Fetch the user's hashed password from the database
-    $stmt = $connection->prepare("SELECT id, email, name, role, password FROM login_db WHERE email = ?");
+    // Step 1: Fetch the user's hashed password and status from the database
+    $stmt = $connection->prepare("SELECT id, email, name, role, password, status FROM login_db WHERE email = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -24,7 +24,13 @@ if (isset($_POST['login'])) {
 
         // Step 2: Verify the user-provided password against the hashed password
         if (password_verify($pwd, $hashed_password)) {
-            // Password is correct, proceed with login
+            // Check if the user's status is Blocked
+            if ($row['status'] == 'Blocked') {
+                echo "<script>alert('Your user ID is Blocked from accessing the system. Kindly contact the Admin!');</script>";
+                exit(); // Stop further execution
+            }
+
+            // Password is correct and status is not Blocked, proceed with login
             $_SESSION['user_id'] = $row['id']; // Store user ID in session
             $_SESSION['user_email'] = $row['email'];
             $_SESSION['user_name'] = $row['name'];
@@ -110,6 +116,7 @@ if (isset($_POST['login'])) {
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en" dir="ltr">

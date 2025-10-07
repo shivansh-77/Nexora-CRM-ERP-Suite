@@ -1,15 +1,17 @@
 <?php
 include('connection.php');
 
+// Get the current directory path
+$current_dir = dirname($_SERVER['PHP_SELF']);
+$base_url = 'http' . (isset($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $current_dir;
+
 // Check if an ID is provided in the URL
 if (isset($_GET['id'])) {
     $contactId = $_GET['id'];
-
     // Fetch the contact data by ID without prepared statements
     $sql = "SELECT * FROM contact WHERE id = $contactId";
     $result = $connection->query($sql);
     $contact = $result->fetch_assoc();
-
     // If no record is found, redirect to display.php
     if (!$contact) {
         header("Location: contact_display.php");
@@ -47,10 +49,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update'])) {
         WHERE id = $contactId";
 
     if ($connection->query($sql)) {
+        // Use PHP redirect instead of JavaScript
         echo "<script>alert('Record updated successfully!'); window.location.href = 'contact_display.php';</script>";
         exit();
     } else {
-        echo "Error: " . $connection->error;
+        $error_message = "Error: " . $connection->error;
     }
 }
 
@@ -85,13 +88,11 @@ if ($result && $result->num_rows > 0) {
 // Close the connection
 $connection->close();
 ?>
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-<link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/png" href="favicon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Update Contact</title>
   <style>
@@ -105,70 +106,59 @@ $connection->close();
   min-height: 100vh;
   background-color: #2c3e50;
 }
-
 .cancel-btn {
   text-decoration: none;
 }
-
 .form-container {
   width: 80%;
-  max-width: 1200px; /* To keep the form size manageable */
+  max-width: 1200px;
   background: #fff;
   border-radius: 10px;
   padding: 20px 30px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  position: relative; /* Add this line */
+  position: relative;
 }
-
 .form-container h2 {
   text-align: center;
   margin-bottom: 20px;
   font-size: 24px;
   color: #2c3e50;
 }
-
 .form-group {
   display: flex;
-  gap: 10px; /* Space between input fields */
+  gap: 10px;
   margin-bottom: 15px;
-  flex-wrap: wrap; /* Ensure fields wrap properly on smaller screens */
+  flex-wrap: wrap;
 }
-
 .form-group.full {
   display: flex;
 }
-
 .form-group label {
   display: block;
   font-size: 14px;
   color: #555;
   margin-bottom: 5px;
 }
-
 .form-group input,
 .form-group select {
-  flex: 1; /* Each input takes equal space */
+  flex: 1;
   padding: 12px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 5px;
   outline: none;
 }
-
 .form-group input:focus,
 .form-group select:focus {
   border-color: #007bff;
 }
-
 .form-group.full input {
   width: 100%;
 }
-
 .form-actions {
   text-align: center;
   margin-top: 20px;
 }
-
 .form-actions button,
 .cancel-btn {
   padding: 10px 20px;
@@ -178,44 +168,39 @@ $connection->close();
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  margin: 0 5px;
+  text-decoration: none;
+  display: inline-block;
 }
-
 .form-actions button:hover,
 .cancel-btn:hover {
-  background: #2c3e50;
+  background: #34495e;
 }
-
-/* Ensure all fields align perfectly */
 .form-group > div {
   flex: 1;
   display: flex;
-  flex-direction: column; /* Ensure label and input are stacked */
+  flex-direction: column;
 }
-
 .form-group > div:last-child {
-  margin-right: 0; /* Prevent last column from adding unnecessary margin */
+  margin-right: 0;
 }
-
 .form-group.full {
-  display: flex; /* Keep it flex like other rows */
-  flex-wrap: wrap; /* Allow wrapping for responsiveness */
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
-
 .form-group.full label {
-  width: 100%; /* Ensure the label takes full width */
+  width: 100%;
   margin-bottom: 5px;
 }
-
 .form-group.full input {
-  flex: 1; /* Ensure the input spans the remaining width */
+  flex: 1;
   padding: 12px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 5px;
   outline: none;
 }
-
 .form-group.full textarea {
   width: 100%;
   padding: 12px;
@@ -223,28 +208,41 @@ $connection->close();
   border: 1px solid #ccc;
   border-radius: 5px;
   outline: none;
+  resize: vertical;
 }
-
 .close-btn {
   position: absolute;
-  top: 10px; /* Adjust this value as needed */
-  right: 10px; /* Adjust this value as needed */
-  font-size: 24px; /* Increase size for better visibility */
+  top: 10px;
+  right: 10px;
+  font-size: 24px;
   color: #2c3e50;
   cursor: pointer;
   transition: color 0.3s;
+  text-decoration: none;
 }
-
 .close-btn:hover {
-  color: #e74c3c; /* Change color on hover for better UX */
+  color: #e74c3c;
+}
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #f5c6cb;
 }
   </style>
 </head>
 <body>
 <div class="form-container">
-  <a style="text-decoration:None;"href="contact_display.php" class="close-btn">&times;</a>
+  <a href="contact_display.php" class="close-btn">&times;</a>
   <h2>Update Contact</h2>
-  <form method="POST" action="">
+
+  <?php if (isset($error_message)): ?>
+    <div class="error-message"><?php echo $error_message; ?></div>
+  <?php endif; ?>
+
+  <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']) . '?id=' . $contactId; ?>">
       <!-- Row 1 -->
       <div class="form-group">
     <!-- Lead Source Input -->
@@ -259,9 +257,7 @@ $connection->close();
                 </option>
             <?php endforeach; ?>
         </select>
-
     </div>
-
     <!-- Lead For Input -->
     <div style="position: relative;">
         <label for="lead-for">Lead For *</label>
@@ -274,9 +270,7 @@ $connection->close();
                 </option>
             <?php endforeach; ?>
         </select>
-
     </div>
-
         <div>
           <label for="lead-priority">Lead Priority *</label>
           <select id="lead-priority" name="lead-priority">
@@ -336,7 +330,6 @@ $connection->close();
     <select id="state" name="state">
         <option value="">Select State</option>
         <?php
-        // List of all Indian states
         $states = [
             "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
             "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
@@ -346,17 +339,13 @@ $connection->close();
             "Chandigarh", "Dadra and Nagar Haveli", "Daman and Diu", "Lakshadweep", "Delhi",
             "Puducherry"
         ];
-
-        // Loop through the states array to create options
         foreach ($states as $state) {
-            // Check if the current state is the one stored in the database
             $selected = ($state == htmlspecialchars($contact['state'])) ? 'selected' : '';
             echo "<option value='$state' $selected>$state</option>";
         }
         ?>
     </select>
 </div>
-
         <div>
           <label for="city">City</label>
           <input type="text" id="city" name="city" placeholder="Enter City" value="<?php echo htmlspecialchars($contact['city']); ?>">
@@ -404,7 +393,6 @@ $connection->close();
               <?php endforeach; ?>
           </select>
       </div>
-
       <div>
           <label for="gst-no">GST No.</label>
           <input type="text" id="gst-no" name="gstno" placeholder="Enter GST Number" class="input-field" value="<?php echo htmlspecialchars($contact['gstno']); ?>">
@@ -424,9 +412,7 @@ $connection->close();
       <button type="submit" name="update" class="button">Update</button>
       <a href="contact_display.php" class="cancel-btn">Cancel</a>
   </div>
-
   </form>
-
 </div>
 </body>
 </html>

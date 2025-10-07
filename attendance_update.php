@@ -138,7 +138,7 @@ if (isset($_GET['id'])) {
 <body>
 
 <div class="container">
-    <a href="attendance.php" class="cross-btn">✖</a> <!-- Cross button -->
+    <a href="attendance_display.php" class="cross-btn">✖</a> <!-- Cross button -->
     <div class="title">
         <span>Edit Attendance Record for <strong><?php echo $row['user_name']; ?></strong></span>
     </div>
